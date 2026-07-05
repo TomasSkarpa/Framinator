@@ -19,7 +19,7 @@ export function ProfilePreviewOverlay({ open, onClose }: ProfilePreviewOverlayPr
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent
-        className="top-0 flex h-dvh w-[min(430px,46dvh,90vw)] max-w-none translate-y-0 items-stretch p-0"
+        className="top-[4dvh] flex h-[92dvh] w-[min(430px,46dvh,90vw)] max-w-none translate-y-0 items-stretch p-0"
         data-testid="profile-preview-overlay"
         aria-label="Instagram profile preview"
         onOpenAutoFocus={(e) => e.preventDefault()}
