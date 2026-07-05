@@ -4,6 +4,11 @@ export const EXPORT_WIDTH = 1080;
 export const EXPORT_HEIGHT_PORTRAIT = 1350;
 export const EXPORT_HEIGHT_SQUARE = 1080;
 
+/** Feed mockup max width (px); preview canvas = this × devicePixelRatio (capped). */
+export const PREVIEW_DISPLAY_WIDTH = 480;
+export const PREVIEW_MAX_DPR = 2;
+export const PREVIEW_JPEG_QUALITY = 0.88;
+
 export type AspectRatio = "4:5" | "1:1";
 
 export function exportHeight(aspect: AspectRatio): number {

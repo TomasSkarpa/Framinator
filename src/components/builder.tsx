@@ -3,6 +3,7 @@
 import { CarouselPreview } from "@/components/carousel-preview";
 import { CustomizationPanel } from "@/components/customization-panel";
 import { ExportButton } from "@/components/export-button";
+import { ProfilePreviewButton } from "@/components/profile-preview-button";
 import { PhotoTray } from "@/components/photo-tray";
 import { ResumePrompt } from "@/components/resume-prompt";
 import { TemplatePicker } from "@/components/template-picker";
@@ -17,7 +18,10 @@ export function Builder() {
             <h1 className="text-xl font-bold tracking-tight text-zinc-50">Framinator</h1>
             <p className="text-sm text-zinc-500">Carousel builder</p>
           </div>
-          <ExportButton />
+          <div className="flex gap-2">
+            <ProfilePreviewButton />
+            <ExportButton />
+          </div>
         </div>
       </header>
 

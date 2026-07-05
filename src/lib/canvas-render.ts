@@ -1,4 +1,11 @@
-import { exportHeight, EXPORT_WIDTH, type AspectRatio } from "./constants";
+import {
+  exportHeight,
+  EXPORT_WIDTH,
+  PREVIEW_DISPLAY_WIDTH,
+  PREVIEW_JPEG_QUALITY,
+  PREVIEW_MAX_DPR,
+  type AspectRatio,
+} from "./constants";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import type { FilterPreset, PhotoItem, Slide, TemplateId } from "./types";
 
@@ -190,15 +197,24 @@ export async function renderSlideToCanvas(
   return canvas;
 }
 
+function previewWidth(): number {
+  const dpr =
+    typeof window !== "undefined"
+      ? Math.min(window.devicePixelRatio || 1, PREVIEW_MAX_DPR)
+      : 1;
+  return Math.min(EXPORT_WIDTH, Math.round(PREVIEW_DISPLAY_WIDTH * dpr));
+}
+
 export async function renderSlidePreviewDataUrl(
   slide: Slide,
   photosById: Map<string, PhotoItem>,
   opts: RenderOpts,
 ): Promise<string> {
+  const w = previewWidth();
   const canvas = await renderSlideToCanvas(slide, photosById, {
     ...opts,
-    width: 360,
-    height: Math.round(360 * (exportHeight(opts.aspectRatio) / EXPORT_WIDTH)),
+    width: w,
+    height: Math.round(w * (exportHeight(opts.aspectRatio) / EXPORT_WIDTH)),
   });
-  return canvas.toDataURL("image/jpeg", 0.82);
+  return canvas.toDataURL("image/jpeg", PREVIEW_JPEG_QUALITY);
 }

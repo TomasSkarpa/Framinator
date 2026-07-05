@@ -25,10 +25,10 @@ import {
   MoreHorizontal,
   Send,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
+import { useCallback, useState } from "react";
 import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
 import { useProject } from "@/lib/project-context";
+import { useSlidePreviewUrl } from "@/lib/use-slide-preview-url";
 import type { Slide } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -46,36 +46,6 @@ function VerifiedBadge() {
       <path fill="#fff" d="m17.5 25.5-5-5 1.8-1.8 3.2 3.2 7.2-7.2 1.8 1.8-9 9Z" />
     </svg>
   );
-}
-
-function useSlidePreviewUrl(slide: Slide): string | null {
-  const { state } = useProject();
-  const [url, setUrl] = useState<string | null>(null);
-  const photoId = slide.cells[0]?.photoId;
-  const photo = photoId ? state.photos.find((p) => p.id === photoId) : undefined;
-
-  useEffect(() => {
-    const templateId = state.templateId;
-    if (!templateId || !photo) return;
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      const photosById = new Map([[photo.id, photo]]);
-      void renderSlidePreviewDataUrl(slide, photosById, {
-        filter: state.filter,
-        borderWidth: state.borderWidth,
-        templateId,
-        aspectRatio: state.aspectRatio,
-      }).then((u) => {
-        if (!cancelled) setUrl(u);
-      });
-    }, 100);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [slide, photo, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
-
-  return url;
 }
 
 function SlideThumb({
