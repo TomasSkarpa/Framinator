@@ -4,10 +4,21 @@ export type FilterPreset =
   | "none"
   | "astia"
   | "velvia"
+  | "velvia-50"
+  | "provia"
   | "fp100c"
   | "elite-chrome"
   | "xpro"
-  | "superia";
+  | "superia"
+  | "kodachrome"
+  | "agfa-precisa"
+  | "polaroid-669"
+  | "portra-400"
+  | "pro-400h"
+  | "classic-chrome"
+  | "acros"
+  | "kodak-2383"
+  | "fuji-3513";
 
 export type TemplateId =
   | "framed-polaroid"

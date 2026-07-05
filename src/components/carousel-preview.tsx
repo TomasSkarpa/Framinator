@@ -30,7 +30,7 @@ import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
 import { useProject } from "@/lib/project-context";
 import { useSlidePreviewUrl } from "@/lib/use-slide-preview-url";
 import type { Slide } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, pressable } from "@/lib/utils";
 
 const IG_FONT =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
@@ -133,7 +133,10 @@ function InstagramFeedPreview({
               <button
                 type="button"
                 onClick={onPrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1 shadow"
+                className={cn(
+                  pressable,
+                  "absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1 shadow transition-[transform,background-color] hover:bg-white active:scale-95 active:bg-white",
+                )}
                 aria-label="Previous slide"
               >
                 <ChevronLeft size={16} />
@@ -143,7 +146,10 @@ function InstagramFeedPreview({
               <button
                 type="button"
                 onClick={onNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1 shadow"
+                className={cn(
+                  pressable,
+                  "absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1 shadow transition-[transform,background-color] hover:bg-white active:scale-95 active:bg-white",
+                )}
                 aria-label="Next slide"
               >
                 <ChevronRight size={16} />
@@ -159,8 +165,11 @@ function InstagramFeedPreview({
                   type="button"
                   onClick={() => onSelectSlide(i)}
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    i === slideIndex ? "bg-blue-500" : "bg-white/70",
+                    pressable,
+                    "h-4 w-4 rounded-full transition-transform",
+                    i === slideIndex
+                      ? "bg-blue-500 active:scale-90"
+                      : "bg-white/70 hover:scale-110 active:scale-90",
                   )}
                   aria-label={`Go to slide ${i + 1}`}
                 />
@@ -243,7 +252,8 @@ function SortableSlide({
         type="button"
         onClick={onSelect}
         className={cn(
-          "block rounded-lg focus-visible:outline-none",
+          pressable,
+          "block rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
           isActive && "ring-2 ring-blue-500 ring-offset-2 ring-offset-zinc-950",
         )}
       >
@@ -251,7 +261,10 @@ function SortableSlide({
       </button>
       <button
         type="button"
-        className="absolute right-1 top-1 rounded bg-zinc-900/80 p-1 text-zinc-400 hover:text-white"
+        className={cn(
+          pressable,
+          "absolute right-1 top-1 rounded bg-zinc-900/80 p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
+        )}
         {...attributes}
         {...listeners}
         aria-label={`Drag slide ${index + 1}`}

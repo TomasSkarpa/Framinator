@@ -17,6 +17,7 @@ import {
 } from "@/lib/export";
 import { useProject } from "@/lib/project-context";
 import { useToast } from "@/components/ui/toast";
+import { cn, pressable } from "@/lib/utils";
 
 type ExportOverlayProps = {
   open: boolean;
@@ -144,7 +145,10 @@ export function ExportOverlay({ open, onClose }: ExportOverlayProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+            className={cn(
+              pressable,
+              "rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 active:bg-zinc-700",
+            )}
             aria-label="Close export"
             data-testid="export-overlay-close"
           >

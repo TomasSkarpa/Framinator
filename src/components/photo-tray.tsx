@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MAX_PHOTOS } from "@/lib/constants";
 import { useProject } from "@/lib/project-context";
 import { useToast } from "@/components/ui/toast";
+import { cn, pressable } from "@/lib/utils";
 
 export function PhotoTray() {
   const { state, addPhotos, removePhoto } = useProject();
@@ -79,7 +80,10 @@ export function PhotoTray() {
             <button
               type="button"
               onClick={() => removePhoto(photo.id)}
-              className="absolute right-1 top-1 z-10 rounded-full bg-zinc-900/90 p-0.5 text-zinc-300 hover:text-white border border-zinc-600"
+              className={cn(
+                pressable,
+                "absolute right-1 top-1 z-10 rounded-full border border-zinc-600 bg-zinc-900/90 p-0.5 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
+              )}
               aria-label={`Remove ${photo.name}`}
             >
               <X className="h-3.5 w-3.5" />
@@ -90,7 +94,10 @@ export function PhotoTray() {
           <button
             type="button"
             onClick={pickPhotos}
-            className="flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/50 px-6 py-10 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 sm:min-h-40"
+            className={cn(
+              pressable,
+              "flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/50 px-6 py-10 text-zinc-400 hover:border-zinc-500 hover:bg-zinc-900/70 hover:text-zinc-200 active:border-zinc-400 active:bg-zinc-800/80 sm:min-h-40",
+            )}
           >
             <ImagePlus className="h-6 w-6" />
             <span className="text-xs">Tap or drop photos here</span>
@@ -100,7 +107,10 @@ export function PhotoTray() {
           <button
             type="button"
             onClick={pickPhotos}
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-600 text-zinc-500 hover:border-zinc-400 hover:text-zinc-300"
+            className={cn(
+              pressable,
+              "flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-600 text-zinc-500 hover:border-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-300 active:border-zinc-300 active:bg-zinc-800/80",
+            )}
             aria-label="Add more photos"
           >
             <ImagePlus className="h-5 w-5" />

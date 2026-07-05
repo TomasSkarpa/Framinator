@@ -7,6 +7,7 @@ import { CROP_SCALE_MAX, CROP_SCALE_MIN, DEFAULT_PHOTO_CROP } from "@/lib/consta
 import { FILTERS } from "@/lib/filters";
 import { preloadLuts } from "@/lib/lut";
 import { useProject } from "@/lib/project-context";
+import { cn, pressable } from "@/lib/utils";
 
 export function CustomizationPanel() {
   const {
@@ -113,11 +114,13 @@ export function CustomizationPanel() {
                 key={a}
                 type="button"
                 onClick={() => setAspect(a)}
-                className={`rounded-lg px-3 py-1.5 text-sm ${
+                className={cn(
+                  pressable,
+                  "rounded-lg px-3 py-1.5 text-sm",
                   state.aspectRatio === a
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                }`}
+                    ? "bg-blue-600 text-white active:bg-blue-700"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
+                )}
               >
                 {a === "4:5" ? "1080×1350" : "1080×1080"}
               </button>
@@ -134,11 +137,13 @@ export function CustomizationPanel() {
                 type="button"
                 title={f.description}
                 onClick={() => setFilter(f.id)}
-                className={`rounded-lg px-3 py-1.5 text-sm ${
+                className={cn(
+                  pressable,
+                  "rounded-lg px-3 py-1.5 text-sm",
                   state.filter === f.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                }`}
+                    ? "bg-blue-600 text-white active:bg-blue-700"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
+                )}
               >
                 {f.label}
               </button>

@@ -7,7 +7,7 @@ import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
 import { useProject } from "@/lib/project-context";
 import { buildSlides, TEMPLATES } from "@/lib/templates";
 import type { TemplateId } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, pressable } from "@/lib/utils";
 
 const ICONS: Record<string, ReactNode> = {
   frame: <Hash className="h-5 w-5" />,
@@ -83,12 +83,15 @@ export function TemplatePicker() {
                 ref={selected ? selectedRef : undefined}
                 type="button"
                 onClick={() => setTemplate(t.id)}
-                className="w-[min(72vw,200px)] shrink-0 snap-center text-left"
+                className={cn(
+                  pressable,
+                  "w-[min(72vw,200px)] shrink-0 snap-center text-left",
+                )}
                 data-testid={`template-${t.id}`}
               >
                 <Card
                   className={cn(
-                    "transition-colors hover:border-zinc-600",
+                    "transition-[border-color,box-shadow] duration-150 hover:border-zinc-600 active:border-zinc-500",
                     selected && "border-blue-500 ring-1 ring-blue-500",
                   )}
                 >

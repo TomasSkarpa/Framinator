@@ -16,7 +16,7 @@ export function Slider({
       <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-zinc-800">
         <SliderPrimitive.Range className="absolute h-full bg-blue-600" />
       </SliderPrimitive.Track>
-      <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-blue-400 bg-white shadow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" />
+      <SliderPrimitive.Thumb className="block h-4 w-4 cursor-grab rounded-full border border-blue-400 bg-white shadow transition-[transform,background-color] active:scale-110 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" />
     </SliderPrimitive.Root>
   );
 }

@@ -1,4 +1,4 @@
-import { cubeUrl, normalizeFilter } from "./filters";
+import { cubeUrl, FILTERS, normalizeFilter } from "./filters";
 import type { FilterPreset } from "./types";
 
 export type Lut3D = {
@@ -122,7 +122,7 @@ export async function loadLut(filter: FilterPreset): Promise<Lut3D | null> {
 }
 
 export function preloadLuts(): void {
-  for (const id of ["astia", "velvia", "fp100c", "elite-chrome", "xpro", "superia"] as FilterPreset[]) {
-    void loadLut(id);
+  for (const f of FILTERS) {
+    if (f.id !== "none") void loadLut(f.id);
   }
 }
