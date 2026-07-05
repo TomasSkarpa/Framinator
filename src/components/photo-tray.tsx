@@ -36,8 +36,8 @@ export function PhotoTray() {
   });
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between">
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
         <h2 className="text-sm font-medium text-zinc-300">
           Your photos · {state.photos.length} selected
         </h2>
@@ -74,7 +74,7 @@ export function PhotoTray() {
           <button
             type="button"
             onClick={() => open()}
-            className="flex h-20 w-full min-w-[200px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/50 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            className="flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/50 px-6 py-10 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 sm:min-h-40"
           >
             <ImagePlus className="h-6 w-6" />
             <span className="text-xs">Tap or drop photos here</span>
