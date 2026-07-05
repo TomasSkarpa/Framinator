@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { CROP_SCALE_MAX, CROP_SCALE_MIN, DEFAULT_PHOTO_CROP } from "@/lib/constants";
 import { FILTERS } from "@/lib/filters";
 import { preloadLuts } from "@/lib/lut";
 import { useProject } from "@/lib/project-context";
@@ -25,6 +27,10 @@ export function CustomizationPanel() {
 
   const photoId = selectedSlide?.cells[0]?.photoId;
   const activePhoto = photoId ? state.photos.find((p) => p.id === photoId) : undefined;
+  const cropIsDefault =
+    activePhoto?.crop.offsetX === DEFAULT_PHOTO_CROP.offsetX &&
+    activePhoto?.crop.offsetY === DEFAULT_PHOTO_CROP.offsetY &&
+    activePhoto?.crop.scale === DEFAULT_PHOTO_CROP.scale;
 
   return (
     <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
@@ -39,7 +45,17 @@ export function CustomizationPanel() {
 
       {activePhoto ? (
         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-          <label className="text-xs font-medium text-zinc-300">This slide</label>
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs font-medium text-zinc-300">This slide</label>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={cropIsDefault}
+              onClick={() => updateCrop(activePhoto.id, { ...DEFAULT_PHOTO_CROP })}
+            >
+              Reset position
+            </Button>
+          </div>
           <p className="text-[11px] text-zinc-500">Crop and zoom for slide {selectedSlideIndex + 1}</p>
           <div className="grid grid-cols-2 gap-2 pt-1">
             <div>
@@ -67,10 +83,12 @@ export function CustomizationPanel() {
               />
             </div>
             <div className="col-span-2">
-              <span className="text-[10px] text-zinc-500">Zoom</span>
+              <span className="text-[10px] text-zinc-500">
+                Zoom · {activePhoto.crop.scale.toFixed(2)}×
+              </span>
               <Slider
-                min={1}
-                max={2}
+                min={CROP_SCALE_MIN}
+                max={CROP_SCALE_MAX}
                 step={0.01}
                 value={[activePhoto.crop.scale]}
                 onValueChange={([v]) =>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Grid2X2, Hash, Image, Layers } from "lucide-react";
+import { ChevronDown, Grid2X2, Hash, Image, Layers } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
 import { useProject } from "@/lib/project-context";
@@ -16,7 +17,13 @@ const ICONS: Record<string, ReactNode> = {
   story: <Layers className="h-5 w-5" />,
 };
 
-function TemplatePreview({ templateId }: { templateId: TemplateId }) {
+function TemplatePreview({
+  templateId,
+  compact = false,
+}: {
+  templateId: TemplateId;
+  compact?: boolean;
+}) {
   const { state } = useProject();
   const [url, setUrl] = useState<string | null>(null);
 
@@ -41,27 +48,83 @@ function TemplatePreview({ templateId }: { templateId: TemplateId }) {
   }, [templateId, state.photos, state.filter, state.borderWidth, state.aspectRatio]);
 
   if (!url) {
-    return <div className="aspect-[4/5] w-full rounded-md bg-zinc-800 animate-pulse" />;
+    return (
+      <div
+        className={cn(
+          "rounded-md bg-zinc-800 animate-pulse",
+          compact ? "h-full w-full" : "aspect-[4/5] w-full",
+        )}
+      />
+    );
   }
   return (
-    <img src={url} alt="" className="aspect-[4/5] w-full rounded-md object-cover" />
+    <img
+      src={url}
+      alt=""
+      className={cn(
+        "object-cover",
+        compact ? "h-full w-full" : "aspect-[4/5] w-full rounded-md",
+      )}
+    />
   );
 }
 
 export function TemplatePicker() {
   const { state, setTemplate } = useProject();
+  const [expanded, setExpanded] = useState(() => !state.templateId);
+  const selected = TEMPLATES.find((t) => t.id === state.templateId);
+
+  useEffect(() => {
+    if (!state.templateId) setExpanded(true);
+  }, [state.templateId]);
 
   if (state.photos.length === 0) return null;
 
+  const pickTemplate = (id: TemplateId) => {
+    setTemplate(id);
+    setExpanded(false);
+  };
+
+  if (!expanded && selected) {
+    return (
+      <section className="space-y-2">
+        <h2 className="text-sm font-medium text-zinc-300">Template</h2>
+        <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+          <div className="h-14 w-11 shrink-0 overflow-hidden rounded-md border border-zinc-700">
+            <TemplatePreview templateId={selected.id} compact />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-zinc-200">
+              {ICONS[selected.icon]}
+              <span className="truncate text-sm font-medium">{selected.name}</span>
+            </div>
+            <p className="truncate text-xs text-zinc-500">{selected.description}</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setExpanded(true)}>
+            Change
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-medium text-zinc-300">Choose a template</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-medium text-zinc-300">Choose a template</h2>
+        {state.templateId && (
+          <Button variant="ghost" size="sm" onClick={() => setExpanded(false)}>
+            <ChevronDown className="h-4 w-4" aria-hidden />
+            Hide
+          </Button>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {TEMPLATES.map((t) => (
           <button
             key={t.id}
             type="button"
-            onClick={() => setTemplate(t.id)}
+            onClick={() => pickTemplate(t.id)}
             className="text-left"
           >
             <Card

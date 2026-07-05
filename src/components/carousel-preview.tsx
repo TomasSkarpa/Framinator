@@ -78,13 +78,26 @@ function useSlidePreviewUrl(slide: Slide): string | null {
   return url;
 }
 
-function SlideThumb({ slide, index }: { slide: Slide; index: number }) {
+function SlideThumb({
+  slide,
+  index,
+  selected = false,
+}: {
+  slide: Slide;
+  index: number;
+  selected?: boolean;
+}) {
   const { state } = useProject();
   const url = useSlidePreviewUrl(slide);
   const aspect = `${EXPORT_WIDTH}/${exportHeight(state.aspectRatio)}`;
 
   return (
-    <div className="relative w-[min(72vw,280px)] shrink-0">
+    <div
+      className={cn(
+        "relative w-[min(72vw,280px)] shrink-0 rounded-lg",
+        selected && "outline outline-2 outline-blue-500 outline-offset-2",
+      )}
+    >
       {url ? (
         <img
           src={url}
@@ -265,10 +278,8 @@ function SortableSlide({
 
   return (
     <div ref={setNodeRef} style={style} className="relative shrink-0">
-      <button type="button" onClick={onSelect} className="block">
-        <div className={cn(isActive && "ring-2 ring-blue-500 rounded-lg")}>
-          <SlideThumb slide={slide} index={index} />
-        </div>
+      <button type="button" onClick={onSelect} className="block rounded-lg focus-visible:outline-none">
+        <SlideThumb slide={slide} index={index} selected={isActive} />
       </button>
       <button
         type="button"
@@ -358,7 +369,7 @@ export function CarouselPreview() {
             items={state.slides.map((s) => s.id)}
             strategy={horizontalListSortingStrategy}
           >
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="flex gap-3 overflow-x-auto p-0.5 pb-2">
               {state.slides.map((s, i) => (
                 <SortableSlide
                   key={s.id}

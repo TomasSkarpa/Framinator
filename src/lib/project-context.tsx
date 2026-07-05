@@ -11,7 +11,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { MAX_PHOTOS } from "@/lib/constants";
+import { DEFAULT_PHOTO_CROP, MAX_PHOTOS } from "@/lib/constants";
 import { clearProject, loadProject, saveProject } from "@/lib/persistence";
 import { normalizeFilter } from "@/lib/filters";
 import { slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
@@ -47,9 +47,6 @@ const initialState: ProjectState = {
   aspectRatio: "4:5",
 };
 
-function defaultCrop(): PhotoItem["crop"] {
-  return { offsetX: 0, offsetY: 0, scale: 1 };
-}
 
 function reducer(state: ProjectState, action: Action): ProjectState {
   switch (action.type) {
@@ -62,7 +59,7 @@ function reducer(state: ProjectState, action: Action): ProjectState {
         id: uid(),
         name: f.name,
         objectUrl: URL.createObjectURL(f),
-        crop: defaultCrop(),
+        crop: { ...DEFAULT_PHOTO_CROP },
         _file: f,
       }));
       const photos = [...state.photos, ...added];
