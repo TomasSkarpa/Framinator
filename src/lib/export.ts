@@ -44,6 +44,7 @@ export async function exportSlides(
       borderWidth: project.borderWidth,
       templateId: project.templateId,
       aspectRatio: project.aspectRatio,
+      slideIndex: i,
       width: EXPORT_WIDTH,
       height: exportHeight(project.aspectRatio),
     });
@@ -76,6 +77,7 @@ export async function exportSingleSlide(
     borderWidth: project.borderWidth,
     templateId: project.templateId,
     aspectRatio: project.aspectRatio,
+    slideIndex: index,
     width: EXPORT_WIDTH,
     height: exportHeight(project.aspectRatio),
   });

@@ -13,7 +13,8 @@ export type TemplateId =
   | "grid-split"
   | "framed-polaroid"
   | "clean-carousel"
-  | "story-arc";
+  | "story-arc"
+  | "kodak-strip";
 
 export type PhotoCrop = {
   offsetX: number;

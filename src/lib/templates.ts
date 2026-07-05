@@ -26,6 +26,12 @@ export const TEMPLATES: TemplateMeta[] = [
     description: "Mixed layout, cover slide",
     icon: "story",
   },
+  {
+    id: "kodak-strip",
+    name: "Kodak strip",
+    description: "Film frame on paper",
+    icon: "film",
+  },
 ];
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -59,6 +65,7 @@ export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[
     }
     case "framed-polaroid":
     case "clean-carousel":
+    case "kodak-strip":
       return photos.map((p) => ({
         id: uid(),
         cells: [{ photoId: p.id }],

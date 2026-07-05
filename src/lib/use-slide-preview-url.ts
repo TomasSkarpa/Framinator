@@ -14,6 +14,7 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
   useEffect(() => {
     const templateId = state.templateId;
     if (!templateId || !slide || !photo) return;
+    const slideIndex = state.slides.findIndex((s) => s.id === slide.id);
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const photosById = new Map([[photo.id, photo]]);
@@ -22,6 +23,7 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
         borderWidth: state.borderWidth,
         templateId,
         aspectRatio: state.aspectRatio,
+        slideIndex: slideIndex >= 0 ? slideIndex : 0,
       }).then((u) => {
         if (!cancelled) setUrl(u);
       });
@@ -30,7 +32,7 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [slide, photo, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
+  }, [slide, photo, state.slides, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
 
   return url;
 }

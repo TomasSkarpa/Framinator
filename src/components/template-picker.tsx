@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { ChevronDown, Grid2X2, Hash, Image, Layers } from "lucide-react";
+import { ChevronDown, Film, Grid2X2, Hash, Image, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
@@ -15,6 +15,7 @@ const ICONS: Record<string, ReactNode> = {
   frame: <Hash className="h-5 w-5" />,
   carousel: <Image className="h-5 w-5" />,
   story: <Layers className="h-5 w-5" />,
+  film: <Film className="h-5 w-5" />,
 };
 
 function TemplatePreview({
@@ -39,6 +40,7 @@ function TemplatePreview({
       borderWidth: state.borderWidth,
       templateId,
       aspectRatio: state.aspectRatio,
+      slideIndex: 0,
     }).then((u) => {
       if (!cancelled) setUrl(u);
     });

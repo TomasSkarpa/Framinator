@@ -16,6 +16,8 @@ type RenderOpts = {
   borderWidth: number;
   templateId: TemplateId;
   aspectRatio: AspectRatio;
+  /** Kodak strip: decorative frame counter (0-based slide index). */
+  slideIndex?: number;
 };
 
 const imageCache = new Map<string, Promise<HTMLImageElement>>();
@@ -148,6 +150,150 @@ function drawStoryArcFrame(
   return { x: 0, y: 0, w, h };
 }
 
+const KODAK_CREAM = "#f3f0e9";
+const KODAK_INK = "#181614";
+const KODAK_GOLD = "#c4a55c";
+const KODAK_HOLE = "#3c3a37";
+const KODAK_FRAME_ASPECT = 640 / 900;
+
+function drawPaperBackground(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.fillStyle = KODAK_CREAM;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "#beb9af";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 16) {
+    const tickH = (x / 16) % 5 === 0 ? 10 : 5;
+    ctx.beginPath();
+    ctx.moveTo(x, 4);
+    ctx.lineTo(x, 4 + tickH);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, h - 4);
+    ctx.lineTo(x, h - 4 - tickH);
+    ctx.stroke();
+  }
+}
+
+function kodakFrameLayout(w: number, h: number) {
+  const maxFrameH = h * 0.82;
+  const maxFrameW = w * 0.72;
+  let frameH = maxFrameH;
+  let frameW = frameH * KODAK_FRAME_ASPECT;
+  if (frameW > maxFrameW) {
+    frameW = maxFrameW;
+    frameH = frameW / KODAK_FRAME_ASPECT;
+  }
+  return {
+    x: (w - frameW) / 2,
+    y: h * 0.06,
+    w: frameW,
+    h: frameH,
+    border: Math.max(12, Math.round(frameW * (22 / 640))),
+    labelW: Math.max(18, Math.round(frameW * (30 / 640))),
+    sprocketPad: Math.max(6, Math.round(frameH * (9 / 900))),
+  };
+}
+
+function drawSprocketHoles(
+  ctx: CanvasRenderingContext2D,
+  frameX: number,
+  frameY: number,
+  frameW: number,
+  frameH: number,
+) {
+  const holeW = Math.max(8, frameW * (14 / 640));
+  const holeH = Math.max(5, frameH * (8 / 900));
+  const gap = Math.max(6, frameW * (10 / 640));
+  const pitch = holeW + gap;
+  const count = Math.max(3, Math.floor((frameW - 28) / pitch));
+  const startX = frameX + (frameW - count * pitch + gap) / 2;
+  const topY = frameY + 6;
+  const bottomY = frameY + frameH - 6 - holeH;
+  ctx.fillStyle = KODAK_HOLE;
+  for (let i = 0; i < count; i++) {
+    const x = startX + i * pitch;
+    ctx.beginPath();
+    ctx.roundRect(x, topY, holeW, holeH, 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(x, bottomY, holeW, holeH, 2);
+    ctx.fill();
+  }
+}
+
+function drawKodakMarkings(
+  ctx: CanvasRenderingContext2D,
+  frameX: number,
+  frameY: number,
+  frameW: number,
+  frameH: number,
+  border: number,
+  labelW: number,
+  frameNo: number,
+) {
+  const fontSize = Math.max(9, Math.round(frameW * (13 / 640)));
+  const tinySize = Math.max(7, Math.round(frameW * (10 / 640)));
+  const noSize = Math.max(9, Math.round(frameW * (13 / 640)));
+  ctx.fillStyle = KODAK_GOLD;
+  ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+
+  ctx.save();
+  ctx.translate(frameX + labelW * 0.2, frameY + frameH * 0.58);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText("KODAK PORTRA 400", 0, 0);
+  ctx.restore();
+
+  const triX = frameX + frameW - border - 18;
+  const triY = frameY + border;
+  ctx.beginPath();
+  ctx.moveTo(triX, triY);
+  ctx.lineTo(triX + 10, triY);
+  ctx.lineTo(triX + 5, triY + 9);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.font = `bold ${tinySize}px system-ui, sans-serif`;
+  ctx.fillText("400", triX - 20, triY + tinySize);
+
+  ctx.fillStyle = "#d2cdc3";
+  ctx.font = `bold ${noSize}px system-ui, sans-serif`;
+  ctx.fillText(
+    String(40 + frameNo),
+    frameX + border + labelW * 0.35,
+    frameY + frameH - border,
+  );
+  ctx.fillText(
+    String(6 + frameNo),
+    frameX + frameW - border - noSize,
+    frameY + frameH - border,
+  );
+}
+
+async function drawKodakStrip(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  img: HTMLImageElement,
+  crop: PhotoItem["crop"],
+  lut: Lut3D | null,
+  frameNo: number,
+) {
+  drawPaperBackground(ctx, w, h);
+  const layout = kodakFrameLayout(w, h);
+  const { x: frameX, y: frameY, w: frameW, h: frameH, border, labelW, sprocketPad } = layout;
+
+  ctx.fillStyle = KODAK_INK;
+  ctx.fillRect(frameX, frameY, frameW, frameH);
+  drawSprocketHoles(ctx, frameX, frameY, frameW, frameH);
+
+  const innerX = frameX + border + labelW;
+  const innerY = frameY + border + sprocketPad;
+  const innerW = frameW - border * 2 - labelW;
+  const innerH = frameH - border * 2 - sprocketPad * 2;
+  await drawCoverWithLut(ctx, img, crop, innerX, innerY, innerW, innerH, lut);
+  drawKodakMarkings(ctx, frameX, frameY, frameW, frameH, border, labelW, frameNo);
+}
+
 export async function renderSlideToCanvas(
   slide: Slide,
   photosById: Map<string, PhotoItem>,
@@ -190,6 +336,8 @@ export async function renderSlideToCanvas(
   } else if (opts.templateId === "story-arc") {
     const frame = drawStoryArcFrame(ctx, w, h, cell.variant, opts.borderWidth);
     await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
+  } else if (opts.templateId === "kodak-strip") {
+    await drawKodakStrip(ctx, w, h, img, photo.crop, lut, opts.slideIndex ?? 0);
   } else {
     await drawCoverWithLut(ctx, img, photo.crop, 0, 0, w, h, lut);
   }
