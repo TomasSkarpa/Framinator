@@ -68,7 +68,7 @@ export function PhotoTray() {
       >
         <input {...getInputProps()} />
         {state.photos.map((photo) => (
-          <div key={photo.id} className="relative shrink-0">
+          <div key={photo.id} className="group relative shrink-0 hover:z-10">
             <img
               src={photo.objectUrl}
               alt={photo.name}
@@ -79,7 +79,7 @@ export function PhotoTray() {
             <button
               type="button"
               onClick={() => removePhoto(photo.id)}
-              className="absolute -right-1 -top-1 rounded-full bg-zinc-900 p-0.5 text-zinc-300 hover:text-white border border-zinc-600"
+              className="absolute right-1 top-1 z-10 rounded-full bg-zinc-900/90 p-0.5 text-zinc-300 hover:text-white border border-zinc-600"
               aria-label={`Remove ${photo.name}`}
             >
               <X className="h-3.5 w-3.5" />
