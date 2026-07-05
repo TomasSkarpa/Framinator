@@ -81,6 +81,15 @@ export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[
   }
 }
 
+/** Rebuild all slides from the current photo list and template (auto-extend). */
+export function slidesFromPhotos(
+  templateId: TemplateId | null,
+  photos: PhotoItem[],
+): Slide[] {
+  if (!templateId || photos.length === 0) return [];
+  return buildSlides(templateId, photos);
+}
+
 /** Photo IDs currently assigned to slides. */
 export function usedPhotoIds(slides: Slide[]): Set<string> {
   const ids = new Set<string>();

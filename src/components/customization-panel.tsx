@@ -1,20 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
+import { FILTERS } from "@/lib/filters";
+import { preloadLuts } from "@/lib/lut";
 import { useProject } from "@/lib/project-context";
-import type { FilterPreset } from "@/lib/types";
-
-const FILTERS: { id: FilterPreset; label: string }[] = [
-  { id: "none", label: "None" },
-  { id: "warm", label: "Warm" },
-  { id: "cool", label: "Cool" },
-  { id: "bw", label: "B&W" },
-  { id: "vintage", label: "Vintage" },
-];
 
 export function CustomizationPanel() {
-  const { state, setFilter, setBorder, setAspect, updateCrop, unusedPhotos, assignPhoto } =
-    useProject();
+  const { state, setFilter, setBorder, setAspect, updateCrop } = useProject();
+
+  useEffect(() => {
+    preloadLuts();
+  }, []);
 
   if (!state.templateId) return null;
 
@@ -52,6 +49,7 @@ export function CustomizationPanel() {
             <button
               key={f.id}
               type="button"
+              title={f.description}
               onClick={() => setFilter(f.id)}
               className={`rounded-lg px-3 py-1.5 text-sm ${
                 state.filter === f.id
@@ -120,28 +118,6 @@ export function CustomizationPanel() {
                 }
               />
             </div>
-          </div>
-        </div>
-      )}
-
-      {unusedPhotos.length > 0 && state.slides.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-xs text-zinc-400">Unused photos · tap to assign to slide 1</label>
-          <div className="flex gap-2 overflow-x-auto">
-            {unusedPhotos.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => assignPhoto(state.slides[0].id, p.id)}
-                className="shrink-0"
-              >
-                <img
-                  src={p.objectUrl}
-                  alt={p.name}
-                  className="h-14 w-14 rounded-md object-cover border border-zinc-600 hover:border-blue-500"
-                />
-              </button>
-            ))}
           </div>
         </div>
       )}

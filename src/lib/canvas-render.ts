@@ -1,9 +1,5 @@
-import {
-  EXPORT_WIDTH,
-  FILTER_CSS,
-  exportHeight,
-  type AspectRatio,
-} from "./constants";
+import { exportHeight, EXPORT_WIDTH, type AspectRatio } from "./constants";
+import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import type { FilterPreset, PhotoItem, Slide, TemplateId } from "./types";
 
 type RenderOpts = {
@@ -43,8 +39,32 @@ function drawCover(
   ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
 }
 
-function applyFilter(ctx: CanvasRenderingContext2D, filter: FilterPreset) {
-  ctx.filter = FILTER_CSS[filter] ?? "none";
+async function drawCoverWithLut(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoItem["crop"],
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  lut: Lut3D | null,
+) {
+  if (!lut) {
+    drawCover(ctx, img, crop, dx, dy, dw, dh);
+    return;
+  }
+
+  const tmp = document.createElement("canvas");
+  tmp.width = Math.max(1, Math.round(dw));
+  tmp.height = Math.max(1, Math.round(dh));
+  const tctx = tmp.getContext("2d");
+  if (!tctx) {
+    drawCover(ctx, img, crop, dx, dy, dw, dh);
+    return;
+  }
+  drawCover(tctx, img, crop, 0, 0, tmp.width, tmp.height);
+  applyLutToCanvas(tmp, lut);
+  ctx.drawImage(tmp, dx, dy, dw, dh);
 }
 
 function drawPolaroidFrame(
@@ -109,7 +129,7 @@ export async function renderSlideToCanvas(
   if (!photo) return canvas;
 
   const img = await loadImage(photo.objectUrl);
-  applyFilter(ctx, opts.filter);
+  const lut = await loadLut(opts.filter);
 
   if (opts.templateId === "grid-split" && cell.gridColumn !== undefined) {
     const col = cell.gridColumn;
@@ -120,19 +140,18 @@ export async function renderSlideToCanvas(
     ctx.beginPath();
     ctx.rect(0, 0, w, h);
     ctx.clip();
-    drawCover(ctx, img, photo.crop, -sliceX, 0, fullW, h);
+    await drawCoverWithLut(ctx, img, photo.crop, -sliceX, 0, fullW, h, lut);
     ctx.restore();
   } else if (opts.templateId === "framed-polaroid") {
     const frame = drawPolaroidFrame(ctx, w, h, opts.borderWidth);
-    drawCover(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h);
+    await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
   } else if (opts.templateId === "story-arc") {
     const frame = drawStoryArcFrame(ctx, w, h, cell.variant, opts.borderWidth);
-    drawCover(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h);
+    await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
   } else {
-    drawCover(ctx, img, photo.crop, 0, 0, w, h);
+    await drawCoverWithLut(ctx, img, photo.crop, 0, 0, w, h, lut);
   }
 
-  ctx.filter = "none";
   return canvas;
 }
 

@@ -13,7 +13,8 @@ import {
 } from "react";
 import { MAX_PHOTOS } from "@/lib/constants";
 import { clearProject, loadProject, saveProject } from "@/lib/persistence";
-import { buildSlides, usedPhotoIds } from "@/lib/templates";
+import { normalizeFilter } from "@/lib/filters";
+import { slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
 import type {
   FilterPreset,
   PhotoItem,
@@ -63,23 +64,22 @@ function reducer(state: ProjectState, action: Action): ProjectState {
         crop: defaultCrop(),
         _file: f,
       }));
-      return { ...state, photos: [...state.photos, ...added] };
+      const photos = [...state.photos, ...added];
+      const slides = state.templateId
+        ? slidesFromPhotos(state.templateId, photos)
+        : state.slides;
+      return { ...state, photos, slides };
     }
     case "REMOVE_PHOTO": {
       const photo = state.photos.find((p) => p.id === action.photoId);
       if (photo) URL.revokeObjectURL(photo.objectUrl);
       const photos = state.photos.filter((p) => p.id !== action.photoId);
-      let slides = state.slides
-        .map((s) => ({
-          ...s,
-          cells: s.cells.filter((c) => c.photoId !== action.photoId),
-        }))
-        .filter((s) => s.cells.length > 0);
-      if (state.templateId && photos.length > 0) {
-        slides = buildSlides(state.templateId, photos);
-      } else if (photos.length === 0) {
-        slides = [];
-      }
+      const slides =
+        photos.length === 0
+          ? []
+          : state.templateId
+            ? slidesFromPhotos(state.templateId, photos)
+            : state.slides;
       return {
         ...state,
         photos,
@@ -91,7 +91,7 @@ function reducer(state: ProjectState, action: Action): ProjectState {
       return {
         ...state,
         templateId: action.templateId,
-        slides: buildSlides(action.templateId, state.photos),
+        slides: slidesFromPhotos(action.templateId, state.photos),
       };
     }
     case "REORDER_SLIDES": {
@@ -185,7 +185,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         photos,
         templateId: stored.templateId,
         slides: stored.slides as Slide[],
-        filter: stored.filter,
+        filter: normalizeFilter(stored.filter),
         borderWidth: stored.borderWidth,
         aspectRatio: stored.aspectRatio,
       };

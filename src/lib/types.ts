@@ -1,6 +1,13 @@
 import type { AspectRatio } from "./constants";
 
-export type FilterPreset = "none" | "warm" | "cool" | "bw" | "vintage";
+export type FilterPreset =
+  | "none"
+  | "astia"
+  | "velvia"
+  | "fp100c"
+  | "elite-chrome"
+  | "xpro"
+  | "superia";
 
 export type TemplateId =
   | "grid-split"

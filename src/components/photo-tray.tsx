@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, type MouseEvent } from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,9 +31,18 @@ export function PhotoTray() {
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { "image/*": [] },
-    noClick: state.photos.length > 0,
+    multiple: true,
+    noClick: true,
     noKeyboard: true,
   });
+
+  const pickPhotos = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      open();
+    },
+    [open],
+  );
 
   return (
     <section className="space-y-4">
@@ -42,7 +51,7 @@ export function PhotoTray() {
           Your photos · {state.photos.length} selected
         </h2>
         {state.photos.length < MAX_PHOTOS && (
-          <Button variant="secondary" size="sm" onClick={() => open()}>
+          <Button variant="secondary" size="sm" onClick={pickPhotos}>
             Add photos
           </Button>
         )}
@@ -52,7 +61,7 @@ export function PhotoTray() {
         {...getRootProps()}
         className={`flex gap-2 overflow-x-auto pb-2 ${isDragActive ? "ring-2 ring-blue-500 rounded-xl p-2" : ""}`}
       >
-        <input {...getInputProps()} capture="environment" />
+        <input {...getInputProps()} />
         {state.photos.map((photo) => (
           <div key={photo.id} className="relative shrink-0">
             <img
@@ -73,7 +82,7 @@ export function PhotoTray() {
         {state.photos.length === 0 && (
           <button
             type="button"
-            onClick={() => open()}
+            onClick={pickPhotos}
             className="flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/50 px-6 py-10 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 sm:min-h-40"
           >
             <ImagePlus className="h-6 w-6" />
@@ -83,7 +92,7 @@ export function PhotoTray() {
         {state.photos.length > 0 && state.photos.length < MAX_PHOTOS && (
           <button
             type="button"
-            onClick={() => open()}
+            onClick={pickPhotos}
             className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-600 text-zinc-500 hover:border-zinc-400 hover:text-zinc-300"
             aria-label="Add more photos"
           >
