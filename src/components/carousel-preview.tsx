@@ -110,9 +110,14 @@ function SortableSlide({
 }
 
 export function CarouselPreview() {
-  const { state, reorderSlides } = useProject();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
+  const {
+    state,
+    reorderSlides,
+    selectedSlideId,
+    selectedSlideIndex,
+    selectedSlide,
+    selectSlide,
+  } = useProject();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -127,7 +132,6 @@ export function CarouselPreview() {
       const newIndex = state.slides.findIndex((s) => s.id === over.id);
       if (oldIndex >= 0 && newIndex >= 0) {
         reorderSlides(oldIndex, newIndex);
-        setActiveIndex(newIndex);
       }
     },
     [state.slides, reorderSlides],
@@ -135,10 +139,13 @@ export function CarouselPreview() {
 
   if (!state.templateId || state.slides.length === 0) return null;
 
-  const slide = state.slides[activeIndex];
-
   const go = (delta: number) => {
-    setActiveIndex((i) => Math.max(0, Math.min(state.slides.length - 1, i + delta)));
+    const next = Math.max(
+      0,
+      Math.min(state.slides.length - 1, selectedSlideIndex + delta),
+    );
+    const slide = state.slides[next];
+    if (slide) selectSlide(slide.id);
   };
 
   return (
@@ -151,17 +158,19 @@ export function CarouselPreview() {
             variant="ghost"
             size="icon"
             onClick={() => go(-1)}
-            disabled={activeIndex === 0}
+            disabled={selectedSlideIndex === 0}
             aria-label="Previous slide"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          {slide && <SlideThumb slide={slide} index={activeIndex} />}
+          {selectedSlide && (
+            <SlideThumb slide={selectedSlide} index={selectedSlideIndex} />
+          )}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => go(1)}
-            disabled={activeIndex >= state.slides.length - 1}
+            disabled={selectedSlideIndex >= state.slides.length - 1}
             aria-label="Next slide"
           >
             <ChevronRight className="h-5 w-5" />
@@ -169,14 +178,14 @@ export function CarouselPreview() {
         </div>
 
         <div className="mt-3 flex justify-center gap-1.5">
-          {state.slides.map((_, i) => (
+          {state.slides.map((s, i) => (
             <button
-              key={state.slides[i].id}
+              key={s.id}
               type="button"
-              onClick={() => setActiveIndex(i)}
+              onClick={() => selectSlide(s.id)}
               className={cn(
                 "h-2 w-2 rounded-full transition-colors",
-                i === activeIndex ? "bg-blue-500" : "bg-zinc-600",
+                i === selectedSlideIndex ? "bg-blue-500" : "bg-zinc-600",
               )}
               aria-label={`Go to slide ${i + 1}`}
             />
@@ -184,8 +193,8 @@ export function CarouselPreview() {
         </div>
 
         <p className="mt-2 text-center text-xs text-zinc-500">
-          Slide {activeIndex + 1} of {state.slides.length} · rendered at Instagram&apos;s exact
-          carousel size
+          Slide {selectedSlideIndex + 1} of {state.slides.length} · rendered at
+          Instagram&apos;s exact carousel size
         </p>
       </div>
 
@@ -193,6 +202,9 @@ export function CarouselPreview() {
         <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
           Reorder slides
         </h3>
+        <p className="mb-3 text-xs text-zinc-500">
+          Tap a slide to select it for cropping below
+        </p>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext
             items={state.slides.map((s) => s.id)}
@@ -205,7 +217,7 @@ export function CarouselPreview() {
                   slide={s}
                   index={i}
                   isActive={selectedSlideId === s.id}
-                  onSelect={() => setSelectedSlideId(s.id)}
+                  onSelect={() => selectSlide(s.id)}
                 />
               ))}
             </div>

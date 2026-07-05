@@ -133,6 +133,10 @@ function reducer(state: ProjectState, action: Action): ProjectState {
 
 type ProjectContextValue = {
   state: ProjectState;
+  selectedSlideId: string | null;
+  selectedSlideIndex: number;
+  selectedSlide: Slide | null;
+  selectSlide: (slideId: string) => void;
   addPhotos: (files: File[]) => { added: number; rejected: number; limitHit: boolean };
   removePhoto: (id: string) => void;
   setTemplate: (id: TemplateId) => void;
@@ -154,6 +158,7 @@ const ProjectContext = createContext<ProjectContextValue | null>(null);
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const [resumeAvailable, setResumeAvailable] = useState(false);
   const pendingRestore = useRef<ProjectState | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -169,6 +174,28 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     const used = usedPhotoIds(state.slides);
     return state.photos.filter((p) => !used.has(p.id));
   }, [state.photos, state.slides]);
+
+  const selectedSlideIndex = useMemo(() => {
+    if (!selectedSlideId) return 0;
+    const i = state.slides.findIndex((s) => s.id === selectedSlideId);
+    return i >= 0 ? i : 0;
+  }, [state.slides, selectedSlideId]);
+
+  const selectedSlide = state.slides[selectedSlideIndex] ?? null;
+
+  useEffect(() => {
+    if (state.slides.length === 0) {
+      setSelectedSlideId(null);
+      return;
+    }
+    if (!selectedSlideId || !state.slides.some((s) => s.id === selectedSlideId)) {
+      setSelectedSlideId(state.slides[0].id);
+    }
+  }, [state.slides, selectedSlideId]);
+
+  const selectSlide = useCallback((slideId: string) => {
+    setSelectedSlideId(slideId);
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -256,6 +283,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const value: ProjectContextValue = {
     state,
+    selectedSlideId,
+    selectedSlideIndex,
+    selectedSlide,
+    selectSlide,
     addPhotos,
     removePhoto: (id) => dispatch({ type: "REMOVE_PHOTO", photoId: id }),
     setTemplate: (id) => dispatch({ type: "SET_TEMPLATE", templateId: id }),
@@ -269,6 +300,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "UPDATE_CROP", photoId, crop }),
     reset: () => {
       void clearProject();
+      setSelectedSlideId(null);
       dispatch({ type: "RESET" });
     },
     unusedPhotos,
