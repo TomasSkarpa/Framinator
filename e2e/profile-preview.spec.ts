@@ -1,7 +1,7 @@
-import path from "node:path";
+import { E2E_FIXTURE_PATH } from "./ensure-fixture";
 import { expect, test, type Page } from "@playwright/test";
 
-const FIXTURE = path.join(__dirname, "fixtures", "test-photo.png");
+const FIXTURE = E2E_FIXTURE_PATH;
 
 async function clearSavedProject(page: Page) {
   await page.addInitScript(() => {

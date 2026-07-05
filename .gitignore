@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/fixtures/
 
 # next.js
 /.next/
@@ -29,6 +34,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+debug*.png
+*.scratch.*
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -39,3 +46,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scratch (agents, manual debugging)
+/.tmp/
+/scratch/
