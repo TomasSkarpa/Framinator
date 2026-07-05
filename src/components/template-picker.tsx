@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Film, Hash, Image } from "lucide-react";
+import { ChevronDown, Film, Hash, Image } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
 import { useProject } from "@/lib/project-context";
@@ -59,20 +59,67 @@ function TemplatePreview({
 export function TemplatePicker() {
   const { state, setTemplate } = useProject();
   const selectedRef = useRef<HTMLButtonElement>(null);
+  const [expanded, setExpanded] = useState(true);
+  const chosen = TEMPLATES.find((t) => t.id === state.templateId);
+  const showPicker = !state.templateId || expanded;
 
   useEffect(() => {
+    setExpanded(!state.templateId);
+  }, [state.templateId]);
+
+  useEffect(() => {
+    if (!showPicker) return;
     selectedRef.current?.scrollIntoView({
       inline: "center",
       behavior: "smooth",
       block: "nearest",
     });
-  }, [state.templateId]);
+  }, [state.templateId, showPicker]);
 
   if (state.photos.length === 0) return null;
 
+  if (!showPicker && chosen) {
+    return (
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-zinc-300">Template</h2>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="text-zinc-400">{ICONS[chosen.icon]}</span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-zinc-200">{chosen.name}</p>
+              <p className="truncate text-xs text-zinc-500">{chosen.description}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className={cn(
+              pressable,
+              "flex shrink-0 items-center gap-1 rounded-lg bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700",
+            )}
+          >
+            Change
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-medium text-zinc-300">Choose a template</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-medium text-zinc-300">Choose a template</h2>
+        {state.templateId && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="text-xs text-zinc-500 hover:text-zinc-300"
+          >
+            Done
+          </button>
+        )}
+      </div>
       <div className="-mx-4 overflow-x-auto scroll-smooth px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex snap-x snap-mandatory gap-3">
           {TEMPLATES.map((t) => {
@@ -82,7 +129,10 @@ export function TemplatePicker() {
                 key={t.id}
                 ref={selected ? selectedRef : undefined}
                 type="button"
-                onClick={() => setTemplate(t.id)}
+                onClick={() => {
+                  setTemplate(t.id);
+                  setExpanded(false);
+                }}
                 className={cn(
                   pressable,
                   "w-[min(72vw,200px)] shrink-0 snap-center text-left",

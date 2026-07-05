@@ -82,7 +82,7 @@ export function PhotoTray() {
               onClick={() => removePhoto(photo.id)}
               className={cn(
                 pressable,
-                "absolute right-1 top-1 z-10 rounded-full border border-zinc-600 bg-zinc-900/90 p-0.5 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
+                "absolute right-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-zinc-600 bg-zinc-900/90 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
               )}
               aria-label={`Remove ${photo.name}`}
             >

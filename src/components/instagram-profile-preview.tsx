@@ -8,10 +8,14 @@ import {
   PlusCircle,
   UserSquare2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, pressable } from "@/lib/utils";
 
 const IG_FONT =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+/** Light-surface press states for the Instagram mockup card. */
+const igPressable =
+  "cursor-pointer transition-[color,transform,background-color] duration-150 ease-out active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
 type InstagramProfilePreviewProps = {
   username?: string;
@@ -55,7 +59,10 @@ export function InstagramProfilePreview({
         <button
           type="button"
           onClick={onBack}
-          className={cn(onBack && "cursor-pointer")}
+          className={cn(
+            onBack && igPressable,
+            "rounded-lg p-1.5 text-gray-900 hover:bg-gray-100 active:bg-gray-200",
+          )}
           aria-label={onBack ? "Close profile preview" : undefined}
           data-testid="profile-preview-close"
         >
@@ -116,19 +123,28 @@ export function InstagramProfilePreview({
       <div className="flex shrink-0 gap-2 px-4 pt-4 sm:gap-3 sm:px-6 sm:pt-5">
         <button
           type="button"
-          className="flex-1 rounded-lg bg-blue-500 py-2 text-sm font-semibold text-white sm:py-3 sm:text-base"
+          className={cn(
+            igPressable,
+            "flex-1 rounded-lg bg-blue-500 py-2 text-sm font-semibold text-white hover:bg-blue-600 active:bg-blue-700 sm:py-3 sm:text-base",
+          )}
         >
           Follow
         </button>
         <button
           type="button"
-          className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold text-gray-900 sm:py-3 sm:text-base"
+          className={cn(
+            igPressable,
+            "flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 active:bg-gray-300 sm:py-3 sm:text-base",
+          )}
         >
           Message
         </button>
         <button
           type="button"
-          className="flex items-center justify-center rounded-lg bg-gray-100 px-3 sm:px-4"
+          className={cn(
+            igPressable,
+            "flex items-center justify-center rounded-lg bg-gray-100 px-3 hover:bg-gray-200 active:bg-gray-300 sm:px-4",
+          )}
           aria-hidden
         >
           <PlusCircle className="h-5 w-5 text-gray-900 sm:h-6 sm:w-6" />

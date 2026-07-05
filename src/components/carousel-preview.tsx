@@ -184,7 +184,7 @@ function InstagramFeedPreview({
           <Heart
             size={24}
             className={cn(
-              "cursor-pointer",
+              "cursor-pointer transition-transform duration-150 active:scale-90 motion-reduce:active:scale-100",
               liked ? "fill-red-500 stroke-red-500" : "text-gray-900",
             )}
             onClick={() => setLiked((v) => !v)}
@@ -200,7 +200,7 @@ function InstagramFeedPreview({
         <Bookmark
           size={24}
           className={cn(
-            "cursor-pointer text-gray-900",
+            "cursor-pointer text-gray-900 transition-transform duration-150 active:scale-90 motion-reduce:active:scale-100",
             saved && "fill-gray-900",
           )}
           onClick={() => setSaved((v) => !v)}
@@ -263,7 +263,7 @@ function SortableSlide({
         type="button"
         className={cn(
           pressable,
-          "absolute right-1 top-1 rounded bg-zinc-900/80 p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
+          "absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
         )}
         {...attributes}
         {...listeners}

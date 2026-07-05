@@ -147,7 +147,7 @@ export function ExportOverlay({ open, onClose }: ExportOverlayProps) {
             onClick={onClose}
             className={cn(
               pressable,
-              "rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 active:bg-zinc-700",
+              "rounded-lg p-2.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 active:bg-zinc-700",
             )}
             aria-label="Close export"
             data-testid="export-overlay-close"
