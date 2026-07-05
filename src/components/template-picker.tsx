@@ -126,6 +126,7 @@ export function TemplatePicker() {
             type="button"
             onClick={() => pickTemplate(t.id)}
             className="text-left"
+            data-testid={`template-${t.id}`}
           >
             <Card
               className={cn(

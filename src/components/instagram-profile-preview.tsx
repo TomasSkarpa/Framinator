@@ -77,7 +77,12 @@ export function InstagramProfilePreview({
       </div>
 
       <div className="flex items-center gap-6 px-4 pt-1">
-        <img src={avatarUrl} alt="" className="h-[70px] w-[70px] rounded-full object-cover" />
+        <img
+          src={avatarUrl}
+          alt=""
+          className="h-[70px] w-[70px] rounded-full object-cover"
+          data-testid="profile-preview-avatar"
+        />
         <div className="flex flex-1 justify-between text-center">
           <div>
             <p className="text-[15px] font-semibold text-gray-900">{posts}</p>
