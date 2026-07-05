@@ -126,30 +126,6 @@ function drawPolaroidFrame(
   return { x: pad, y: pad, w: w - pad * 2, h: h - pad - bottomExtra };
 }
 
-function drawStoryArcFrame(
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  variant: "cover" | "full" | "inset" | undefined,
-  border: number,
-) {
-  if (variant === "cover") {
-    ctx.fillStyle = "#111827";
-    ctx.fillRect(0, 0, w, h);
-    const barH = h * 0.22;
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(0, h - barH, w, barH);
-    return { x: 0, y: 0, w, h: h - barH * 0.3 };
-  }
-  if (variant === "inset") {
-    const m = border * 4 + 24;
-    ctx.fillStyle = "#1f2937";
-    ctx.fillRect(0, 0, w, h);
-    return { x: m, y: m, w: w - m * 2, h: h - m * 2 };
-  }
-  return { x: 0, y: 0, w, h };
-}
-
 const KODAK_CREAM = "#f3f0e9";
 const KODAK_INK = "#181614";
 const KODAK_GOLD = "#c4a55c";
@@ -319,22 +295,8 @@ export async function renderSlideToCanvas(
   const img = await loadImage(photo.objectUrl);
   const lut = await loadLut(opts.filter);
 
-  if (opts.templateId === "grid-split" && cell.gridColumn !== undefined) {
-    const col = cell.gridColumn;
-    const sliceW = w;
-    const fullW = w * 3;
-    const sliceX = col * w;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, w, h);
-    ctx.clip();
-    await drawCoverWithLut(ctx, img, photo.crop, -sliceX, 0, fullW, h, lut);
-    ctx.restore();
-  } else if (opts.templateId === "framed-polaroid") {
+  if (opts.templateId === "framed-polaroid") {
     const frame = drawPolaroidFrame(ctx, w, h, opts.borderWidth);
-    await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
-  } else if (opts.templateId === "story-arc") {
-    const frame = drawStoryArcFrame(ctx, w, h, cell.variant, opts.borderWidth);
     await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
   } else if (opts.templateId === "kodak-strip") {
     await drawKodakStrip(ctx, w, h, img, photo.crop, lut, opts.slideIndex ?? 0);

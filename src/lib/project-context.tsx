@@ -14,7 +14,7 @@ import {
 import { DEFAULT_PHOTO_CROP, MAX_PHOTOS } from "@/lib/constants";
 import { clearProject, loadProject, saveProject } from "@/lib/persistence";
 import { normalizeFilter } from "@/lib/filters";
-import { slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
+import { normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
 import { preparePhoto } from "@/lib/prepare-photo";
 import type {
   FilterPreset,
@@ -206,10 +206,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         crop: sp.crop,
         _file: new File([sp.blob], sp.name, { type: sp.blob.type }),
       }));
+      const templateId = normalizeTemplateId(stored.templateId);
       pendingRestore.current = {
         photos,
-        templateId: stored.templateId,
-        slides: stored.slides as Slide[],
+        templateId,
+        slides: templateId ? slidesFromPhotos(templateId, photos) : [],
         filter: normalizeFilter(stored.filter),
         borderWidth: stored.borderWidth,
         aspectRatio: stored.aspectRatio,

@@ -146,7 +146,7 @@ export function CustomizationPanel() {
           </div>
         </div>
 
-        {(state.templateId === "framed-polaroid" || state.templateId === "story-arc") && (
+        {state.templateId === "framed-polaroid" && (
           <div className="space-y-2">
             <label className="text-xs text-zinc-400">
               Border width · {state.borderWidth}px

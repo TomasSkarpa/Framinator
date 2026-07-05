@@ -10,10 +10,8 @@ export type FilterPreset =
   | "superia";
 
 export type TemplateId =
-  | "grid-split"
   | "framed-polaroid"
   | "clean-carousel"
-  | "story-arc"
   | "kodak-strip";
 
 export type PhotoCrop = {
@@ -33,10 +31,6 @@ export type PhotoItem = {
 
 export type SlideCell = {
   photoId: string;
-  /** Grid-split: which third of the composite row (0, 1, 2) */
-  gridColumn?: number;
-  /** Story arc: layout variant */
-  variant?: "cover" | "full" | "inset";
 };
 
 export type Slide = {

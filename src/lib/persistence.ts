@@ -11,7 +11,7 @@ type StoredPhoto = {
 
 type StoredSlide = {
   id: string;
-  cells: { photoId: string; gridColumn?: number; variant?: "cover" | "full" | "inset" }[];
+  cells: { photoId: string }[];
 };
 
 export type StoredProject = {
