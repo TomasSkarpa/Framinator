@@ -11,13 +11,20 @@ type RenderOpts = {
   aspectRatio: AspectRatio;
 };
 
+const imageCache = new Map<string, Promise<HTMLImageElement>>();
+
 function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
+  let pending = imageCache.get(src);
+  if (!pending) {
+    pending = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+    imageCache.set(src, pending);
+  }
+  return pending;
 }
 
 function drawCover(

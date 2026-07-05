@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type MouseEvent } from "react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,24 @@ import { useToast } from "@/components/ui/toast";
 export function PhotoTray() {
   const { state, addPhotos, removePhoto } = useProject();
   const { toast } = useToast();
+  const [importing, setImporting] = useState(false);
 
   const onDrop = useCallback(
     (accepted: File[]) => {
-      const { added, rejected, limitHit } = addPhotos(accepted);
-      if (rejected > 0) {
-        toast(`${rejected} duplicate file${rejected > 1 ? "s" : ""} skipped`);
-      }
-      if (limitHit) {
-        toast(`Instagram allows up to ${MAX_PHOTOS} photos per carousel`);
-      }
-      if (added === 0 && rejected === 0 && limitHit) {
-        toast(`Maximum ${MAX_PHOTOS} photos reached`);
-      }
+      setImporting(true);
+      void addPhotos(accepted)
+        .then(({ added, rejected, limitHit }) => {
+          if (rejected > 0) {
+            toast(`${rejected} duplicate file${rejected > 1 ? "s" : ""} skipped`);
+          }
+          if (limitHit) {
+            toast(`Instagram allows up to ${MAX_PHOTOS} photos per carousel`);
+          }
+          if (added === 0 && rejected === 0 && limitHit) {
+            toast(`Maximum ${MAX_PHOTOS} photos reached`);
+          }
+        })
+        .finally(() => setImporting(false));
     },
     [addPhotos, toast],
   );
@@ -51,8 +56,8 @@ export function PhotoTray() {
           Your photos · {state.photos.length} selected
         </h2>
         {state.photos.length < MAX_PHOTOS && (
-          <Button variant="secondary" size="sm" onClick={pickPhotos}>
-            Add photos
+          <Button variant="secondary" size="sm" onClick={pickPhotos} disabled={importing}>
+            {importing ? "Processing…" : "Add photos"}
           </Button>
         )}
       </div>
@@ -67,6 +72,8 @@ export function PhotoTray() {
             <img
               src={photo.objectUrl}
               alt={photo.name}
+              decoding="async"
+              loading="lazy"
               className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
             />
             <button

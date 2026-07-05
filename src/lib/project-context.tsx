@@ -15,6 +15,7 @@ import { MAX_PHOTOS } from "@/lib/constants";
 import { clearProject, loadProject, saveProject } from "@/lib/persistence";
 import { normalizeFilter } from "@/lib/filters";
 import { slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
+import { preparePhoto } from "@/lib/prepare-photo";
 import type {
   FilterPreset,
   PhotoItem,
@@ -137,7 +138,7 @@ type ProjectContextValue = {
   selectedSlideIndex: number;
   selectedSlide: Slide | null;
   selectSlide: (slideId: string) => void;
-  addPhotos: (files: File[]) => { added: number; rejected: number; limitHit: boolean };
+  addPhotos: (files: File[]) => Promise<{ added: number; rejected: number; limitHit: boolean }>;
   removePhoto: (id: string) => void;
   setTemplate: (id: TemplateId) => void;
   reorderSlides: (from: number, to: number) => void;
@@ -254,14 +255,16 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     };
   }, [state, fileByPhotoId]);
 
-  const addPhotos = useCallback((files: File[]) => {
+  const addPhotos = useCallback(async (files: File[]) => {
     const existingNames = new Set(state.photos.map((p) => p.name));
     const unique = files.filter((f) => !existingNames.has(f.name));
     const room = MAX_PHOTOS - state.photos.length;
     const limitHit = unique.length > room;
-    dispatch({ type: "ADD_PHOTOS", files });
+    const accepted = unique.slice(0, room);
+    const prepared = await Promise.all(accepted.map((f) => preparePhoto(f)));
+    dispatch({ type: "ADD_PHOTOS", files: prepared });
     return {
-      added: Math.min(unique.length, room),
+      added: prepared.length,
       rejected: files.length - unique.length,
       limitHit,
     };

@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
 import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
@@ -27,26 +27,29 @@ import { cn } from "@/lib/utils";
 function SlideThumb({ slide, index }: { slide: Slide; index: number }) {
   const { state } = useProject();
   const [url, setUrl] = useState<string | null>(null);
-  const photosById = useMemo(
-    () => new Map(state.photos.map((p) => [p.id, p])),
-    [state.photos],
-  );
+  const photoId = slide.cells[0]?.photoId;
+  const photo = photoId ? state.photos.find((p) => p.id === photoId) : undefined;
 
   useEffect(() => {
-    if (!state.templateId) return;
+    const templateId = state.templateId;
+    if (!templateId || !photo) return;
     let cancelled = false;
-    void renderSlidePreviewDataUrl(slide, photosById, {
-      filter: state.filter,
-      borderWidth: state.borderWidth,
-      templateId: state.templateId,
-      aspectRatio: state.aspectRatio,
-    }).then((u) => {
-      if (!cancelled) setUrl(u);
-    });
+    const timer = window.setTimeout(() => {
+      const photosById = new Map([[photo.id, photo]]);
+      void renderSlidePreviewDataUrl(slide, photosById, {
+        filter: state.filter,
+        borderWidth: state.borderWidth,
+        templateId,
+        aspectRatio: state.aspectRatio,
+      }).then((u) => {
+        if (!cancelled) setUrl(u);
+      });
+    }, 100);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [slide, photosById, state]);
+  }, [slide, photo, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
 
   return (
     <div className="relative shrink-0 w-[min(72vw,280px)]">
