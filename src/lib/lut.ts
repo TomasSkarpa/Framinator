@@ -14,11 +14,14 @@ export function parseCube(text: string): Lut3D {
 
   for (const line of text.split("\n")) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      const match = trimmed.match(/LUT_3D_SIZE\s+(\d+)/);
-      if (match) size = Number.parseInt(match[1], 10);
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const sizeMatch = trimmed.match(/^LUT_3D_SIZE\s+(\d+)/i);
+    if (sizeMatch) {
+      size = Number.parseInt(sizeMatch[1], 10);
       continue;
     }
+
     const parts = trimmed.split(/\s+/);
     if (parts.length < 3) continue;
     const r = Number.parseFloat(parts[0]);
