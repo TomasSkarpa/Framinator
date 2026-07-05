@@ -19,7 +19,7 @@ export function CustomizationPanel() {
   const activePhoto = state.photos.find((p) => p.id === activePhotoId);
 
   return (
-    <section className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+    <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
       <h2 className="text-sm font-medium text-zinc-300">Customize</h2>
 
       <div className="space-y-2">

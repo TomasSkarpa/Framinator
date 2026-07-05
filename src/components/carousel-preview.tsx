@@ -142,7 +142,7 @@ export function CarouselPreview() {
   };
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
       <h2 className="text-sm font-medium text-zinc-300">Live preview</h2>
 
       <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-4">
@@ -189,8 +189,8 @@ export function CarouselPreview() {
         </p>
       </div>
 
-      <div>
-        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+      <div className="border-t border-zinc-800 pt-6">
+        <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
           Reorder slides
         </h3>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>

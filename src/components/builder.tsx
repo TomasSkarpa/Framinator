@@ -21,7 +21,7 @@ export function Builder() {
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 pb-28 sm:py-10">
+      <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8 pb-36 sm:py-10">
         <PhotoTray />
         <TemplatePicker />
         <CarouselPreview />
