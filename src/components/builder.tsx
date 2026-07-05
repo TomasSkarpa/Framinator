@@ -25,14 +25,14 @@ export function Builder() {
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8 pb-36 sm:py-10">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-4 py-8 sm:py-10">
         <PhotoTray />
         <TemplatePicker />
         <CarouselPreview />
         <CustomizationPanel />
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-zinc-800 bg-zinc-950/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-center text-[11px] text-zinc-500">
+      <footer className="shrink-0 border-t border-zinc-800 bg-zinc-950 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-center text-[11px] text-zinc-500">
         All compositing runs in your browser. Photos never leave your device.
       </footer>
     </>
