@@ -1,0 +1,36 @@
+"use client";
+
+import { CarouselPreview } from "@/components/carousel-preview";
+import { CustomizationPanel } from "@/components/customization-panel";
+import { ExportButton } from "@/components/export-button";
+import { PhotoTray } from "@/components/photo-tray";
+import { ResumePrompt } from "@/components/resume-prompt";
+import { TemplatePicker } from "@/components/template-picker";
+
+export function Builder() {
+  return (
+    <>
+      <ResumePrompt />
+      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur px-4 py-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-50">Framinator</h1>
+            <p className="text-sm text-zinc-500">Carousel builder</p>
+          </div>
+          <ExportButton />
+        </div>
+      </header>
+
+      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-6 pb-24">
+        <PhotoTray />
+        <TemplatePicker />
+        <CarouselPreview />
+        <CustomizationPanel />
+      </main>
+
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-zinc-800 bg-zinc-950/95 px-4 py-2 text-center text-[11px] text-zinc-500">
+        All compositing runs in your browser. Photos never leave your device.
+      </footer>
+    </>
+  );
+}

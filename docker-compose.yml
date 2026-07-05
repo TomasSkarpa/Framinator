@@ -1,0 +1,8 @@
+# Framinator — Coolify project: framinator
+# Domain: https://framinator.skarpa.dev
+# Client-side only; no secrets required.
+
+services:
+  framinator:
+    build: .
+    restart: unless-stopped

@@ -1,0 +1,96 @@
+"use client";
+
+import { useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { ImagePlus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MAX_PHOTOS } from "@/lib/constants";
+import { useProject } from "@/lib/project-context";
+import { useToast } from "@/components/ui/toast";
+
+export function PhotoTray() {
+  const { state, addPhotos, removePhoto } = useProject();
+  const { toast } = useToast();
+
+  const onDrop = useCallback(
+    (accepted: File[]) => {
+      const { added, rejected, limitHit } = addPhotos(accepted);
+      if (rejected > 0) {
+        toast(`${rejected} duplicate file${rejected > 1 ? "s" : ""} skipped`);
+      }
+      if (limitHit) {
+        toast(`Instagram allows up to ${MAX_PHOTOS} photos per carousel`);
+      }
+      if (added === 0 && rejected === 0 && limitHit) {
+        toast(`Maximum ${MAX_PHOTOS} photos reached`);
+      }
+    },
+    [addPhotos, toast],
+  );
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    onDrop,
+    accept: { "image/*": [] },
+    noClick: state.photos.length > 0,
+    noKeyboard: true,
+  });
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-zinc-300">
+          Your photos · {state.photos.length} selected
+        </h2>
+        {state.photos.length < MAX_PHOTOS && (
+          <Button variant="secondary" size="sm" onClick={() => open()}>
+            Add photos
+          </Button>
+        )}
+      </div>
+
+      <div
+        {...getRootProps()}
+        className={`flex gap-2 overflow-x-auto pb-2 ${isDragActive ? "ring-2 ring-blue-500 rounded-xl p-2" : ""}`}
+      >
+        <input {...getInputProps()} capture="environment" />
+        {state.photos.map((photo) => (
+          <div key={photo.id} className="relative shrink-0">
+            <img
+              src={photo.objectUrl}
+              alt={photo.name}
+              className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
+            />
+            <button
+              type="button"
+              onClick={() => removePhoto(photo.id)}
+              className="absolute -right-1 -top-1 rounded-full bg-zinc-900 p-0.5 text-zinc-300 hover:text-white border border-zinc-600"
+              aria-label={`Remove ${photo.name}`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+        {state.photos.length === 0 && (
+          <button
+            type="button"
+            onClick={() => open()}
+            className="flex h-20 w-full min-w-[200px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/50 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+          >
+            <ImagePlus className="h-6 w-6" />
+            <span className="text-xs">Tap or drop photos here</span>
+          </button>
+        )}
+        {state.photos.length > 0 && state.photos.length < MAX_PHOTOS && (
+          <button
+            type="button"
+            onClick={() => open()}
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-600 text-zinc-500 hover:border-zinc-400 hover:text-zinc-300"
+            aria-label="Add more photos"
+          >
+            <ImagePlus className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,150 @@
+import {
+  EXPORT_WIDTH,
+  FILTER_CSS,
+  exportHeight,
+  type AspectRatio,
+} from "./constants";
+import type { FilterPreset, PhotoItem, Slide, TemplateId } from "./types";
+
+type RenderOpts = {
+  width?: number;
+  height?: number;
+  filter: FilterPreset;
+  borderWidth: number;
+  templateId: TemplateId;
+  aspectRatio: AspectRatio;
+};
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function drawCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoItem["crop"],
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+) {
+  const iw = img.naturalWidth;
+  const ih = img.naturalHeight;
+  const scale = Math.max(dw / iw, dh / ih) * crop.scale;
+  const sw = dw / scale;
+  const sh = dh / scale;
+  const sx = (iw - sw) / 2 - crop.offsetX / scale;
+  const sy = (ih - sh) / 2 - crop.offsetY / scale;
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+}
+
+function applyFilter(ctx: CanvasRenderingContext2D, filter: FilterPreset) {
+  ctx.filter = FILTER_CSS[filter] ?? "none";
+}
+
+function drawPolaroidFrame(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  border: number,
+) {
+  ctx.fillStyle = "#f5f0e8";
+  ctx.fillRect(0, 0, w, h);
+  const pad = border * 3;
+  const bottomExtra = border * 5;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(pad, pad, w - pad * 2, h - pad - bottomExtra);
+  return { x: pad, y: pad, w: w - pad * 2, h: h - pad - bottomExtra };
+}
+
+function drawStoryArcFrame(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  variant: "cover" | "full" | "inset" | undefined,
+  border: number,
+) {
+  if (variant === "cover") {
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(0, 0, w, h);
+    const barH = h * 0.22;
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(0, h - barH, w, barH);
+    return { x: 0, y: 0, w, h: h - barH * 0.3 };
+  }
+  if (variant === "inset") {
+    const m = border * 4 + 24;
+    ctx.fillStyle = "#1f2937";
+    ctx.fillRect(0, 0, w, h);
+    return { x: m, y: m, w: w - m * 2, h: h - m * 2 };
+  }
+  return { x: 0, y: 0, w, h };
+}
+
+export async function renderSlideToCanvas(
+  slide: Slide,
+  photosById: Map<string, PhotoItem>,
+  opts: RenderOpts,
+): Promise<HTMLCanvasElement> {
+  const w = opts.width ?? EXPORT_WIDTH;
+  const h = opts.height ?? exportHeight(opts.aspectRatio);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas unsupported");
+
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, w, h);
+
+  const cell = slide.cells[0];
+  if (!cell) return canvas;
+
+  const photo = photosById.get(cell.photoId);
+  if (!photo) return canvas;
+
+  const img = await loadImage(photo.objectUrl);
+  applyFilter(ctx, opts.filter);
+
+  if (opts.templateId === "grid-split" && cell.gridColumn !== undefined) {
+    const col = cell.gridColumn;
+    const sliceW = w;
+    const fullW = w * 3;
+    const sliceX = col * w;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, w, h);
+    ctx.clip();
+    drawCover(ctx, img, photo.crop, -sliceX, 0, fullW, h);
+    ctx.restore();
+  } else if (opts.templateId === "framed-polaroid") {
+    const frame = drawPolaroidFrame(ctx, w, h, opts.borderWidth);
+    drawCover(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h);
+  } else if (opts.templateId === "story-arc") {
+    const frame = drawStoryArcFrame(ctx, w, h, cell.variant, opts.borderWidth);
+    drawCover(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h);
+  } else {
+    drawCover(ctx, img, photo.crop, 0, 0, w, h);
+  }
+
+  ctx.filter = "none";
+  return canvas;
+}
+
+export async function renderSlidePreviewDataUrl(
+  slide: Slide,
+  photosById: Map<string, PhotoItem>,
+  opts: RenderOpts,
+): Promise<string> {
+  const canvas = await renderSlideToCanvas(slide, photosById, {
+    ...opts,
+    width: 360,
+    height: Math.round(360 * (exportHeight(opts.aspectRatio) / EXPORT_WIDTH)),
+  });
+  return canvas.toDataURL("image/jpeg", 0.82);
+}

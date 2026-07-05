@@ -1,0 +1,28 @@
+# Production overlay: Traefik on existing Coolify proxy network.
+# Used for direct deploy when Coolify project is not yet wired.
+
+services:
+  framinator:
+    build: .
+    restart: unless-stopped
+    networks:
+      - coolify
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.gzip.compress=true
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.http-0-framinator-framinator.entryPoints=http
+      - traefik.http.routers.http-0-framinator-framinator.middlewares=redirect-to-https
+      - traefik.http.routers.http-0-framinator-framinator.rule=Host(`framinator.skarpa.dev`) && PathPrefix(`/`)
+      - traefik.http.routers.http-0-framinator-framinator.service=http-0-framinator-framinator
+      - traefik.http.routers.https-0-framinator-framinator.entryPoints=https
+      - traefik.http.routers.https-0-framinator-framinator.middlewares=gzip
+      - traefik.http.routers.https-0-framinator-framinator.rule=Host(`framinator.skarpa.dev`) && PathPrefix(`/`)
+      - traefik.http.routers.https-0-framinator-framinator.service=http-0-framinator-framinator
+      - traefik.http.routers.https-0-framinator-framinator.tls=true
+      - traefik.http.routers.https-0-framinator-framinator.tls.certresolver=letsencrypt
+      - traefik.http.services.http-0-framinator-framinator.loadbalancer.server.port=3000
+
+networks:
+  coolify:
+    external: true
