@@ -126,8 +126,7 @@ export function TemplatePicker() {
           </button>
         )}
       </div>
-      <div className="-mx-4 overflow-x-auto scroll-smooth px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex snap-x snap-mandatory gap-3">
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TEMPLATES.map((t) => {
             const selected = state.templateId === t.id;
             return (
@@ -165,7 +164,6 @@ export function TemplatePicker() {
               </button>
             );
           })}
-        </div>
       </div>
     </section>
   );
