@@ -30,32 +30,36 @@ Feature: Per-photo crop and zoom
     Then I can override the suggested position and zoom
     And undo layout should restore the previous crops
 
-  # --- Planned: direct manipulation on preview and tray ---
+  # --- Shipped: direct manipulation on preview and tray ---
 
-  @planned
   Scenario: Tap the feed preview to enter crop mode
     When I tap the active slide in the live preview
     Then I should see crop mode for that slide's photo
     And I should see a hint to drag to reposition and pinch or scroll to zoom
 
-  @planned
   Scenario: Drag on preview repositions the photo
     Given I am in crop mode for a slide
     When I drag the photo within the frame
     Then the preview should pan with my drag
     And the customize panel sliders should stay in sync
 
-  @planned
   Scenario: Zoom on preview updates scale
     Given I am in crop mode for a slide
     When I zoom in on the preview
     Then the photo should appear closer in the frame
 
-  @planned
   Scenario: Crop from photo tray thumbnail
     When I open crop from a photo in the tray
     Then I should enter crop mode for that photo
     And the carousel should select a slide that uses that photo if one exists
+
+  Scenario: Layered slide picks which photo to crop
+    Given I have selected the layered prints template
+    And I have selected a hero slide with background and print photos
+    When I choose background in the crop photo picker
+    Then crop controls should target the background photo
+    When I choose print in the crop photo picker
+    Then crop controls should target the print photo independently
 
   # --- Planned: per-placement crop on layered templates ---
 

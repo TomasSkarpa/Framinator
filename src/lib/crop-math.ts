@@ -90,3 +90,9 @@ export function drawCover(
     (csh / sh) * dh,
   );
 }
+
+// ponytail: dev-only guard; pan/zoom invert matches drawCover
+if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+  const next = cropAfterPan({ offsetX: 0, offsetY: 0, scale: 1 }, 10, 0, 100, 100, 200, 300);
+  if (next.offsetX <= 0) throw new Error("crop-math self-check: pan direction broken");
+}

@@ -1,4 +1,5 @@
 import { clampCrop as clampCropValues } from "./crop-math";
+import { DEFAULT_PHOTO_CROP } from "./constants";
 import { normalizeFilter } from "./filters";
 import { reflowLayeredPrintsSlides } from "./layered-prints";
 import { isLayeredSpreadTemplate, reflowSpreadSlides } from "./layered-spreads";
