@@ -3,7 +3,8 @@ import { geminiApiKeys, geminiGenerateContent } from "@/lib/gemini-request";
 import { normalizeFilter } from "@/lib/filters";
 import { buildSmartLayoutPrompt, type SmartLayoutApiPayload } from "@/lib/smart-layout";
 import { normalizeTemplateId } from "@/lib/templates";
-import type { AspectRatio, TemplateId } from "@/lib/types";
+import type { AspectRatio } from "@/lib/constants";
+import type { TemplateId } from "@/lib/types";
 
 type RequestBody = {
   photos: { id: string; name: string; thumbnailBase64: string }[];
