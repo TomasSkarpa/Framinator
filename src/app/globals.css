@@ -21,3 +21,38 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+@keyframes smart-layout-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes smart-layout-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(0.92) rotate(-8deg);
+  }
+}
+
+.smart-layout-shimmer {
+  background-size: 200% 200%;
+  animation: smart-layout-shimmer 3s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smart-layout-shimmer {
+    animation: none;
+  }
+}

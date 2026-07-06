@@ -1,0 +1,132 @@
+import { NextResponse } from "next/server";
+import { normalizeFilter } from "@/lib/filters";
+import { buildSmartLayoutPrompt, type SmartLayoutApiPayload } from "@/lib/smart-layout";
+import { normalizeTemplateId } from "@/lib/templates";
+import type { TemplateId } from "@/lib/types";
+
+type RequestBody = {
+  photos: { id: string; name: string; thumbnailBase64: string }[];
+  templateId: TemplateId | null;
+  slideRoles: string[];
+};
+
+const GEMINI_MODEL = "gemini-2.5-flash";
+
+const RESPONSE_SCHEMA = {
+  type: "object",
+  properties: {
+    photoOrder: { type: "array", items: { type: "integer" } },
+    slideOrder: { type: "array", items: { type: "integer" } },
+    crops: {
+      type: "object",
+      additionalProperties: {
+        type: "object",
+        properties: {
+          offsetX: { type: "number" },
+          offsetY: { type: "number" },
+          scale: { type: "number" },
+        },
+        required: ["offsetX", "offsetY", "scale"],
+      },
+    },
+    templateId: { type: "string" },
+    filter: { type: "string" },
+    summary: { type: "string" },
+  },
+  required: ["photoOrder", "summary"],
+};
+
+export async function POST(req: Request) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "Smart layout is not configured (missing GEMINI_API_KEY)" },
+      { status: 503 },
+    );
+  }
+
+  let body: RequestBody;
+  try {
+    body = (await req.json()) as RequestBody;
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  if (!Array.isArray(body.photos) || body.photos.length < 2) {
+    return NextResponse.json({ error: "At least 2 photos required" }, { status: 400 });
+  }
+  if (body.photos.length > 25) {
+    return NextResponse.json({ error: "Too many photos" }, { status: 400 });
+  }
+
+  const templateId = body.templateId ? normalizeTemplateId(body.templateId) : null;
+  const indexedPhotos = body.photos.map((p, index) => ({ index, name: p.name }));
+  const prompt = buildSmartLayoutPrompt(indexedPhotos, templateId, body.slideRoles ?? []);
+
+  const parts: { text?: string; inline_data?: { mime_type: string; data: string } }[] = [
+    { text: prompt },
+  ];
+  for (const photo of body.photos) {
+    parts.push({ inline_data: { mime_type: "image/jpeg", data: photo.thumbnailBase64 } });
+  }
+
+  const geminiRes = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: RESPONSE_SCHEMA,
+          temperature: 0.4,
+        },
+      }),
+    },
+  );
+
+  if (!geminiRes.ok) {
+    const detail = await geminiRes.text();
+    const rateLimited = geminiRes.status === 429;
+    return NextResponse.json(
+      {
+        error: rateLimited
+          ? "AI rate limit reached. Try again in a minute."
+          : "Gemini request failed",
+        detail: detail.slice(0, 200),
+      },
+      { status: rateLimited ? 429 : 502 },
+    );
+  }
+
+  const geminiJson = (await geminiRes.json()) as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
+  };
+
+  const text = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    return NextResponse.json({ error: "Empty response from Gemini" }, { status: 502 });
+  }
+
+  let payload: SmartLayoutApiPayload;
+  try {
+    payload = JSON.parse(text) as SmartLayoutApiPayload;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON from Gemini" }, { status: 502 });
+  }
+
+  if (!Array.isArray(payload.photoOrder)) {
+    return NextResponse.json({ error: "Missing photoOrder in response" }, { status: 502 });
+  }
+
+  if (payload.templateId) {
+    const normalized = normalizeTemplateId(payload.templateId);
+    payload.templateId = normalized ?? undefined;
+  }
+  if (payload.filter) {
+    payload.filter = normalizeFilter(payload.filter);
+  }
+
+  return NextResponse.json(payload);
+}

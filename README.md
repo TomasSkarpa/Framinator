@@ -14,6 +14,8 @@ npm install && npm run dev
 
 Coolify + root `docker-compose.yml`, domain `framinator.skarpa.dev`. See [home_server_iac compose](https://github.com/TomasSkarpa/home_server_iac/tree/main/compose/coolify/framinator).
 
+Set `GEMINI_API_KEY` in Coolify env to enable Smart layout (optional).
+
 ## What it does
 
 - Upload up to 25 photos

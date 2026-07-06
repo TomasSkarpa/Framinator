@@ -18,6 +18,7 @@ import { reflowLayeredPrintsSlides } from "@/lib/layered-prints";
 import { isLayeredSpreadTemplate, reflowSpreadSlides } from "@/lib/layered-spreads";
 import { buildSlides, normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
 import { preparePhoto } from "@/lib/prepare-photo";
+import { applySmartLayoutPlan, type SmartLayoutPlan } from "@/lib/smart-layout";
 import type {
   FilterPreset,
   PhotoItem,
@@ -39,6 +40,7 @@ type Action =
   | { type: "SET_ASPECT"; aspectRatio: ProjectState["aspectRatio"] }
   | { type: "UPDATE_CROP"; photoId: string; crop: PhotoItem["crop"] }
   | { type: "RESTORE"; state: ProjectState }
+  | { type: "APPLY_SMART_LAYOUT"; plan: SmartLayoutPlan }
   | { type: "RESET" };
 
 const initialState: ProjectState = {
@@ -138,6 +140,8 @@ function reducer(state: ProjectState, action: Action): ProjectState {
       };
     case "RESTORE":
       return action.state;
+    case "APPLY_SMART_LAYOUT":
+      return applySmartLayoutPlan(state, action.plan);
     case "RESET":
       state.photos.forEach((p) => URL.revokeObjectURL(p.objectUrl));
       return initialState;
@@ -162,6 +166,8 @@ type ProjectContextValue = {
   setBorder: (n: number) => void;
   setAspect: (a: ProjectState["aspectRatio"]) => void;
   updateCrop: (photoId: string, crop: PhotoItem["crop"]) => void;
+  applySmartLayout: (plan: SmartLayoutPlan) => void;
+  restoreState: (state: ProjectState) => void;
   reset: () => void;
   unusedPhotos: PhotoItem[];
   fileByPhotoId: Map<string, File>;
@@ -318,6 +324,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setAspect: (a) => dispatch({ type: "SET_ASPECT", aspectRatio: a }),
     updateCrop: (photoId, crop) =>
       dispatch({ type: "UPDATE_CROP", photoId, crop }),
+    applySmartLayout: (plan) => dispatch({ type: "APPLY_SMART_LAYOUT", plan }),
+    restoreState: (snapshot) => dispatch({ type: "RESTORE", state: snapshot }),
     reset: () => {
       void clearProject();
       setSelectedSlideId(null);

@@ -19,6 +19,7 @@ import { useCallback, useState, type MouseEvent } from "react";
 import { useDropzone } from "react-dropzone";
 import { GripVertical, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SmartLayoutButton } from "@/components/smart-layout-button";
 import { MAX_PHOTOS } from "@/lib/constants";
 import { useProject } from "@/lib/project-context";
 import { useToast } from "@/components/ui/toast";
@@ -148,11 +149,14 @@ export function PhotoTray() {
         <h2 className="text-sm font-medium text-zinc-300">
           Your photos · {state.photos.length} selected
         </h2>
-        {state.photos.length < MAX_PHOTOS && (
-          <Button variant="secondary" size="sm" onClick={pickPhotos} disabled={importing}>
-            {importing ? "Processing…" : "Add photos"}
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {state.photos.length >= 2 && <SmartLayoutButton />}
+          {state.photos.length < MAX_PHOTOS && (
+            <Button variant="secondary" size="sm" onClick={pickPhotos} disabled={importing}>
+              {importing ? "Processing…" : "Add photos"}
+            </Button>
+          )}
+        </div>
       </div>
 
       {sortable && (
