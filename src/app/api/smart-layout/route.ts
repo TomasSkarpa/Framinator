@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { geminiApiKeys, geminiGenerateContent } from "@/lib/gemini-request";
 import { normalizeFilter } from "@/lib/filters";
 import { buildSmartLayoutPrompt, type SmartLayoutApiPayload } from "@/lib/smart-layout";
 import { normalizeTemplateId } from "@/lib/templates";
@@ -37,8 +38,7 @@ const RESPONSE_SCHEMA = {
 };
 
 export async function POST(req: Request) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  if (geminiApiKeys().length === 0) {
     return NextResponse.json(
       { error: "Smart layout is not configured (missing GEMINI_API_KEY)" },
       { status: 503 },
@@ -70,37 +70,29 @@ export async function POST(req: Request) {
     parts.push({ inline_data: { mime_type: "image/jpeg", data: photo.thumbnailBase64 } });
   }
 
-  const geminiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: RESPONSE_SCHEMA,
-          temperature: 0.4,
-        },
-      }),
+  const gemini = await geminiGenerateContent(GEMINI_MODEL, {
+    contents: [{ parts }],
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+      temperature: 0.4,
     },
-  );
+  });
 
-  if (!geminiRes.ok) {
-    const detail = await geminiRes.text();
-    const rateLimited = geminiRes.status === 429;
+  if (!gemini.ok) {
+    const rateLimited = gemini.status === 429;
     return NextResponse.json(
       {
         error: rateLimited
-          ? "AI rate limit reached. Try again in a minute."
+          ? "AI rate limit reached on all keys. Try again in a minute."
           : "Gemini request failed",
-        detail: detail.slice(0, 200),
+        detail: gemini.detail.slice(0, 200),
       },
       { status: rateLimited ? 429 : 502 },
     );
   }
 
-  const geminiJson = (await geminiRes.json()) as {
+  const geminiJson = gemini.json as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
   };
 

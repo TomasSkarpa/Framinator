@@ -1,8 +1,11 @@
 # Framinator — Coolify project: framinator
 # Domain: https://framinator.skarpa.dev
-# Client-side only; no secrets required.
+# Set GEMINI_API_KEY (+ optional GEMINI_API_KEY_FALLBACK) in Coolify UI or a local .env file.
 
 services:
   framinator:
     build: .
     restart: unless-stopped
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_KEY_FALLBACK: ${GEMINI_API_KEY_FALLBACK:-}

@@ -14,7 +14,7 @@ npm install && npm run dev
 
 Coolify + root `docker-compose.yml`, domain `framinator.skarpa.dev`. See [home_server_iac compose](https://github.com/TomasSkarpa/home_server_iac/tree/main/compose/coolify/framinator).
 
-Set `GEMINI_API_KEY` in Coolify env to enable Smart layout (optional).
+Smart layout: set `GEMINI_API_KEY` and optional `GEMINI_API_KEY_FALLBACK` in Coolify (not in git). Fallback is used on rate limit.
 
 ## What it does
 

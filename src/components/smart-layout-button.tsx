@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Sparkles, Star } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -145,17 +145,10 @@ export function SmartLayoutButton() {
               canRun && "group-hover:opacity-100 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-cyan-400/10",
             )}
           />
-          <Star
-            className={cn(
-              "relative h-4 w-4 shrink-0 text-amber-200 drop-shadow-[0_0_6px_rgba(251,191,36,0.55)]",
-              canRun && "motion-safe:animate-[smart-layout-twinkle_2.4s_ease-in-out_infinite]",
-            )}
-            strokeWidth={1.5}
-          />
           <Sparkles
             className={cn(
-              "relative h-3.5 w-3.5 shrink-0 text-violet-200",
-              canRun && "motion-safe:animate-pulse",
+              "relative h-4 w-4 shrink-0 text-violet-200 drop-shadow-[0_0_6px_rgba(167,139,250,0.55)]",
+              canRun && "motion-safe:animate-[smart-layout-twinkle_2.4s_ease-in-out_infinite]",
             )}
             strokeWidth={1.75}
           />
@@ -170,7 +163,6 @@ export function SmartLayoutButton() {
           <div className="overflow-hidden rounded-xl border border-violet-500/30 bg-zinc-900 shadow-[0_0_40px_rgba(139,92,246,0.15)]">
             <div className="border-b border-violet-500/20 bg-gradient-to-r from-violet-950/80 via-zinc-900 to-cyan-950/60 px-5 py-4">
               <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-200" strokeWidth={1.5} />
                 <Sparkles className="h-4 w-4 text-violet-300" strokeWidth={1.75} />
                 <h2 className="text-base font-semibold text-zinc-50">Smart layout</h2>
               </div>

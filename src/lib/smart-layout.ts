@@ -118,9 +118,15 @@ export function applySmartLayoutPlan(state: ProjectState, plan: SmartLayoutPlan)
     return crop ? { ...photo, crop } : photo;
   });
 
-  const templateId = plan.templateId ?? state.templateId;
-  let slides = templateId
-    ? slidesFromPhotos(templateId, photos, state.slides)
+  const nextTemplateId = plan.templateId ?? state.templateId;
+  const templateChanged =
+    plan.templateId != null && plan.templateId !== state.templateId;
+  let slides = nextTemplateId
+    ? slidesFromPhotos(
+        nextTemplateId,
+        photos,
+        templateChanged ? [] : state.slides,
+      )
     : state.slides;
 
   if (plan.slideOrder && plan.slideOrder.length > 0) {
@@ -131,7 +137,7 @@ export function applySmartLayoutPlan(state: ProjectState, plan: SmartLayoutPlan)
     ...state,
     photos,
     slides,
-    templateId,
+    templateId: nextTemplateId,
     filter: plan.filter ?? state.filter,
   };
 }

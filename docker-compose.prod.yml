@@ -5,6 +5,9 @@ services:
   framinator:
     build: .
     restart: unless-stopped
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_KEY_FALLBACK: ${GEMINI_API_KEY_FALLBACK:-}
     networks:
       - coolify
     labels:
