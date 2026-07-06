@@ -15,7 +15,7 @@ import { DEFAULT_PHOTO_CROP, MAX_PHOTOS } from "@/lib/constants";
 import { clearProject, loadProject, saveProject } from "@/lib/persistence";
 import { normalizeFilter } from "@/lib/filters";
 import { reflowLayeredPrintsSlides } from "@/lib/layered-prints";
-import { reflowPanoramaSlides } from "@/lib/layered-prints-panorama";
+import { isLayeredSpreadTemplate, reflowSpreadSlides } from "@/lib/layered-spreads";
 import { buildSlides, normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
 import { preparePhoto } from "@/lib/prepare-photo";
 import type {
@@ -108,8 +108,8 @@ function reducer(state: ProjectState, action: Action): ProjectState {
       const slides =
         state.templateId === "layered-prints"
           ? reflowLayeredPrintsSlides(state.slides, photos)
-          : state.templateId === "layered-prints-panorama"
-            ? reflowPanoramaSlides(state.slides, photos)
+          : isLayeredSpreadTemplate(state.templateId)
+            ? reflowSpreadSlides(state.templateId, state.slides, photos)
             : state.templateId
               ? buildSlides(state.templateId, photos)
               : state.slides;

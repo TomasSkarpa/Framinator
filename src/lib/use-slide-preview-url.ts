@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
 import { useProject } from "@/lib/project-context";
+import { isLayeredTemplate } from "@/lib/templates";
 import type { Slide } from "@/lib/types";
 
 export function useSlidePreviewUrl(slide: Slide | null): string | null {
@@ -13,9 +14,7 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
     const templateId = state.templateId;
     if (!templateId || !slide) return;
 
-    const layered =
-      (templateId === "layered-prints" || templateId === "layered-prints-panorama") &&
-      slide.layeredPrints;
+    const layered = isLayeredTemplate(templateId) && slide.layeredPrints;
     if (!layered && !slide.cells[0]?.photoId) return;
 
     const slideIndex = state.slides.findIndex((s) => s.id === slide.id);

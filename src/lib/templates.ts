@@ -1,5 +1,11 @@
 import { buildLayeredPrintsSlides, syncLayeredPrintsSlides } from "./layered-prints";
-import { buildPanoramaSlides, syncPanoramaSlides } from "./layered-prints-panorama";
+import {
+  buildSpreadSlides,
+  isLayeredSpreadTemplate,
+  reflowSpreadSlides,
+  spreadSlideHasContent,
+  syncSpreadSlides,
+} from "./layered-spreads";
 import { uid } from "./utils";
 import type { PhotoItem, Slide, TemplateId, TemplateMeta } from "./types";
 
@@ -35,6 +41,36 @@ export const TEMPLATES: TemplateMeta[] = [
     icon: "panorama",
   },
   {
+    id: "layered-spread-scatter",
+    name: "Scatter spread",
+    description: "Messy desk, four prints",
+    icon: "scatter",
+  },
+  {
+    id: "layered-spread-cascade",
+    name: "Diagonal cascade",
+    description: "Steps across the spread",
+    icon: "cascade",
+  },
+  {
+    id: "layered-spread-corner",
+    name: "Corner bleed",
+    description: "Big crop, corner peek",
+    icon: "corner",
+  },
+  {
+    id: "layered-spread-tilted",
+    name: "Tilted pile",
+    description: "Rotated polaroids",
+    icon: "tilted",
+  },
+  {
+    id: "layered-spread-split",
+    name: "Split focus",
+    description: "Hero plus detail shots",
+    icon: "split",
+  },
+  {
     id: "soft-focus",
     name: "Soft focus",
     description: "Blurred backdrop, framed photo",
@@ -52,7 +88,7 @@ export function normalizeTemplateId(value: string | null | undefined): TemplateI
 /** Build slide list from photos + template. Preserves photo order. */
 export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[] {
   if (templateId === "layered-prints") return buildLayeredPrintsSlides(photos);
-  if (templateId === "layered-prints-panorama") return buildPanoramaSlides(photos);
+  if (isLayeredSpreadTemplate(templateId)) return buildSpreadSlides(templateId, photos);
   if (photos.length === 0) return [];
   return photos.map((p) => ({
     id: uid(),
@@ -60,7 +96,7 @@ export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[
   }));
 }
 
-/** Rebuild slides; layered-prints keeps carousel order and reflows photos from tray order. */
+/** Rebuild slides; layered templates keep carousel order and reflow photos from tray order. */
 export function slidesFromPhotos(
   templateId: TemplateId | null,
   photos: PhotoItem[],
@@ -70,11 +106,15 @@ export function slidesFromPhotos(
   if (templateId === "layered-prints") {
     return syncLayeredPrintsSlides(existing, photos);
   }
-  if (templateId === "layered-prints-panorama") {
-    return syncPanoramaSlides(existing, photos);
+  if (isLayeredSpreadTemplate(templateId)) {
+    return syncSpreadSlides(templateId, existing, photos);
   }
   if (photos.length === 0) return [];
   return buildSlides(templateId, photos);
+}
+
+export function isLayeredTemplate(templateId: TemplateId | null): boolean {
+  return templateId === "layered-prints" || isLayeredSpreadTemplate(templateId);
 }
 
 /** Photo IDs currently assigned to slides. */
@@ -96,3 +136,5 @@ export function usedPhotoIds(slides: Slide[]): Set<string> {
   }
   return ids;
 }
+
+export { reflowSpreadSlides, spreadSlideHasContent };

@@ -28,6 +28,7 @@ import {
 import { useCallback, useState } from "react";
 import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
 import { useProject } from "@/lib/project-context";
+import { isLayeredTemplate } from "@/lib/templates";
 import { useSlidePreviewUrl } from "@/lib/use-slide-preview-url";
 import type { Slide } from "@/lib/types";
 import { cn, pressable } from "@/lib/utils";
@@ -244,7 +245,7 @@ function SortableSlide({
   };
 
   const assignedNames =
-    (state.templateId === "layered-prints" || state.templateId === "layered-prints-panorama") &&
+    isLayeredTemplate(state.templateId) &&
     slide.layeredPrints
       ? [
           slide.layeredPrints.background.kind === "photo"
@@ -366,7 +367,7 @@ export function CarouselPreview() {
           Reorder slides
         </h3>
         <p className="mb-3 text-xs text-zinc-500">
-          {state.templateId === "layered-prints" || state.templateId === "layered-prints-panorama"
+          {isLayeredTemplate(state.templateId)
             ? "Drag slides to change carousel order. Photos stay on each slide."
             : "Tap a slide to select it for cropping below"}
         </p>

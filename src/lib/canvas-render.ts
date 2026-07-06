@@ -9,7 +9,7 @@ import {
 import { blurCanvas, supportsCanvasFilter } from "./canvas-blur";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
-import { panoramaSpreadIndex } from "./layered-prints-panorama";
+import { isLayeredSpreadTemplate, spreadIndexFromRole } from "./layered-spreads";
 import type {
   FilterPreset,
   LayeredPrintsLayout,
@@ -468,7 +468,7 @@ function spreadPrintEmptyFrame(
   ctx.restore();
 }
 
-async function drawPanoramaSlide(
+async function drawSpreadLayeredSlide(
   ctx: CanvasRenderingContext2D,
   layout: LayeredPrintsLayout,
   photosById: Map<string, PhotoItem>,
@@ -476,7 +476,12 @@ async function drawPanoramaSlide(
   h: number,
   lut: Lut3D | null,
 ) {
-  if (layout.background.kind === "photo" && layout.background.photoId) {
+  const onPaper = layout.background.kind === "paper";
+
+  if (layout.background.kind === "paper") {
+    ctx.fillStyle = layout.background.color;
+    ctx.fillRect(0, 0, w, h);
+  } else if (layout.background.photoId) {
     const bg = photosById.get(layout.background.photoId);
     if (bg) {
       const img = await loadImage(bg.objectUrl);
@@ -490,19 +495,37 @@ async function drawPanoramaSlide(
     drawEmptyFrame(ctx, { xPct: 0, yPct: 0, wPct: 100, hPct: 100 }, w, h, false);
   }
 
+  const spreadIndex = spreadIndexFromRole(layout.role);
   const spread = layout.spreadPrint;
-  if (!spread) return;
-
-  const spreadIndex = panoramaSpreadIndex(layout.role);
-  if (spread.photoId) {
-    const photo = photosById.get(spread.photoId);
-    if (photo) {
-      const img = await loadImage(photo.objectUrl);
-      await drawSpreadPrintLayer(ctx, img, photo.crop, spread, spreadIndex, w, h, lut);
-      return;
+  if (spread) {
+    if (spread.photoId) {
+      const photo = photosById.get(spread.photoId);
+      if (photo) {
+        const img = await loadImage(photo.objectUrl);
+        await drawSpreadPrintLayer(ctx, img, photo.crop, spread, spreadIndex, w, h, lut);
+      } else {
+        spreadPrintEmptyFrame(ctx, spread, spreadIndex, w, h);
+      }
+    } else {
+      spreadPrintEmptyFrame(ctx, spread, spreadIndex, w, h);
     }
   }
-  spreadPrintEmptyFrame(ctx, spread, spreadIndex, w, h);
+
+  for (const layer of layout.prints) {
+    if (layer.photoId) {
+      const photo = photosById.get(layer.photoId);
+      if (photo) {
+        const img = await loadImage(photo.objectUrl);
+        await drawPrintLayer(ctx, img, photo.crop, layer, w, h, lut);
+        continue;
+      }
+    }
+    drawEmptyFrame(ctx, layer, w, h, onPaper);
+  }
+
+  if (layout.caption) {
+    drawLayeredCaption(ctx, layout.caption, w, h);
+  }
 }
 
 async function drawLayeredPrints(
@@ -564,8 +587,8 @@ export async function renderSlideToCanvas(
 
   const lut = await loadLut(opts.filter);
 
-  if (opts.templateId === "layered-prints-panorama" && slide.layeredPrints) {
-    await drawPanoramaSlide(ctx, slide.layeredPrints, photosById, w, h, lut);
+  if (isLayeredSpreadTemplate(opts.templateId) && slide.layeredPrints) {
+    await drawSpreadLayeredSlide(ctx, slide.layeredPrints, photosById, w, h, lut);
     return canvas;
   }
 

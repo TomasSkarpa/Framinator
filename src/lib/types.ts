@@ -26,6 +26,11 @@ export type TemplateId =
   | "kodak-strip"
   | "layered-prints"
   | "layered-prints-panorama"
+  | "layered-spread-scatter"
+  | "layered-spread-cascade"
+  | "layered-spread-corner"
+  | "layered-spread-tilted"
+  | "layered-spread-split"
   | "soft-focus";
 
 export type PhotoCrop = {
@@ -65,7 +70,17 @@ export type LayeredPrintsRole =
   | "diptych"
   | "caption"
   | "panorama-left"
-  | "panorama-right";
+  | "panorama-right"
+  | "scatter-left"
+  | "scatter-right"
+  | "cascade-left"
+  | "cascade-right"
+  | "corner-left"
+  | "corner-right"
+  | "tilted-left"
+  | "tilted-right"
+  | "split-left"
+  | "split-right";
 
 /** Overlay spanning a 2-slide spread; x/w are % of one slide width (spread spans 0–200). */
 export type SpreadPrintLayer = {
