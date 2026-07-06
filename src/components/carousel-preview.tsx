@@ -244,11 +244,13 @@ function SortableSlide({
   };
 
   const assignedNames =
-    state.templateId === "layered-prints" && slide.layeredPrints
+    (state.templateId === "layered-prints" || state.templateId === "layered-prints-panorama") &&
+    slide.layeredPrints
       ? [
           slide.layeredPrints.background.kind === "photo"
             ? slide.layeredPrints.background.photoId
             : undefined,
+          slide.layeredPrints.spreadPrint?.photoId,
           ...slide.layeredPrints.prints.map((p) => p.photoId),
         ]
           .filter(Boolean)
@@ -364,7 +366,7 @@ export function CarouselPreview() {
           Reorder slides
         </h3>
         <p className="mb-3 text-xs text-zinc-500">
-          {state.templateId === "layered-prints"
+          {state.templateId === "layered-prints" || state.templateId === "layered-prints-panorama"
             ? "Drag slides to change carousel order. Photos stay on each slide."
             : "Tap a slide to select it for cropping below"}
         </p>

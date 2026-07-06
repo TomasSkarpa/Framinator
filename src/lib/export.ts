@@ -2,11 +2,13 @@ import JSZip from "jszip";
 import { renderSlideToCanvas } from "./canvas-render";
 import { EXPORT_WIDTH, exportHeight } from "./constants";
 import { layeredPrintsSlideHasContent } from "./layered-prints";
+import { panoramaSlideHasContent } from "./layered-prints-panorama";
 import type { PhotoItem, ProjectState, Slide, TemplateId } from "./types";
 
 export function slidesForExport(slides: Slide[], templateId: TemplateId | null): Slide[] {
-  if (templateId !== "layered-prints") return slides;
-  return slides.filter(layeredPrintsSlideHasContent);
+  if (templateId === "layered-prints") return slides.filter(layeredPrintsSlideHasContent);
+  if (templateId === "layered-prints-panorama") return slides.filter(panoramaSlideHasContent);
+  return slides;
 }
 
 export type ExportFormat = "jpeg" | "png";

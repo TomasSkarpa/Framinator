@@ -13,7 +13,9 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
     const templateId = state.templateId;
     if (!templateId || !slide) return;
 
-    const layered = templateId === "layered-prints" && slide.layeredPrints;
+    const layered =
+      (templateId === "layered-prints" || templateId === "layered-prints-panorama") &&
+      slide.layeredPrints;
     if (!layered && !slide.cells[0]?.photoId) return;
 
     const slideIndex = state.slides.findIndex((s) => s.id === slide.id);

@@ -8,7 +8,16 @@ import {
 } from "./constants";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
-import type { FilterPreset, LayeredPrintsLayout, PhotoItem, PrintLayer, Slide, TemplateId } from "./types";
+import { panoramaSpreadIndex } from "./layered-prints-panorama";
+import type {
+  FilterPreset,
+  LayeredPrintsLayout,
+  PhotoItem,
+  PrintLayer,
+  Slide,
+  SpreadPrintLayer,
+  TemplateId,
+} from "./types";
 
 type RenderOpts = {
   width?: number;
@@ -383,6 +392,96 @@ async function drawSoftFocus(
   await drawPrintLayer(ctx, img, crop, { photoId: "", ...HERO_PRINT_FRAME }, w, h, lut);
 }
 
+async function drawSpreadPrintLayer(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoItem["crop"],
+  layer: SpreadPrintLayer,
+  spreadIndex: 0 | 1,
+  canvasW: number,
+  canvasH: number,
+  lut: Lut3D | null,
+) {
+  const printLayer: PrintLayer = {
+    photoId: layer.photoId,
+    xPct: layer.spreadXPct,
+    yPct: layer.yPct,
+    wPct: layer.spreadWPct,
+    hPct: layer.hPct,
+    rotationDeg: layer.rotationDeg,
+    borderPx: layer.borderPx,
+    borderColor: layer.borderColor,
+    shadow: layer.shadow,
+  };
+
+  ctx.save();
+  ctx.translate(-spreadIndex * canvasW, 0);
+  ctx.beginPath();
+  ctx.rect(spreadIndex * canvasW, 0, canvasW, canvasH);
+  ctx.clip();
+  await drawPrintLayer(ctx, img, crop, printLayer, canvasW, canvasH, lut);
+  ctx.restore();
+}
+
+function spreadPrintEmptyFrame(
+  ctx: CanvasRenderingContext2D,
+  layer: SpreadPrintLayer,
+  spreadIndex: 0 | 1,
+  canvasW: number,
+  canvasH: number,
+) {
+  const printLayer: PrintLayer = {
+    xPct: layer.spreadXPct,
+    yPct: layer.yPct,
+    wPct: layer.spreadWPct,
+    hPct: layer.hPct,
+  };
+  ctx.save();
+  ctx.translate(-spreadIndex * canvasW, 0);
+  ctx.beginPath();
+  ctx.rect(spreadIndex * canvasW, 0, canvasW, canvasH);
+  ctx.clip();
+  drawEmptyFrame(ctx, printLayer, canvasW, canvasH, false);
+  ctx.restore();
+}
+
+async function drawPanoramaSlide(
+  ctx: CanvasRenderingContext2D,
+  layout: LayeredPrintsLayout,
+  photosById: Map<string, PhotoItem>,
+  w: number,
+  h: number,
+  lut: Lut3D | null,
+) {
+  if (layout.background.kind === "photo" && layout.background.photoId) {
+    const bg = photosById.get(layout.background.photoId);
+    if (bg) {
+      const img = await loadImage(bg.objectUrl);
+      await drawCoverWithLut(ctx, img, bg.crop, 0, 0, w, h, lut);
+    } else {
+      drawEmptyFrame(ctx, { xPct: 0, yPct: 0, wPct: 100, hPct: 100 }, w, h, false);
+    }
+  } else {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, w, h);
+    drawEmptyFrame(ctx, { xPct: 0, yPct: 0, wPct: 100, hPct: 100 }, w, h, false);
+  }
+
+  const spread = layout.spreadPrint;
+  if (!spread) return;
+
+  const spreadIndex = panoramaSpreadIndex(layout.role);
+  if (spread.photoId) {
+    const photo = photosById.get(spread.photoId);
+    if (photo) {
+      const img = await loadImage(photo.objectUrl);
+      await drawSpreadPrintLayer(ctx, img, photo.crop, spread, spreadIndex, w, h, lut);
+      return;
+    }
+  }
+  spreadPrintEmptyFrame(ctx, spread, spreadIndex, w, h);
+}
+
 async function drawLayeredPrints(
   ctx: CanvasRenderingContext2D,
   layout: LayeredPrintsLayout,
@@ -441,6 +540,11 @@ export async function renderSlideToCanvas(
   if (!ctx) throw new Error("Canvas unsupported");
 
   const lut = await loadLut(opts.filter);
+
+  if (opts.templateId === "layered-prints-panorama" && slide.layeredPrints) {
+    await drawPanoramaSlide(ctx, slide.layeredPrints, photosById, w, h, lut);
+    return canvas;
+  }
 
   if (opts.templateId === "layered-prints" && slide.layeredPrints) {
     await drawLayeredPrints(ctx, slide.layeredPrints, photosById, w, h, lut);

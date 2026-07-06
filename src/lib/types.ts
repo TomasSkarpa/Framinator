@@ -25,6 +25,7 @@ export type TemplateId =
   | "clean-carousel"
   | "kodak-strip"
   | "layered-prints"
+  | "layered-prints-panorama"
   | "soft-focus";
 
 export type PhotoCrop = {
@@ -59,7 +60,25 @@ export type PrintLayer = {
   shadow?: boolean;
 };
 
-export type LayeredPrintsRole = "hero" | "diptych" | "caption";
+export type LayeredPrintsRole =
+  | "hero"
+  | "diptych"
+  | "caption"
+  | "panorama-left"
+  | "panorama-right";
+
+/** Overlay spanning a 2-slide spread; x/w are % of one slide width (spread spans 0–200). */
+export type SpreadPrintLayer = {
+  photoId?: string;
+  spreadXPct: number;
+  yPct: number;
+  spreadWPct: number;
+  hPct: number;
+  rotationDeg?: number;
+  borderPx?: number;
+  borderColor?: string;
+  shadow?: boolean;
+};
 
 export type LayeredPrintsBackground =
   | { kind: "photo"; photoId?: string }
@@ -69,6 +88,8 @@ export type LayeredPrintsLayout = {
   role: LayeredPrintsRole;
   background: LayeredPrintsBackground;
   prints: PrintLayer[];
+  spreadId?: string;
+  spreadPrint?: SpreadPrintLayer;
   caption?: string;
 };
 
