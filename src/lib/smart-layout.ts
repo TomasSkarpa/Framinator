@@ -26,11 +26,13 @@ export type SmartLayoutPlan = {
   summary?: string;
 };
 
+export type SmartLayoutCropEntry = SmartLayoutCrop & { photoIndex: number };
+
 /** Raw Gemini response uses photo/slide indices. */
 export type SmartLayoutApiPayload = {
   photoOrder: number[];
   slideOrder?: number[];
-  crops?: Record<string, SmartLayoutCrop>;
+  crops?: SmartLayoutCropEntry[];
   templateId?: string;
   filter?: string;
   summary?: string;
@@ -83,11 +85,10 @@ export function apiPayloadToPlan(
     .filter((id): id is string => !!id);
 
   const crops: Record<string, SmartLayoutCrop> = {};
-  if (payload.crops) {
-    for (const [key, crop] of Object.entries(payload.crops)) {
-      const idx = Number(key);
-      const photo = photos[idx];
-      if (photo && crop) crops[photo.id] = clampCrop(crop);
+  if (Array.isArray(payload.crops)) {
+    for (const entry of payload.crops) {
+      const photo = photos[entry.photoIndex];
+      if (photo) crops[photo.id] = clampCrop(entry);
     }
   }
 
@@ -203,7 +204,7 @@ ${slideRoles.length > 0 ? slideRoles.map((r, i) => `${i}: ${r}`).join("\n") : "O
 Return JSON only:
 - photoOrder: number[] — photo indices for tray fill order (leftmost fills first frame)
 - slideOrder: number[] — optional carousel slide order for story flow
-- crops: object keyed by photo index string ("0", "1") with offsetX (-200..200), offsetY (-200..200), scale (0.25..2) to center subjects in frames
+- crops: array of { photoIndex, offsetX (-200..200), offsetY (-200..200), scale (0.25..2) } for photos that need crop tweaks
 - templateId: string — only if no template or a better fit exists
 - filter: string — optional film filter id (portra-400, velvia, classic-chrome, none, etc.)
 - summary: string — one short sentence explaining your choices

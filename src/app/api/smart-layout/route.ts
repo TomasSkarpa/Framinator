@@ -19,15 +19,16 @@ const RESPONSE_SCHEMA = {
     photoOrder: { type: "array", items: { type: "integer" } },
     slideOrder: { type: "array", items: { type: "integer" } },
     crops: {
-      type: "object",
-      additionalProperties: {
+      type: "array",
+      items: {
         type: "object",
         properties: {
+          photoIndex: { type: "integer" },
           offsetX: { type: "number" },
           offsetY: { type: "number" },
           scale: { type: "number" },
         },
-        required: ["offsetX", "offsetY", "scale"],
+        required: ["photoIndex", "offsetX", "offsetY", "scale"],
       },
     },
     templateId: { type: "string" },
