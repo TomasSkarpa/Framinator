@@ -386,8 +386,8 @@ async function drawBlurredCoverWithLut(
     return;
   }
 
-  const tw = Math.max(1, Math.round(bw));
-  const th = Math.max(1, Math.round(bh));
+  const tw = Math.max(1, Math.round(dw));
+  const th = Math.max(1, Math.round(dh));
   const tmp = document.createElement("canvas");
   tmp.width = tw;
   tmp.height = th;
@@ -396,9 +396,9 @@ async function drawBlurredCoverWithLut(
     await drawCoverWithLut(ctx, img, crop, bx, by, bw, bh, lut);
     return;
   }
-  await drawCoverWithLut(tctx, img, crop, 0, 0, tw, th, lut);
+  await drawCoverWithLut(tctx, img, crop, -pad, -pad, tw + pad * 2, th + pad * 2, lut);
   blurCanvas(tmp, blurPx);
-  ctx.drawImage(tmp, bx, by);
+  ctx.drawImage(tmp, dx, dy, dw, dh);
 }
 
 async function drawSoftFocus(

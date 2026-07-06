@@ -30,91 +30,77 @@ export function supportsCanvasFilter(): boolean {
   return canvasFilterWorks;
 }
 
-function boxBlurH(
+function blurChannelH(
   src: Uint8ClampedArray,
   dest: Uint8ClampedArray,
   w: number,
   h: number,
   r: number,
+  ch: number,
 ) {
-  const div = 2 * r + 1;
   for (let y = 0; y < h; y++) {
     const row = y * w;
-    let rs = 0;
-    let gs = 0;
-    let bs = 0;
-    let as = 0;
+    let sum = 0;
+    let count = 0;
     for (let x = 0; x <= r; x++) {
-      const p = (row + x) * 4;
-      rs += src[p];
-      gs += src[p + 1];
-      bs += src[p + 2];
-      as += src[p + 3];
+      sum += src[(row + x) * 4 + ch];
+      count++;
     }
     for (let x = 0; x < w; x++) {
-      const p = (row + x) * 4;
-      dest[p] = rs / div;
-      dest[p + 1] = gs / div;
-      dest[p + 2] = bs / div;
-      dest[p + 3] = as / div;
-      const add = Math.min(x + r + 1, w - 1);
-      const sub = Math.max(x - r, 0);
-      const pa = (row + add) * 4;
-      const ps = (row + sub) * 4;
-      rs += src[pa] - src[ps];
-      gs += src[pa + 1] - src[ps + 1];
-      bs += src[pa + 2] - src[ps + 2];
-      as += src[pa + 3] - src[ps + 3];
+      dest[(row + x) * 4 + ch] = sum / count;
+      if (x + r + 1 < w) {
+        sum += src[(row + x + r + 1) * 4 + ch];
+        count++;
+      }
+      if (x - r >= 0) {
+        sum -= src[(row + x - r) * 4 + ch];
+        count--;
+      }
     }
   }
 }
 
-function boxBlurV(
+function blurChannelV(
   src: Uint8ClampedArray,
   dest: Uint8ClampedArray,
   w: number,
   h: number,
   r: number,
+  ch: number,
 ) {
-  const div = 2 * r + 1;
   for (let x = 0; x < w; x++) {
-    let rs = 0;
-    let gs = 0;
-    let bs = 0;
-    let as = 0;
+    let sum = 0;
+    let count = 0;
     for (let y = 0; y <= r; y++) {
-      const p = (y * w + x) * 4;
-      rs += src[p];
-      gs += src[p + 1];
-      bs += src[p + 2];
-      as += src[p + 3];
+      sum += src[(y * w + x) * 4 + ch];
+      count++;
     }
     for (let y = 0; y < h; y++) {
-      const p = (y * w + x) * 4;
-      dest[p] = rs / div;
-      dest[p + 1] = gs / div;
-      dest[p + 2] = bs / div;
-      dest[p + 3] = as / div;
-      const add = Math.min(y + r + 1, h - 1);
-      const sub = Math.max(y - r, 0);
-      const pa = (add * w + x) * 4;
-      const ps = (sub * w + x) * 4;
-      rs += src[pa] - src[ps];
-      gs += src[pa + 1] - src[ps + 1];
-      bs += src[pa + 2] - src[ps + 2];
-      as += src[pa + 3] - src[ps + 3];
+      dest[(y * w + x) * 4 + ch] = sum / count;
+      if (y + r + 1 < h) {
+        sum += src[((y + r + 1) * w + x) * 4 + ch];
+        count++;
+      }
+      if (y - r >= 0) {
+        sum -= src[((y - r) * w + x) * 4 + ch];
+        count--;
+      }
     }
   }
 }
 
-function boxBlurRgba(data: Uint8ClampedArray, w: number, h: number, r: number): Uint8ClampedArray {
+function boxBlurRgb(data: Uint8ClampedArray, w: number, h: number, r: number): Uint8ClampedArray {
   const tmp = new Uint8ClampedArray(data.length);
   const out = new Uint8ClampedArray(data.length);
-  // ponytail: 2-pass box blur, O(w*h*r); upgrade path: ctx.filter when WebKit honors it
-  boxBlurH(data, tmp, w, h, r);
-  boxBlurV(tmp, out, w, h, r);
-  boxBlurH(out, tmp, w, h, r);
-  boxBlurV(tmp, out, w, h, r);
+  out.set(data);
+  tmp.set(data);
+  for (const ch of [0, 1, 2] as const) {
+    blurChannelH(data, tmp, w, h, r, ch);
+    blurChannelV(tmp, out, w, h, r, ch);
+    blurChannelH(out, tmp, w, h, r, ch);
+    blurChannelV(tmp, out, w, h, r, ch);
+  }
+  for (let i = 3; i < out.length; i += 4) out[i] = 255;
   return out;
 }
 
@@ -125,7 +111,7 @@ export function blurCanvas(canvas: HTMLCanvasElement, radiusPx: number): void {
   const r = Math.max(1, Math.round(radiusPx));
   const { width: w, height: h } = canvas;
   const src = ctx.getImageData(0, 0, w, h);
-  const blurred = boxBlurRgba(src.data, w, h, r);
+  const blurred = boxBlurRgb(src.data, w, h, r);
   ctx.putImageData(new ImageData(new Uint8ClampedArray(blurred), w, h), 0, 0);
 }
 
@@ -145,6 +131,17 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
     const mid = ctx.getImageData(15, 16, 1, 1).data;
     if (mid[0] === 255 || mid[2] === 255) {
       throw new Error("canvas-blur self-check: box blur fallback ineffective");
+    }
+    const solid = document.createElement("canvas");
+    solid.width = solid.height = 16;
+    const sctx = solid.getContext("2d");
+    if (!sctx) return;
+    sctx.fillStyle = "#3498db";
+    sctx.fillRect(0, 0, 16, 16);
+    blurCanvas(solid, 2);
+    const center = sctx.getImageData(8, 8, 1, 1).data;
+    if (center[0] < 40 || center[2] < 180 || center[3] !== 255) {
+      throw new Error("canvas-blur self-check: solid fill corrupted after blur");
     }
   });
 }
