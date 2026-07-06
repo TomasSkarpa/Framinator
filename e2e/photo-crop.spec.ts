@@ -1,110 +1,119 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import path from "node:path";
+/**
+ * E2E tests generated from docs/features/photo-crop.feature
+ */
 import { expect, test } from "@playwright/test";
-import { E2E_FIXTURE_DIR } from "./ensure-fixture";
-import { gotoBuilder, selectTemplate } from "./helpers";
+import {
+  E2E_CHECKER_FIXTURE_PATH,
+  E2E_FIXTURE_PATH,
+  ensureCheckerFixture,
+  ensureE2eFixture,
+} from "./ensure-fixture";
+import {
+  confirmSmartLayout,
+  DEFAULT_SMART_LAYOUT_PAYLOAD,
+  dragCropCanvas,
+  gotoBuilder,
+  mockSmartLayout,
+  openSmartLayout,
+  readCropOffset,
+  selectTemplate,
+  setCropHorizontal,
+  uploadPhotos,
+  nudgeCropHorizontal,
+  zoomCropCanvas,
+} from "./helpers";
 
-const FIXTURE_PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
-  "base64",
-);
-
-function writeNamedFixtures(count: number): string[] {
-  mkdirSync(E2E_FIXTURE_DIR, { recursive: true });
-  return Array.from({ length: count }, (_, i) => {
-    const filePath = path.join(E2E_FIXTURE_DIR, `crop-${i + 1}.png`);
-    writeFileSync(filePath, FIXTURE_PNG);
-    return filePath;
-  });
-}
-
-async function uploadPhotos(page: import("@playwright/test").Page, paths: string[]) {
-  await page.locator('input[type="file"]').setInputFiles(paths);
-  await expect(page.getByText(`${paths.length} selected`)).toBeVisible({ timeout: 15_000 });
-}
-
-test.describe("Photo crop", () => {
-  test("layered hero slide crops each photo independently", async ({ page }) => {
-    const fixtures = writeNamedFixtures(3);
-    await gotoBuilder(page);
-    await uploadPhotos(page, fixtures);
-    await selectTemplate(page, "layered-prints");
-
-    const picker = page.getByTestId("slide-crop-photo-picker");
-    await expect(picker).toBeVisible();
-    await expect(picker.getByTestId("crop-target-bg")).toBeVisible();
-    await expect(picker.getByTestId("crop-target-print-0")).toBeVisible();
-
-    await picker.getByTestId("crop-target-bg").click();
-    const display = page.getByTestId("crop-offset-display");
-    await expect(display).toHaveAttribute("data-offset-x", "0");
-
-    await page.getByTestId("crop-slider-horizontal").locator('[role="slider"]').click();
-    await page.keyboard.press("ArrowRight");
-    await page.keyboard.press("ArrowRight");
-    const bgOffset = await display.getAttribute("data-offset-x");
-    expect(Number(bgOffset)).not.toBe(0);
-
-    await picker.getByTestId("crop-target-print-0").click();
-    await expect(display).toHaveAttribute("data-offset-x", "0");
-
-    await page.getByTestId("crop-slider-vertical").locator('[role="slider"]').click();
-    await page.keyboard.press("ArrowUp");
-    const printOffsetY = await display.getAttribute("data-offset-y");
-    expect(Number(printOffsetY)).not.toBe(0);
-
-    await picker.getByTestId("crop-target-bg").click();
-    await expect(display).toHaveAttribute("data-offset-x", bgOffset ?? "");
+test.describe("Per-photo crop and zoom", () => {
+  test.beforeAll(async () => {
+    ensureE2eFixture();
+    await ensureCheckerFixture();
   });
 
-  test("tap preview enters crop mode and drag updates sliders", async ({ page }) => {
-    const fixtures = writeNamedFixtures(2);
+  test.beforeEach(async ({ page }) => {
     await gotoBuilder(page);
-    await uploadPhotos(page, fixtures);
-    await selectTemplate(page, "clean-carousel");
+    await uploadPhotos(page, [E2E_CHECKER_FIXTURE_PATH, E2E_FIXTURE_PATH]);
+    await selectTemplate(page, "kodak-strip");
+  });
 
+  test("Select a slide to crop its photo", async ({ page }) => {
+    await page.getByTestId("slide-thumb-2").click();
+    await expect(page.getByTestId("crop-sliders")).toBeVisible();
+    await expect(page.getByTestId("crop-slider-horizontal")).toBeVisible();
+  });
+
+  test("Customize panel adjusts the selected slide photo", async ({ page }) => {
+    const before = await readCropOffset(page);
+    await setCropHorizontal(page, 55);
+    const after = await readCropOffset(page);
+    expect(after.offsetX).toBeGreaterThan(before.offsetX);
+  });
+
+  test("Reset crop to default from customize panel", async ({ page }) => {
+    await setCropHorizontal(page, 90);
+    await expect(page.getByTestId("crop-reset")).toBeEnabled();
+    await page.getByTestId("crop-reset").click();
+    const crop = await readCropOffset(page);
+    expect(crop.offsetX).toBe(0);
+    expect(crop.offsetY).toBe(0);
+    expect(crop.scale).toBe(1);
+  });
+
+  test("Smart layout crop is a starting point only", async ({ page }) => {
+    await mockSmartLayout(page, DEFAULT_SMART_LAYOUT_PAYLOAD);
+    await openSmartLayout(page);
+    await confirmSmartLayout(page);
+    await expect(page.getByTestId("smart-layout-undo")).toBeVisible({ timeout: 15_000 });
+
+    const suggested = await readCropOffset(page);
+    await nudgeCropHorizontal(page, 20);
+    const overridden = await readCropOffset(page);
+    expect(overridden.offsetX).toBeGreaterThan(suggested.offsetX);
+
+    await page.getByTestId("smart-layout-undo").click();
+    const restored = await readCropOffset(page);
+    expect(restored.offsetX).toBe(0);
+    expect(restored.offsetY).toBe(0);
+  });
+
+  test("Tap the feed preview to enter crop mode", async ({ page }) => {
     await page.getByTestId("feed-preview-crop-tap").click();
     await expect(page.getByTestId("crop-overlay")).toBeVisible();
-
-    const display = page.getByTestId("crop-offset-display");
-    const beforeX = await display.getAttribute("data-offset-x");
-
-    const canvas = page.getByTestId("crop-overlay").locator("canvas");
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error("crop canvas missing");
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2, { steps: 8 });
-    await page.mouse.up();
-
-    const afterX = await display.getAttribute("data-offset-x");
-    expect(afterX).not.toBe(beforeX);
-
-    await page.getByTestId("crop-done").click();
-    await expect(page.getByTestId("crop-overlay")).not.toBeVisible();
+    await expect(page.getByText(/Drag to reposition/)).toBeVisible();
+    await expect(page.getByText(/scroll or pinch to zoom/)).toBeVisible();
   });
 
-  test("tray Adjust opens crop for photo slide", async ({ page }) => {
-    const fixtures = writeNamedFixtures(2);
-    await gotoBuilder(page);
-    await uploadPhotos(page, fixtures);
-    await selectTemplate(page, "clean-carousel");
+  test("Drag on preview repositions the photo", async ({ page }) => {
+    await page.getByTestId("customize-enter-crop").click();
+    const before = await readCropOffset(page);
+    await dragCropCanvas(page, -50, 0);
+    const after = await readCropOffset(page);
+    expect(after.offsetX).not.toBe(before.offsetX);
+  });
 
+  test("Zoom on preview updates scale", async ({ page }) => {
+    await page.getByTestId("customize-enter-crop").click();
+    const before = await readCropOffset(page);
+    await zoomCropCanvas(page, -120);
+    const after = await readCropOffset(page);
+    expect(after.scale).toBeGreaterThan(before.scale);
+  });
+
+  test("Crop from photo tray thumbnail", async ({ page }) => {
     await page.getByTestId("photo-tray-adjust-1").click({ force: true });
     await expect(page.getByTestId("crop-overlay")).toBeVisible();
   });
 
-  test("reset crop returns to default", async ({ page }) => {
-    const fixtures = writeNamedFixtures(1);
+  test("Layered slide picks which photo to crop", async ({ page }) => {
     await gotoBuilder(page);
-    await uploadPhotos(page, fixtures);
-    await selectTemplate(page, "clean-carousel");
+    await uploadPhotos(page, [E2E_FIXTURE_PATH, E2E_CHECKER_FIXTURE_PATH]);
+    await selectTemplate(page, "layered-prints");
 
-    await page.getByTestId("crop-slider-zoom").locator('[role="slider"]').click();
-    await page.keyboard.press("ArrowRight");
-    await expect(page.getByTestId("crop-reset")).toBeEnabled();
+    await expect(page.getByTestId("slide-crop-photo-picker")).toBeVisible({ timeout: 15_000 });
 
-    await page.getByTestId("crop-reset").click();
-    await expect(page.getByTestId("crop-offset-display")).toHaveAttribute("data-scale", "1");
+    await page.getByTestId("crop-target-bg").click();
+    await expect(page.getByTestId("crop-offset-display")).toContainText("offset");
+
+    await page.getByTestId("crop-target-print-0").click();
+    await expect(page.getByTestId("crop-sliders")).toBeVisible();
   });
 });

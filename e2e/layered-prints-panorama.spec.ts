@@ -31,7 +31,7 @@ test.describe("Panorama spread", () => {
     await selectTemplate(page, "layered-prints-panorama");
 
     await expect(page.getByRole("button", { name: /Drag slide 2/ })).toBeVisible();
-    await expect(page.getByText(/Photos stay on each slide/)).toBeVisible();
+    await expect(page.getByText(/Drag slides to change carousel order/)).toBeVisible();
 
     const slides = page.locator("[data-assigned-names]");
     await expect(slides).toHaveCount(2);

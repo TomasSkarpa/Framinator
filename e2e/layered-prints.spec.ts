@@ -32,7 +32,7 @@ test.describe("Layered prints", () => {
 
     await expect(page.getByRole("button", { name: /Drag slide 4/ })).toBeVisible();
     await expect(page.getByText(/Drag photos to set fill order/)).toBeVisible();
-    await expect(page.getByText(/Photos stay on each slide/)).toBeVisible();
+    await expect(page.getByText(/Drag slides to change carousel order/)).toBeVisible();
 
     const slides = page.locator("[data-assigned-names]");
     await expect(slides.nth(1)).toHaveAttribute("data-slide-role", "caption");

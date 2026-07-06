@@ -58,6 +58,7 @@ export function SmartLayoutButton() {
           photos: requestPhotos,
           templateId: state.templateId,
           slideRoles,
+          aspectRatio: state.aspectRatio,
         }),
       });
 
@@ -192,6 +193,7 @@ export function SmartLayoutButton() {
                     </Button>
                     <button
                       type="button"
+                      data-testid="smart-layout-arrange"
                       onClick={() => void runSmartLayout()}
                       className={cn(
                         pressable,

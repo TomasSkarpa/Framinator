@@ -3,12 +3,13 @@ import { geminiApiKeys, geminiGenerateContent } from "@/lib/gemini-request";
 import { normalizeFilter } from "@/lib/filters";
 import { buildSmartLayoutPrompt, type SmartLayoutApiPayload } from "@/lib/smart-layout";
 import { normalizeTemplateId } from "@/lib/templates";
-import type { TemplateId } from "@/lib/types";
+import type { AspectRatio, TemplateId } from "@/lib/types";
 
 type RequestBody = {
   photos: { id: string; name: string; thumbnailBase64: string }[];
   templateId: TemplateId | null;
   slideRoles: string[];
+  aspectRatio?: AspectRatio;
 };
 
 const GEMINI_MODEL = "gemini-2.5-flash";
@@ -62,8 +63,9 @@ export async function POST(req: Request) {
   }
 
   const templateId = body.templateId ? normalizeTemplateId(body.templateId) : null;
+  const aspectRatio: AspectRatio = body.aspectRatio === "1:1" ? "1:1" : "4:5";
   const indexedPhotos = body.photos.map((p, index) => ({ index, name: p.name }));
-  const prompt = buildSmartLayoutPrompt(indexedPhotos, templateId, body.slideRoles ?? []);
+  const prompt = buildSmartLayoutPrompt(indexedPhotos, templateId, body.slideRoles ?? [], aspectRatio);
 
   const parts: { text?: string; inline_data?: { mime_type: string; data: string } }[] = [
     { text: prompt },

@@ -1,4 +1,5 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
+import type { SmartLayoutApiPayload } from "../src/lib/smart-layout";
 
 export async function clearSavedProject(page: Page) {
   await page.addInitScript(() => {
@@ -25,8 +26,16 @@ export async function uploadPhoto(page: Page, fixturePath: string) {
   await expect(page.getByText(/1 selected/)).toBeVisible({ timeout: 15_000 });
 }
 
+export async function uploadPhotos(page: Page, fixturePaths: string[]) {
+  await page.locator('input[type="file"]').setInputFiles(fixturePaths);
+  await expect(page.getByText(new RegExp(`${fixturePaths.length} selected`))).toBeVisible({
+    timeout: 15_000,
+  });
+}
+
 export async function selectTemplate(page: Page, id = "clean-carousel") {
   await page.getByTestId(`template-${id}`).click();
+  await expect(page.getByText("Customize")).toBeVisible({ timeout: 10_000 });
 }
 
 export async function reopenTemplatePicker(page: Page) {
@@ -34,8 +43,136 @@ export async function reopenTemplatePicker(page: Page) {
   await expect(page.getByTestId("template-picker-done")).toBeVisible();
 }
 
+export async function openSmartLayout(page: Page) {
+  await page.getByTestId("smart-layout-button").click();
+  await expect(page.getByRole("heading", { name: "Smart layout" })).toBeVisible();
+}
+
+export async function confirmSmartLayout(page: Page) {
+  await page.getByTestId("smart-layout-arrange").click();
+}
+
+export async function mockSmartLayout(
+  page: Page,
+  payload: SmartLayoutApiPayload,
+  onRequest?: (body: Record<string, unknown>) => void,
+) {
+  await page.route("**/api/smart-layout", async (route) => {
+    if (onRequest) {
+      onRequest(route.request().postDataJSON() as Record<string, unknown>);
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(payload),
+    });
+  });
+}
+
+export async function mockSmartLayoutError(page: Page, status: number, error: string) {
+  await page.route("**/api/smart-layout", async (route) => {
+    await route.fulfill({
+      status,
+      contentType: "application/json",
+      body: JSON.stringify({ error }),
+    });
+  });
+}
+
+export type CropOffset = { offsetX: number; offsetY: number; scale: number };
+
+export async function readCropOffset(page: Page): Promise<CropOffset> {
+  const display = page.getByTestId("crop-offset-display");
+  await expect(display).toBeVisible();
+  return {
+    offsetX: Number(await display.getAttribute("data-offset-x")),
+    offsetY: Number(await display.getAttribute("data-offset-y")),
+    scale: Number(await display.getAttribute("data-scale")),
+  };
+}
+
+export async function setCropHorizontal(page: Page, offsetX: number) {
+  const clamped = Math.max(-200, Math.min(200, Math.round(offsetX)));
+  const thumb = page.getByTestId("crop-slider-horizontal").getByRole("slider");
+  await thumb.scrollIntoViewIfNeeded();
+  await thumb.focus();
+  await thumb.press("Home");
+  const steps = clamped + 200;
+  for (let i = 0; i < steps; i++) {
+    await page.keyboard.press("ArrowRight");
+  }
+}
+
+export async function nudgeCropHorizontal(page: Page, steps = 20) {
+  const thumb = page.getByTestId("crop-slider-horizontal").getByRole("slider");
+  await thumb.scrollIntoViewIfNeeded();
+  await thumb.focus();
+  for (let i = 0; i < steps; i++) {
+    await page.keyboard.press("ArrowRight");
+  }
+}
+
+export async function waitForCropCanvas(page: Page) {
+  const canvas = page.getByTestId("crop-overlay").locator("canvas");
+  await expect(canvas).toBeVisible();
+  await page.waitForFunction(() => {
+    const el = document.querySelector('[data-testid="crop-overlay"] canvas') as HTMLCanvasElement | null;
+    return !!el && el.width > 0 && el.height > 0;
+  });
+  return canvas;
+}
+
+export async function dragCropCanvas(page: Page, deltaX: number, deltaY: number) {
+  await waitForCropCanvas(page);
+  await page.evaluate(
+    ({ deltaX, deltaY }) => {
+      const canvas = document.querySelector(
+        '[data-testid="crop-overlay"] canvas',
+      ) as HTMLCanvasElement | null;
+      if (!canvas) throw new Error("crop canvas missing");
+      const rect = canvas.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const opts = { bubbles: true, cancelable: true, pointerId: 1, pointerType: "mouse" as const };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", { ...opts, clientX: cx, clientY: cy, buttons: 1 }));
+      canvas.dispatchEvent(
+        new PointerEvent("pointermove", {
+          ...opts,
+          clientX: cx + deltaX,
+          clientY: cy + deltaY,
+          buttons: 1,
+        }),
+      );
+      canvas.dispatchEvent(
+        new PointerEvent("pointerup", {
+          ...opts,
+          clientX: cx + deltaX,
+          clientY: cy + deltaY,
+          buttons: 0,
+        }),
+      );
+    },
+    { deltaX, deltaY },
+  );
+}
+
+export async function zoomCropCanvas(page: Page, deltaY: number) {
+  await waitForCropCanvas(page);
+  await page.evaluate((dy) => {
+    const canvas = document.querySelector(
+      '[data-testid="crop-overlay"] canvas',
+    ) as HTMLCanvasElement | null;
+    if (!canvas) throw new Error("crop canvas missing");
+    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: dy, bubbles: true, cancelable: true }));
+  }, deltaY);
+}
+
 /** dnd-kit needs a pointer move past activation distance (6px). */
-export async function dragSortable(page: Page, source: Locator, target: Locator) {
+export async function dragSortable(
+  page: Page,
+  source: import("@playwright/test").Locator,
+  target: import("@playwright/test").Locator,
+) {
   await source.scrollIntoViewIfNeeded();
   await target.scrollIntoViewIfNeeded();
 
@@ -54,3 +191,13 @@ export async function dragSortable(page: Page, source: Locator, target: Locator)
   await page.mouse.move(endX, endY, { steps: 24 });
   await page.mouse.up();
 }
+
+export const DEFAULT_SMART_LAYOUT_PAYLOAD = {
+  photoOrder: [0, 1],
+  crops: [
+    { photoIndex: 0, offsetX: 80, offsetY: -20, scale: 1.12 },
+    { photoIndex: 1, offsetX: 0, offsetY: 0, scale: 1 },
+  ],
+  postDescription: "A warm carousel from your event photos.",
+  whyArranged: "Opened with the strongest portrait, then supporting detail shots.",
+} satisfies SmartLayoutApiPayload;

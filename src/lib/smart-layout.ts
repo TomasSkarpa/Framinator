@@ -1,5 +1,6 @@
 import { clampCrop as clampCropValues } from "./crop-math";
-import { DEFAULT_PHOTO_CROP } from "./constants";
+import { DEFAULT_PHOTO_CROP, type AspectRatio } from "./constants";
+import { smartLayoutFrameContext } from "./template-frame";
 import { normalizeFilter } from "./filters";
 import { reflowLayeredPrintsSlides } from "./layered-prints";
 import { isLayeredSpreadTemplate, reflowSpreadSlides } from "./layered-spreads";
@@ -173,7 +174,7 @@ export function applySmartLayoutPlan(state: ProjectState, plan: SmartLayoutPlan)
   };
 }
 
-export async function photoToThumbnailBase64(objectUrl: string, maxEdge = 256): Promise<string> {
+export async function photoToThumbnailBase64(objectUrl: string, maxEdge = 512): Promise<string> {
   const img = await new Promise<HTMLImageElement>((resolve, reject) => {
     const el = new Image();
     el.onload = () => resolve(el);
@@ -213,19 +214,24 @@ export function buildSmartLayoutPrompt(
   photos: { index: number; name: string }[],
   templateId: TemplateId | null,
   slideRoles: string[],
+  aspectRatio: AspectRatio = "4:5",
 ): string {
   const templateLine = templateId
-    ? `Current template: ${templateId}.`
+    ? `Current template: ${templateId}. Keep this template unless none was selected.`
     : "No template selected yet; pick the best fit from the list.";
 
   const templateList = TEMPLATES.map((t) => `${t.id} (${t.description})`).join(", ");
+  const frameContext = smartLayoutFrameContext(templateId, aspectRatio);
 
   return `You are arranging photos for an Instagram carousel app.
 
 ${templateLine}
 Available templates: ${templateList}
 
-Photos (index → filename):
+Frame for cropping:
+${frameContext}
+
+Photos (index → filename; thumbnails follow in the same order):
 ${photos.map((p) => `${p.index}: ${p.name}`).join("\n")}
 
 Slide structure (index → role):
@@ -234,13 +240,21 @@ ${slideRoles.length > 0 ? slideRoles.map((r, i) => `${i}: ${r}`).join("\n") : "O
 Return JSON only:
 - photoOrder: number[] — photo indices for tray fill order (leftmost fills first frame)
 - slideOrder: number[] — optional carousel slide order for story flow
-- crops: array of { photoIndex, offsetX (-200..200), offsetY (-200..200), scale (0.25..2) } for photos that need crop tweaks. On layered templates the same photoIndex may appear as background and print; still use one crop per photo (user refines per frame later). Suggest crops for faces, horizons, and wide backgrounds.
-- templateId: string — only if no template or a better fit exists
+- crops: array of { photoIndex, offsetX (-200..200), offsetY (-200..200), scale (0.25..2) } — REQUIRED for every photo where the main subject would be clipped or off-center at default crop (offset 0,0 scale 1). On layered templates one crop per photoIndex (user refines per frame later).
+- templateId: string — only if no template or a clearly better fit exists
 - filter: string — optional film filter id (portra-400, velvia, classic-chrome, none, etc.)
 - postDescription: string — one sentence: what this carousel post will feel like to a viewer (story/mood, no photo numbers or template names)
 - whyArranged: string — one sentence: why you ordered and placed photos this way (plain language, no indices or jargon)
 
-Prioritize: strong hook on slide 1, chronological flow when dates implied, pair similar shots on diptych slides, wide landscapes as backgrounds on hero slides. For each photo, suggest offset/scale so subjects are centered in their primary frame (portraits upright, horizons level).`;
+Subject framing (critical):
+- In each thumbnail, find the main subject: person, face, product, signage, or focal object.
+- Center that subject in the frame described above. Do not crop from the geometric image center when the subject sits to one side.
+- offsetX: positive reveals more of the RIGHT side of the source photo; negative reveals more of the LEFT.
+- offsetY: positive reveals lower in the source; negative reveals higher.
+- scale > 1 zooms in when the subject is small; keep faces fully inside the frame.
+- Never leave a person or face cut off at an edge when pan/zoom within the ranges above can fix it.
+
+Story order: strong hook on slide 1, chronological flow when dates implied, pair similar shots on diptych slides, wide landscapes as backgrounds on hero slides. Horizons level where relevant.`;
 }
 
 // ponytail: dev-only guard; fails if reorder/apply breaks id mapping
@@ -276,6 +290,10 @@ if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
   }
   if (next.photos[0].crop.scale !== 1.2) {
     throw new Error("smart-layout self-check: crop apply broken");
+  }
+  const kodakPrompt = buildSmartLayoutPrompt([{ index: 0, name: "portrait.jpg" }], "kodak-strip", [], "4:5");
+  if (!kodakPrompt.includes("Subject framing") || !kodakPrompt.includes("0.7111")) {
+    throw new Error("smart-layout self-check: subject framing prompt broken");
   }
   void reflowLayeredPrintsSlides;
   void reflowSpreadSlides;

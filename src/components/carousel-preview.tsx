@@ -325,6 +325,7 @@ function SortableSlide({
     >
       <button
         type="button"
+        data-testid={`slide-thumb-${index + 1}`}
         onClick={onSelect}
         className={cn(
           pressable,
