@@ -16,7 +16,7 @@ Coolify + root `docker-compose.yml`, domain `framinator.skarpa.dev`. See [home_s
 
 ## What it does
 
-- Upload up to 10 photos
+- Upload up to 25 photos
 - Templates: polaroid, clean carousel, Kodak strip, layered prints
 - Crop, film filters, live feed preview, profile mockup
 - Export: per-slide save/share overlay (+ ZIP on desktop)

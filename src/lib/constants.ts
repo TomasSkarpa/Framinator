@@ -1,4 +1,4 @@
-export const MAX_PHOTOS = 10;
+export const MAX_PHOTOS = 25;
 
 export const EXPORT_WIDTH = 1080;
 export const EXPORT_HEIGHT_PORTRAIT = 1350;

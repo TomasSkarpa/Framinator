@@ -103,10 +103,7 @@ export function PhotoTray() {
             toast(`${rejected} duplicate file${rejected > 1 ? "s" : ""} skipped`);
           }
           if (limitHit) {
-            toast(`Instagram allows up to ${MAX_PHOTOS} photos per carousel`);
-          }
-          if (added === 0 && rejected === 0 && limitHit) {
-            toast(`Maximum ${MAX_PHOTOS} photos reached`);
+            toast(`Maximum ${MAX_PHOTOS} photos per project`);
           }
         })
         .finally(() => setImporting(false));
