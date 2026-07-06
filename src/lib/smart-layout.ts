@@ -29,24 +29,26 @@ export type SmartLayoutPlan = {
 };
 
 export type SmartLayoutNotice = {
-  headline: string;
-  details: string[];
+  postDescription: string;
+  whyArranged: string;
 };
 
-/** 10–20s; scales with text length (~250 chars/s reading pace). */
+/** 10–20s; scales with text length. */
 export function noticeDurationMs(notice: SmartLayoutNotice): number {
-  const chars = notice.headline.length + notice.details.join("").length;
+  const chars = notice.postDescription.length + notice.whyArranged.length;
   return Math.min(20_000, Math.max(10_000, 10_000 + chars * 40));
 }
 
 export function noticeFromPayload(payload: SmartLayoutApiPayload): SmartLayoutNotice {
-  const details = (payload.details ?? [])
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-  return {
-    headline: payload.summary?.trim() || "Smart layout applied",
-    details: details.length > 0 ? details : ["Photos reordered for a clearer carousel flow."],
-  };
+  const postDescription =
+    payload.postDescription?.trim() ||
+    payload.summary?.trim() ||
+    "A carousel from your selected photos.";
+  const whyArranged =
+    payload.whyArranged?.trim() ||
+    payload.details?.[0]?.trim() ||
+    "Photos reordered for a clearer story from first slide to last.";
+  return { postDescription, whyArranged };
 }
 
 export type SmartLayoutCropEntry = SmartLayoutCrop & { photoIndex: number };
@@ -58,6 +60,9 @@ export type SmartLayoutApiPayload = {
   crops?: SmartLayoutCropEntry[];
   templateId?: string;
   filter?: string;
+  postDescription?: string;
+  whyArranged?: string;
+  /** @deprecated legacy Gemini fields */
   summary?: string;
   details?: string[];
 };
@@ -235,8 +240,8 @@ Return JSON only:
 - crops: array of { photoIndex, offsetX (-200..200), offsetY (-200..200), scale (0.25..2) } for photos that need crop tweaks
 - templateId: string — only if no template or a better fit exists
 - filter: string — optional film filter id (portra-400, velvia, classic-chrome, none, etc.)
-- summary: string — short headline (max 12 words)
-- details: string[] — 3 to 5 plain-language bullets explaining what you changed and why. Cover template choice (if any), photo tray order, slide story arc, and crops/filter when relevant. Each bullet is one complete sentence, no jargon.
+- postDescription: string — one sentence: what this carousel post will feel like to a viewer (story/mood, no photo numbers or template names)
+- whyArranged: string — one sentence: why you ordered and placed photos this way (plain language, no indices or jargon)
 
 Prioritize: strong hook on slide 1, chronological flow when dates implied, pair similar shots on diptych slides, wide landscapes as backgrounds on hero slides.`;
 }

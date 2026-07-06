@@ -33,10 +33,10 @@ const RESPONSE_SCHEMA = {
     },
     templateId: { type: "string" },
     filter: { type: "string" },
-    summary: { type: "string" },
-    details: { type: "array", items: { type: "string" } },
+    postDescription: { type: "string" },
+    whyArranged: { type: "string" },
   },
-  required: ["photoOrder", "summary", "details"],
+  required: ["photoOrder", "postDescription", "whyArranged"],
 };
 
 export async function POST(req: Request) {

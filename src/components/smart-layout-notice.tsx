@@ -22,7 +22,7 @@ export function SmartLayoutNoticePanel({ notice, onDismiss }: Props) {
       role="status"
       data-testid="smart-layout-notice"
       className={cn(
-        "fixed bottom-4 right-4 z-50 w-[min(92vw,22rem)] rounded-xl border border-violet-500/35",
+        "fixed bottom-4 right-4 z-50 w-[min(92vw,20rem)] rounded-xl border border-violet-500/35",
         "bg-zinc-900/95 px-4 py-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-sm",
       )}
     >
@@ -32,16 +32,22 @@ export function SmartLayoutNoticePanel({ notice, onDismiss }: Props) {
           strokeWidth={1.75}
           aria-hidden
         />
-        <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-sm font-medium leading-snug text-zinc-50">{notice.headline}</p>
-          <ul className="space-y-1.5 text-[13px] leading-relaxed text-zinc-300">
-            {notice.details.map((line) => (
-              <li key={line} className="flex gap-2">
-                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-violet-400/80" aria-hidden />
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="min-w-0 flex-1 space-y-3">
+          <p className="text-sm font-medium text-zinc-50">Smart layout</p>
+          <div className="space-y-2.5 text-[13px] leading-relaxed text-zinc-300">
+            <div>
+              <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-violet-300/90">
+                Your post
+              </p>
+              <p>{notice.postDescription}</p>
+            </div>
+            <div>
+              <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-violet-300/90">
+                Why
+              </p>
+              <p>{notice.whyArranged}</p>
+            </div>
+          </div>
         </div>
         <button
           type="button"
