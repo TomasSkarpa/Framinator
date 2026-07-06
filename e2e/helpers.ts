@@ -35,7 +35,7 @@ export async function uploadPhotos(page: Page, fixturePaths: string[]) {
 
 export async function selectTemplate(page: Page, id = "clean-carousel") {
   await page.getByTestId(`template-${id}`).click();
-  await expect(page.getByText("Customize")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("customization-panel")).toBeVisible({ timeout: 10_000 });
 }
 
 export async function reopenTemplatePicker(page: Page) {
@@ -110,61 +110,6 @@ export async function nudgeCropHorizontal(page: Page, steps = 20) {
   for (let i = 0; i < steps; i++) {
     await page.keyboard.press("ArrowRight");
   }
-}
-
-export async function waitForCropCanvas(page: Page) {
-  const canvas = page.getByTestId("crop-overlay").locator("canvas");
-  await expect(canvas).toBeVisible();
-  await page.waitForFunction(() => {
-    const el = document.querySelector('[data-testid="crop-overlay"] canvas') as HTMLCanvasElement | null;
-    return !!el && el.width > 0 && el.height > 0;
-  });
-  return canvas;
-}
-
-export async function dragCropCanvas(page: Page, deltaX: number, deltaY: number) {
-  await waitForCropCanvas(page);
-  await page.evaluate(
-    ({ deltaX, deltaY }) => {
-      const canvas = document.querySelector(
-        '[data-testid="crop-overlay"] canvas',
-      ) as HTMLCanvasElement | null;
-      if (!canvas) throw new Error("crop canvas missing");
-      const rect = canvas.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const opts = { bubbles: true, cancelable: true, pointerId: 1, pointerType: "mouse" as const };
-      canvas.dispatchEvent(new PointerEvent("pointerdown", { ...opts, clientX: cx, clientY: cy, buttons: 1 }));
-      canvas.dispatchEvent(
-        new PointerEvent("pointermove", {
-          ...opts,
-          clientX: cx + deltaX,
-          clientY: cy + deltaY,
-          buttons: 1,
-        }),
-      );
-      canvas.dispatchEvent(
-        new PointerEvent("pointerup", {
-          ...opts,
-          clientX: cx + deltaX,
-          clientY: cy + deltaY,
-          buttons: 0,
-        }),
-      );
-    },
-    { deltaX, deltaY },
-  );
-}
-
-export async function zoomCropCanvas(page: Page, deltaY: number) {
-  await waitForCropCanvas(page);
-  await page.evaluate((dy) => {
-    const canvas = document.querySelector(
-      '[data-testid="crop-overlay"] canvas',
-    ) as HTMLCanvasElement | null;
-    if (!canvas) throw new Error("crop canvas missing");
-    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: dy, bubbles: true, cancelable: true }));
-  }, deltaY);
 }
 
 /** dnd-kit needs a pointer move past activation distance (6px). */

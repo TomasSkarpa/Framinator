@@ -23,8 +23,6 @@ export function CustomizationPanel() {
     slideCropOptions,
     cropPlacementKey,
     setCropPlacement,
-    enterCropMode,
-    cropModeActive,
   } = useProject();
 
   useEffect(() => {
@@ -39,7 +37,7 @@ export function CustomizationPanel() {
     activeCropPhoto?.crop.scale === DEFAULT_PHOTO_CROP.scale;
 
   return (
-    <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+    <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5" data-testid="customization-panel">
       <div>
         <h2 className="text-sm font-medium text-zinc-300">
           Customize
@@ -53,27 +51,15 @@ export function CustomizationPanel() {
         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
           <div className="flex items-center justify-between gap-2">
             <label className="text-xs font-medium text-zinc-300">Crop</label>
-            <div className="flex gap-2">
-              {!cropModeActive && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  data-testid="customize-enter-crop"
-                  onClick={enterCropMode}
-                >
-                  Adjust on preview
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                data-testid="crop-reset"
-                disabled={cropIsDefault}
-                onClick={() => updateCrop(activeCropPhoto.id, { ...DEFAULT_PHOTO_CROP })}
-              >
-                Reset position
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              data-testid="crop-reset"
+              disabled={cropIsDefault}
+              onClick={() => updateCrop(activeCropPhoto.id, { ...DEFAULT_PHOTO_CROP })}
+            >
+              Reset position
+            </Button>
           </div>
 
           {slideCropOptions.length > 1 && (

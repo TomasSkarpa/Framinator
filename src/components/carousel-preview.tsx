@@ -26,9 +26,7 @@ import {
   Send,
 } from "lucide-react";
 import { useCallback, useState } from "react";
-import { CropOverlay } from "@/components/crop-overlay";
 import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
-import { cropFrameForPlacement, slideCropTargets, type CropPlacementKey } from "@/lib/slide-crop";
 import { useProject } from "@/lib/project-context";
 import { isLayeredTemplate } from "@/lib/templates";
 import { useSlidePreviewUrl } from "@/lib/use-slide-preview-url";
@@ -37,10 +35,6 @@ import { cn, pressable } from "@/lib/utils";
 
 const IG_FONT =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
-
-function cropLabelForPlacement(slide: Slide, key: CropPlacementKey): string | undefined {
-  return slideCropTargets(slide).find((t) => t.key === key)?.label;
-}
 
 function VerifiedBadge() {
   return (
@@ -94,31 +88,13 @@ function InstagramFeedPreview({
   onNext: () => void;
   onSelectSlide: (index: number) => void;
 }) {
-  const {
-    state,
-    cropModeActive,
-    cropPlacementKey,
-    activeCropPhoto,
-    enterCropMode,
-    exitCropMode,
-    updateCrop,
-  } = useProject();
+  const { state } = useProject();
   const url = useSlidePreviewUrl(slide);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const hasCarousel = slideCount > 1;
   const aspect = `${EXPORT_WIDTH}/${exportHeight(state.aspectRatio)}`;
   const avatarUrl = state.photos[0]?.objectUrl ?? "https://i.pravatar.cc/100?img=12";
-  const cropFrame =
-    state.templateId && activeCropPhoto
-      ? cropFrameForPlacement(slide, state.templateId, cropPlacementKey)
-      : null;
-
-  const onPreviewTap = useCallback(() => {
-    if (!activeCropPhoto) return;
-    if (cropModeActive) return;
-    enterCropMode();
-  }, [activeCropPhoto, cropModeActive, enterCropMode]);
 
   return (
     <div
@@ -156,27 +132,6 @@ function InstagramFeedPreview({
           />
         ) : (
           <div className="h-full w-full animate-pulse bg-gray-200" />
-        )}
-
-        {activeCropPhoto && !cropModeActive && (
-          <button
-            type="button"
-            onClick={onPreviewTap}
-            className="absolute inset-0 cursor-pointer bg-transparent"
-            aria-label="Tap to adjust crop"
-            data-testid="feed-preview-crop-tap"
-          />
-        )}
-
-        {cropModeActive && activeCropPhoto && cropFrame && state.templateId && (
-          <CropOverlay
-            photo={activeCropPhoto}
-            crop={activeCropPhoto.crop}
-            frame={cropFrame}
-            label={cropLabelForPlacement(slide, cropPlacementKey)}
-            onCropChange={(c) => updateCrop(activeCropPhoto.id, c)}
-            onDone={exitCropMode}
-          />
         )}
 
         {hasCarousel && (
@@ -420,8 +375,8 @@ export function CarouselPreview() {
         </h3>
         <p className="mb-3 text-xs text-zinc-500">
           {isLayeredTemplate(state.templateId)
-            ? "Drag slides to change carousel order. Tap preview or pick a photo below to crop."
-            : "Tap a slide or the preview to adjust crop"}
+            ? "Drag slides to change carousel order. Adjust crop in Customize below."
+            : "Select a slide, then adjust crop in Customize below."}
         </p>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext

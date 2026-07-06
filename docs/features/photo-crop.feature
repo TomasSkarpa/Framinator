@@ -30,21 +30,27 @@ Feature: Per-photo crop and zoom
     Then I can override the suggested position and zoom
     And undo layout should restore the previous crops
 
+  # --- Planned: live preview and tray crop entry points ---
+
+  @planned
   Scenario: Tap the feed preview to enter crop mode
     When I tap the active slide in the live preview
     Then I should see crop mode for that slide's photo
     And I should see a hint to drag to reposition and pinch or scroll to zoom
 
+  @planned
   Scenario: Drag on preview repositions the photo
     Given I am in crop mode for a slide
     When I drag the photo within the frame
     Then the customize panel sliders should stay in sync
 
+  @planned
   Scenario: Zoom on preview updates scale
     Given I am in crop mode for a slide
     When I zoom in on the preview
     Then the crop scale display should increase
 
+  @planned
   Scenario: Crop from photo tray thumbnail
     When I open crop from a photo in the tray
     Then I should enter crop mode for that photo
