@@ -4,11 +4,14 @@ import { Loader2, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { SmartLayoutNoticePanel } from "@/components/smart-layout-notice";
 import { useToast } from "@/components/ui/toast";
 import {
   apiPayloadToPlan,
   buildSmartLayoutRequestPhotos,
+  noticeFromPayload,
   type SmartLayoutApiPayload,
+  type SmartLayoutNotice,
 } from "@/lib/smart-layout";
 import { useProject } from "@/lib/project-context";
 import type { ProjectState } from "@/lib/types";
@@ -23,6 +26,7 @@ export function SmartLayoutButton() {
   const [phase, setPhase] = useState<DialogPhase>("confirm");
   const [errorMessage, setErrorMessage] = useState("");
   const [undoSnapshot, setUndoSnapshot] = useState<ProjectState | null>(null);
+  const [notice, setNotice] = useState<SmartLayoutNotice | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const photoCount = state.photos.length;
@@ -70,13 +74,12 @@ export function SmartLayoutButton() {
 
       setUndoSnapshot(structuredClone(state));
       applySmartLayout(plan);
+      setNotice(noticeFromPayload(body));
       setOpen(false);
       setPhase("confirm");
 
       if (undoTimer.current) clearTimeout(undoTimer.current);
       undoTimer.current = setTimeout(clearUndo, 12000);
-
-      toast(plan.summary ?? "Smart layout applied");
     } catch (err) {
       setPhase("error");
       setErrorMessage(err instanceof Error ? err.message : "Something went wrong");
@@ -87,6 +90,7 @@ export function SmartLayoutButton() {
     if (!undoSnapshot) return;
     restoreState(undoSnapshot);
     clearUndo();
+    setNotice(null);
     toast("Layout restored");
   }, [clearUndo, restoreState, undoSnapshot, toast]);
 
@@ -234,6 +238,10 @@ export function SmartLayoutButton() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {notice && (
+        <SmartLayoutNoticePanel notice={notice} onDismiss={() => setNotice(null)} />
+      )}
     </>
   );
 }

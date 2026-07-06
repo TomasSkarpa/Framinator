@@ -34,8 +34,9 @@ const RESPONSE_SCHEMA = {
     templateId: { type: "string" },
     filter: { type: "string" },
     summary: { type: "string" },
+    details: { type: "array", items: { type: "string" } },
   },
-  required: ["photoOrder", "summary"],
+  required: ["photoOrder", "summary", "details"],
 };
 
 export async function POST(req: Request) {

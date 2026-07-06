@@ -28,6 +28,27 @@ export type SmartLayoutPlan = {
   summary?: string;
 };
 
+export type SmartLayoutNotice = {
+  headline: string;
+  details: string[];
+};
+
+/** 10–20s; scales with text length (~250 chars/s reading pace). */
+export function noticeDurationMs(notice: SmartLayoutNotice): number {
+  const chars = notice.headline.length + notice.details.join("").length;
+  return Math.min(20_000, Math.max(10_000, 10_000 + chars * 40));
+}
+
+export function noticeFromPayload(payload: SmartLayoutApiPayload): SmartLayoutNotice {
+  const details = (payload.details ?? [])
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  return {
+    headline: payload.summary?.trim() || "Smart layout applied",
+    details: details.length > 0 ? details : ["Photos reordered for a clearer carousel flow."],
+  };
+}
+
 export type SmartLayoutCropEntry = SmartLayoutCrop & { photoIndex: number };
 
 /** Raw Gemini response uses photo/slide indices. */
@@ -38,6 +59,7 @@ export type SmartLayoutApiPayload = {
   templateId?: string;
   filter?: string;
   summary?: string;
+  details?: string[];
 };
 
 export type SmartLayoutRequestPhoto = {
@@ -213,7 +235,8 @@ Return JSON only:
 - crops: array of { photoIndex, offsetX (-200..200), offsetY (-200..200), scale (0.25..2) } for photos that need crop tweaks
 - templateId: string — only if no template or a better fit exists
 - filter: string — optional film filter id (portra-400, velvia, classic-chrome, none, etc.)
-- summary: string — one short sentence explaining your choices
+- summary: string — short headline (max 12 words)
+- details: string[] — 3 to 5 plain-language bullets explaining what you changed and why. Cover template choice (if any), photo tray order, slide story arc, and crops/filter when relevant. Each bullet is one complete sentence, no jargon.
 
 Prioritize: strong hook on slide 1, chronological flow when dates implied, pair similar shots on diptych slides, wide landscapes as backgrounds on hero slides.`;
 }
