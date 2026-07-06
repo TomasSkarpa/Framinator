@@ -8,16 +8,18 @@ import type { Slide } from "@/lib/types";
 export function useSlidePreviewUrl(slide: Slide | null): string | null {
   const { state } = useProject();
   const [url, setUrl] = useState<string | null>(null);
-  const photoId = slide?.cells[0]?.photoId;
-  const photo = photoId ? state.photos.find((p) => p.id === photoId) : undefined;
 
   useEffect(() => {
     const templateId = state.templateId;
-    if (!templateId || !slide || !photo) return;
+    if (!templateId || !slide) return;
+
+    const layered = templateId === "layered-prints" && slide.layeredPrints;
+    if (!layered && !slide.cells[0]?.photoId) return;
+
     const slideIndex = state.slides.findIndex((s) => s.id === slide.id);
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      const photosById = new Map([[photo.id, photo]]);
+      const photosById = new Map(state.photos.map((p) => [p.id, p]));
       void renderSlidePreviewDataUrl(slide, photosById, {
         filter: state.filter,
         borderWidth: state.borderWidth,
@@ -32,7 +34,7 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [slide, photo, state.slides, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
+  }, [slide, state.photos, state.slides, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
 
   return url;
 }
