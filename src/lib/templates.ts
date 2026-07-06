@@ -24,7 +24,7 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "layered-prints",
     name: "Layered prints",
-    description: "Snapshots scattered on a scene",
+    description: "Snapshots on a scene",
     icon: "layers",
   },
 ];

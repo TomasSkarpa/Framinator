@@ -155,7 +155,9 @@ export function TemplatePicker() {
                       {ICONS[t.icon]}
                       <CardTitle className="text-sm">{t.name}</CardTitle>
                     </div>
-                    <CardDescription>{t.description}</CardDescription>
+                    <CardDescription className="line-clamp-1 text-xs">
+                      {t.description}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <TemplatePreview templateId={t.id} />
