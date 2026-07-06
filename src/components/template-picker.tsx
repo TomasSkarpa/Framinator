@@ -114,9 +114,10 @@ export function TemplatePicker() {
           <button
             type="button"
             onClick={() => setExpanded(false)}
+            data-testid="template-picker-done"
             className={cn(
               pressable,
-              "rounded-lg px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:bg-zinc-700",
+              "cursor-pointer rounded-lg px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 active:bg-zinc-700",
             )}
           >
             Done
