@@ -6,6 +6,7 @@ import {
   PREVIEW_MAX_DPR,
   type AspectRatio,
 } from "./constants";
+import { blurCanvas, supportsCanvasFilter } from "./canvas-blur";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
 import { panoramaSpreadIndex } from "./layered-prints-panorama";
@@ -372,10 +373,32 @@ async function drawBlurredCoverWithLut(
   blurPx: number,
 ) {
   const pad = blurPx * 2;
-  ctx.save();
-  ctx.filter = `blur(${blurPx}px)`;
-  await drawCoverWithLut(ctx, img, crop, dx - pad, dy - pad, dw + pad * 2, dh + pad * 2, lut);
-  ctx.restore();
+  const bx = dx - pad;
+  const by = dy - pad;
+  const bw = dw + pad * 2;
+  const bh = dh + pad * 2;
+
+  if (supportsCanvasFilter()) {
+    ctx.save();
+    ctx.filter = `blur(${blurPx}px)`;
+    await drawCoverWithLut(ctx, img, crop, bx, by, bw, bh, lut);
+    ctx.restore();
+    return;
+  }
+
+  const tw = Math.max(1, Math.round(bw));
+  const th = Math.max(1, Math.round(bh));
+  const tmp = document.createElement("canvas");
+  tmp.width = tw;
+  tmp.height = th;
+  const tctx = tmp.getContext("2d");
+  if (!tctx) {
+    await drawCoverWithLut(ctx, img, crop, bx, by, bw, bh, lut);
+    return;
+  }
+  await drawCoverWithLut(tctx, img, crop, 0, 0, tw, th, lut);
+  blurCanvas(tmp, blurPx);
+  ctx.drawImage(tmp, bx, by);
 }
 
 async function drawSoftFocus(

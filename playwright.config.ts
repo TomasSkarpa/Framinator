@@ -11,7 +11,14 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "webkit-iphone",
+      use: { ...devices["iPhone 16"] },
+      testMatch: "soft-focus.spec.ts",
+    },
+  ],
   globalSetup: "./e2e/global-setup.ts",
   webServer: {
     command: "npm run dev",

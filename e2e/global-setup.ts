@@ -1,5 +1,6 @@
-import { ensureE2eFixture } from "./ensure-fixture";
+import { ensureCheckerFixture, ensureE2eFixture } from "./ensure-fixture";
 
-export default function globalSetup() {
+export default async function globalSetup() {
   ensureE2eFixture();
+  await ensureCheckerFixture();
 }
