@@ -10,8 +10,6 @@ export const LAYERED_PRINTS_RECIPE: LayeredPrintsRole[] = [
   "diptych",
 ];
 
-const CAPTION_TEXT = "YOUR CAPTION";
-
 function slotsForRole(role: LayeredPrintsRole): number {
   if (role === "hero") return 2;
   if (role === "diptych") return 3;
@@ -70,7 +68,6 @@ function captionLayout(p1Id?: string, p2Id?: string): LayeredPrintsLayout {
       printSpec(p1Id, { xPct: 8, yPct: 5, wPct: 84, hPct: 38 }),
       printSpec(p2Id, { xPct: 8, yPct: 46, wPct: 84, hPct: 38 }),
     ],
-    caption: CAPTION_TEXT,
   };
 }
 

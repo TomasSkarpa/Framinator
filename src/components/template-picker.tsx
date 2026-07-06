@@ -151,11 +151,11 @@ export function TemplatePicker() {
                   )}
                 >
                   <CardHeader className="pb-2">
-                    <div className="flex items-center gap-2 text-zinc-200">
-                      {ICONS[t.icon]}
-                      <CardTitle className="text-sm">{t.name}</CardTitle>
+                    <div className="flex min-w-0 items-center gap-2 text-zinc-200">
+                      <span className="shrink-0">{ICONS[t.icon]}</span>
+                      <CardTitle className="min-w-0 truncate text-sm">{t.name}</CardTitle>
                     </div>
-                    <CardDescription className="line-clamp-1 text-xs">
+                    <CardDescription className="truncate text-xs">
                       {t.description}
                     </CardDescription>
                   </CardHeader>
