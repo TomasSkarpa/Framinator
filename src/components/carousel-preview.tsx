@@ -165,26 +165,27 @@ function InstagramFeedPreview({
             <div className="absolute right-2.5 top-2.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[11px] text-white">
               {slideIndex + 1}/{slideCount}
             </div>
-            <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 gap-1">
-              {Array.from({ length: slideCount }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => onSelectSlide(i)}
-                  className={cn(
-                    pressable,
-                    "h-4 w-4 rounded-full transition-transform",
-                    i === slideIndex
-                      ? "bg-blue-500 active:scale-90"
-                      : "bg-white/70 hover:scale-110 active:scale-90",
-                  )}
-                  aria-label={`Go to slide ${i + 1}`}
-                />
-              ))}
-            </div>
           </>
         )}
       </div>
+
+      {hasCarousel && (
+        <div className="flex justify-center gap-[5px] py-2" data-testid="feed-preview-dots">
+          {Array.from({ length: slideCount }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSelectSlide(i)}
+              className={cn(
+                pressable,
+                "h-[6px] w-[6px] rounded-full transition-opacity",
+                i === slideIndex ? "bg-[#0095f6]" : "bg-[#dbdbdb] hover:opacity-80 active:opacity-60",
+              )}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center justify-between px-3 pt-2.5">
         <div className="flex items-center gap-3.5">
