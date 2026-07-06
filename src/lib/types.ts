@@ -23,7 +23,8 @@ export type FilterPreset =
 export type TemplateId =
   | "framed-polaroid"
   | "clean-carousel"
-  | "kodak-strip";
+  | "kodak-strip"
+  | "layered-prints";
 
 export type PhotoCrop = {
   offsetX: number;
@@ -44,9 +45,32 @@ export type SlideCell = {
   photoId: string;
 };
 
+/** White-bordered print on a layered-prints slide (% of canvas). */
+export type PrintLayer = {
+  photoId: string;
+  xPct: number;
+  yPct: number;
+  wPct: number;
+  hPct: number;
+  rotationDeg?: number;
+  borderPx?: number;
+  shadow?: boolean;
+};
+
+export type LayeredPrintsBackground =
+  | { kind: "photo"; photoId: string }
+  | { kind: "paper"; color: string };
+
+export type LayeredPrintsLayout = {
+  background: LayeredPrintsBackground;
+  prints: PrintLayer[];
+  caption?: string;
+};
+
 export type Slide = {
   id: string;
   cells: SlideCell[];
+  layeredPrints?: LayeredPrintsLayout;
 };
 
 export type ProjectState = {

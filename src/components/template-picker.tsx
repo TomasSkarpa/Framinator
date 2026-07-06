@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, Film, Hash, Image } from "lucide-react";
+import { ChevronDown, Film, Hash, Image, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
 import { useProject } from "@/lib/project-context";
@@ -13,6 +13,7 @@ const ICONS: Record<string, ReactNode> = {
   frame: <Hash className="h-5 w-5" />,
   carousel: <Image className="h-5 w-5" />,
   film: <Film className="h-5 w-5" />,
+  layers: <Layers className="h-5 w-5" />,
 };
 
 function TemplatePreview({

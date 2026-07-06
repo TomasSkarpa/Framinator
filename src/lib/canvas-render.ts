@@ -7,7 +7,7 @@ import {
   type AspectRatio,
 } from "./constants";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
-import type { FilterPreset, PhotoItem, Slide, TemplateId } from "./types";
+import type { FilterPreset, LayeredPrintsLayout, PhotoItem, PrintLayer, Slide, TemplateId } from "./types";
 
 type RenderOpts = {
   width?: number;
@@ -270,6 +270,95 @@ async function drawKodakStrip(
   drawKodakMarkings(ctx, frameX, frameY, frameW, frameH, border, labelW, frameNo);
 }
 
+async function drawPrintLayer(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoItem["crop"],
+  layer: PrintLayer,
+  canvasW: number,
+  canvasH: number,
+  lut: Lut3D | null,
+) {
+  const border = layer.borderPx ?? Math.round(canvasW * 0.0148);
+  const outerX = (layer.xPct / 100) * canvasW;
+  const outerY = (layer.yPct / 100) * canvasH;
+  const outerW = (layer.wPct / 100) * canvasW;
+  const outerH = (layer.hPct / 100) * canvasH;
+
+  ctx.save();
+  if (layer.rotationDeg) {
+    const cx = outerX + outerW / 2;
+    const cy = outerY + outerH / 2;
+    ctx.translate(cx, cy);
+    ctx.rotate((layer.rotationDeg * Math.PI) / 180);
+    ctx.translate(-cx, -cy);
+  }
+
+  if (layer.shadow) {
+    ctx.shadowColor = "rgba(0,0,0,0.35)";
+    ctx.shadowBlur = canvasW * 0.018;
+    ctx.shadowOffsetY = canvasW * 0.006;
+  }
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(outerX, outerY, outerW, outerH);
+  ctx.shadowColor = "transparent";
+
+  const innerX = outerX + border;
+  const innerY = outerY + border;
+  const innerW = outerW - border * 2;
+  const innerH = outerH - border * 2;
+
+  ctx.beginPath();
+  ctx.rect(innerX, innerY, innerW, innerH);
+  ctx.clip();
+  await drawCoverWithLut(ctx, img, crop, innerX, innerY, innerW, innerH, lut);
+  ctx.restore();
+}
+
+function drawLayeredCaption(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  canvasW: number,
+  canvasH: number,
+) {
+  ctx.fillStyle = "#111111";
+  ctx.font = `700 ${Math.round(canvasW * 0.052)}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text.toUpperCase(), canvasW / 2, canvasH * 0.93);
+}
+
+async function drawLayeredPrints(
+  ctx: CanvasRenderingContext2D,
+  layout: LayeredPrintsLayout,
+  photosById: Map<string, PhotoItem>,
+  w: number,
+  h: number,
+  lut: Lut3D | null,
+) {
+  if (layout.background.kind === "paper") {
+    ctx.fillStyle = layout.background.color;
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    const bg = photosById.get(layout.background.photoId);
+    if (bg) {
+      const img = await loadImage(bg.objectUrl);
+      await drawCoverWithLut(ctx, img, bg.crop, 0, 0, w, h, lut);
+    }
+  }
+
+  for (const layer of layout.prints) {
+    const photo = photosById.get(layer.photoId);
+    if (!photo) continue;
+    const img = await loadImage(photo.objectUrl);
+    await drawPrintLayer(ctx, img, photo.crop, layer, w, h, lut);
+  }
+
+  if (layout.caption) {
+    drawLayeredCaption(ctx, layout.caption, w, h);
+  }
+}
+
 export async function renderSlideToCanvas(
   slide: Slide,
   photosById: Map<string, PhotoItem>,
@@ -283,6 +372,13 @@ export async function renderSlideToCanvas(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas unsupported");
 
+  const lut = await loadLut(opts.filter);
+
+  if (opts.templateId === "layered-prints" && slide.layeredPrints) {
+    await drawLayeredPrints(ctx, slide.layeredPrints, photosById, w, h, lut);
+    return canvas;
+  }
+
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, w, h);
 
@@ -293,7 +389,6 @@ export async function renderSlideToCanvas(
   if (!photo) return canvas;
 
   const img = await loadImage(photo.objectUrl);
-  const lut = await loadLut(opts.filter);
 
   if (opts.templateId === "framed-polaroid") {
     const frame = drawPolaroidFrame(ctx, w, h, opts.borderWidth);

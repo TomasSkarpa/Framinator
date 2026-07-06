@@ -1,6 +1,11 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { AspectRatio } from "./constants";
-import type { FilterPreset, PhotoCrop, TemplateId } from "./types";
+import type {
+  FilterPreset,
+  LayeredPrintsLayout,
+  PhotoCrop,
+  TemplateId,
+} from "./types";
 
 type StoredPhoto = {
   id: string;
@@ -12,6 +17,7 @@ type StoredPhoto = {
 type StoredSlide = {
   id: string;
   cells: { photoId: string }[];
+  layeredPrints?: LayeredPrintsLayout;
 };
 
 export type StoredProject = {
