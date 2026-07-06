@@ -7,6 +7,7 @@ import {
   type AspectRatio,
 } from "./constants";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
+import { HERO_PRINT_FRAME } from "./layered-prints";
 import type { FilterPreset, LayeredPrintsLayout, PhotoItem, PrintLayer, Slide, TemplateId } from "./types";
 
 type RenderOpts = {
@@ -350,6 +351,38 @@ function drawLayeredCaption(
   ctx.fillText(text.toUpperCase(), canvasW / 2, canvasH * 0.93);
 }
 
+async function drawBlurredCoverWithLut(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoItem["crop"],
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  lut: Lut3D | null,
+  blurPx: number,
+) {
+  const pad = blurPx * 2;
+  ctx.save();
+  ctx.filter = `blur(${blurPx}px)`;
+  await drawCoverWithLut(ctx, img, crop, dx - pad, dy - pad, dw + pad * 2, dh + pad * 2, lut);
+  ctx.restore();
+}
+
+async function drawSoftFocus(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoItem["crop"],
+  w: number,
+  h: number,
+  lut: Lut3D | null,
+) {
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, w, h);
+  await drawBlurredCoverWithLut(ctx, img, crop, 0, 0, w, h, lut, w * 0.035);
+  await drawPrintLayer(ctx, img, crop, { photoId: "", ...HERO_PRINT_FRAME }, w, h, lut);
+}
+
 async function drawLayeredPrints(
   ctx: CanvasRenderingContext2D,
   layout: LayeredPrintsLayout,
@@ -430,6 +463,8 @@ export async function renderSlideToCanvas(
     await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
   } else if (opts.templateId === "kodak-strip") {
     await drawKodakStrip(ctx, w, h, img, photo.crop, lut, opts.slideIndex ?? 0);
+  } else if (opts.templateId === "soft-focus") {
+    await drawSoftFocus(ctx, img, photo.crop, w, h, lut);
   } else {
     await drawCoverWithLut(ctx, img, photo.crop, 0, 0, w, h, lut);
   }

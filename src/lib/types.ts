@@ -24,7 +24,8 @@ export type TemplateId =
   | "framed-polaroid"
   | "clean-carousel"
   | "kodak-strip"
-  | "layered-prints";
+  | "layered-prints"
+  | "soft-focus";
 
 export type PhotoCrop = {
   offsetX: number;

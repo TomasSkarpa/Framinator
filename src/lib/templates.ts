@@ -27,6 +27,12 @@ export const TEMPLATES: TemplateMeta[] = [
     description: "Snapshots on a scene",
     icon: "layers",
   },
+  {
+    id: "soft-focus",
+    name: "Soft focus",
+    description: "Blurred backdrop, framed photo",
+    icon: "focus",
+  },
 ];
 
 const VALID_TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));

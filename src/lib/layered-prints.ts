@@ -28,19 +28,20 @@ function printSpec(
   return photoId ? { photoId, ...spec } : { ...spec };
 }
 
+/** Centered white-bordered print used on hero layered-prints slides and soft-focus. */
+export const HERO_PRINT_FRAME: Omit<PrintLayer, "photoId"> = {
+  xPct: 17.5,
+  yPct: 18.9,
+  wPct: 65,
+  hPct: 62.2,
+  shadow: true,
+};
+
 function heroLayout(bgId?: string, printId?: string): LayeredPrintsLayout {
   return {
     role: "hero",
     background: { kind: "photo", photoId: bgId },
-    prints: [
-      printSpec(printId, {
-        xPct: 17.5,
-        yPct: 18.9,
-        wPct: 65,
-        hPct: 62.2,
-        shadow: true,
-      }),
-    ],
+    prints: [printSpec(printId, HERO_PRINT_FRAME)],
   };
 }
 
