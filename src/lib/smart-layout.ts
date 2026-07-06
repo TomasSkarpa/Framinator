@@ -1,4 +1,4 @@
-import { CROP_SCALE_MAX, CROP_SCALE_MIN, DEFAULT_PHOTO_CROP } from "./constants";
+import { clampCrop as clampCropValues } from "./crop-math";
 import { normalizeFilter } from "./filters";
 import { reflowLayeredPrintsSlides } from "./layered-prints";
 import { isLayeredSpreadTemplate, reflowSpreadSlides } from "./layered-spreads";
@@ -74,11 +74,7 @@ export type SmartLayoutRequestPhoto = {
 };
 
 export function clampCrop(crop: SmartLayoutCrop): PhotoCrop {
-  return {
-    offsetX: Math.round(Math.max(-200, Math.min(200, crop.offsetX))),
-    offsetY: Math.round(Math.max(-200, Math.min(200, crop.offsetY))),
-    scale: Math.max(CROP_SCALE_MIN, Math.min(CROP_SCALE_MAX, crop.scale)),
-  };
+  return clampCropValues(crop);
 }
 
 export function reorderByIds<T extends { id: string }>(items: T[], order: string[]): T[] {
@@ -237,13 +233,13 @@ ${slideRoles.length > 0 ? slideRoles.map((r, i) => `${i}: ${r}`).join("\n") : "O
 Return JSON only:
 - photoOrder: number[] — photo indices for tray fill order (leftmost fills first frame)
 - slideOrder: number[] — optional carousel slide order for story flow
-- crops: array of { photoIndex, offsetX (-200..200), offsetY (-200..200), scale (0.25..2) } for photos that need crop tweaks
+- crops: array of { photoIndex, offsetX (-200..200), offsetY (-200..200), scale (0.25..2) } for photos that need crop tweaks. On layered templates the same photoIndex may appear as background and print; still use one crop per photo (user refines per frame later). Suggest crops for faces, horizons, and wide backgrounds.
 - templateId: string — only if no template or a better fit exists
 - filter: string — optional film filter id (portra-400, velvia, classic-chrome, none, etc.)
 - postDescription: string — one sentence: what this carousel post will feel like to a viewer (story/mood, no photo numbers or template names)
 - whyArranged: string — one sentence: why you ordered and placed photos this way (plain language, no indices or jargon)
 
-Prioritize: strong hook on slide 1, chronological flow when dates implied, pair similar shots on diptych slides, wide landscapes as backgrounds on hero slides.`;
+Prioritize: strong hook on slide 1, chronological flow when dates implied, pair similar shots on diptych slides, wide landscapes as backgrounds on hero slides. For each photo, suggest offset/scale so subjects are centered in their primary frame (portraits upright, horizons level).`;
 }
 
 // ponytail: dev-only guard; fails if reorder/apply breaks id mapping

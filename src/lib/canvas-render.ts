@@ -6,6 +6,7 @@ import {
   PREVIEW_MAX_DPR,
   type AspectRatio,
 } from "./constants";
+import { drawCover } from "./crop-math";
 import { blurCanvas, supportsCanvasFilter } from "./canvas-blur";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
@@ -45,53 +46,6 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     imageCache.set(src, pending);
   }
   return pending;
-}
-
-function drawCover(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  crop: PhotoItem["crop"],
-  dx: number,
-  dy: number,
-  dw: number,
-  dh: number,
-) {
-  const iw = img.naturalWidth;
-  const ih = img.naturalHeight;
-  const coverScale = Math.max(dw / iw, dh / ih);
-  const eff = coverScale * crop.scale;
-  const sw = dw / eff;
-  const sh = dh / eff;
-
-  if (sw >= iw && sh >= ih) {
-    const fit = Math.min(dw / iw, dh / ih);
-    const w = iw * fit;
-    const h = ih * fit;
-    ctx.drawImage(img, 0, 0, iw, ih, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
-    return;
-  }
-
-  const sx = (iw - sw) / 2 - crop.offsetX / eff;
-  const sy = (ih - sh) / 2 - crop.offsetY / eff;
-  const x0 = Math.max(0, sx);
-  const y0 = Math.max(0, sy);
-  const x1 = Math.min(iw, sx + sw);
-  const y1 = Math.min(ih, sy + sh);
-  const csw = x1 - x0;
-  const csh = y1 - y0;
-  if (csw <= 0 || csh <= 0) return;
-
-  ctx.drawImage(
-    img,
-    x0,
-    y0,
-    csw,
-    csh,
-    dx + ((x0 - sx) / sw) * dw,
-    dy + ((y0 - sy) / sh) * dh,
-    (csw / sw) * dw,
-    (csh / sh) * dh,
-  );
 }
 
 async function drawCoverWithLut(

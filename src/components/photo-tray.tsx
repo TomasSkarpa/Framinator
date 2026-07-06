@@ -30,10 +30,12 @@ function SortablePhoto({
   photo,
   index,
   onRemove,
+  onAdjust,
 }: {
   photo: PhotoItem;
   index: number;
   onRemove: () => void;
+  onAdjust: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: photo.id,
@@ -72,6 +74,18 @@ function SortablePhoto({
       </button>
       <button
         type="button"
+        onClick={onAdjust}
+        className={cn(
+          pressable,
+          "absolute bottom-1 left-1/2 z-10 -translate-x-1/2 rounded bg-blue-600/90 px-2 py-0.5 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-blue-600 active:bg-blue-700",
+        )}
+        data-testid={`photo-tray-adjust-${index}`}
+        aria-label={`Adjust crop for ${photo.name}`}
+      >
+        Adjust
+      </button>
+      <button
+        type="button"
         onClick={onRemove}
         className={cn(
           pressable,
@@ -86,7 +100,7 @@ function SortablePhoto({
 }
 
 export function PhotoTray() {
-  const { state, addPhotos, removePhoto, reorderPhotos } = useProject();
+  const { state, addPhotos, removePhoto, reorderPhotos, startCropForPhoto } = useProject();
   const { toast } = useToast();
   const [importing, setImporting] = useState(false);
 
@@ -182,6 +196,7 @@ export function PhotoTray() {
                   photo={photo}
                   index={index}
                   onRemove={() => removePhoto(photo.id)}
+                  onAdjust={() => startCropForPhoto(photo.id)}
                 />
               ))}
             </SortableContext>

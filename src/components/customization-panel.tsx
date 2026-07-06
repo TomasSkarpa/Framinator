@@ -7,6 +7,7 @@ import { CROP_SCALE_MAX, CROP_SCALE_MIN, DEFAULT_PHOTO_CROP } from "@/lib/consta
 import { FILTERS } from "@/lib/filters";
 import { preloadLuts } from "@/lib/lut";
 import { useProject } from "@/lib/project-context";
+import type { CropPlacementKey } from "@/lib/slide-crop";
 import { cn, pressable } from "@/lib/utils";
 
 export function CustomizationPanel() {
@@ -18,6 +19,12 @@ export function CustomizationPanel() {
     setBorder,
     setAspect,
     updateCrop,
+    activeCropPhoto,
+    slideCropOptions,
+    cropPlacementKey,
+    setCropPlacement,
+    enterCropMode,
+    cropModeActive,
   } = useProject();
 
   useEffect(() => {
@@ -26,12 +33,10 @@ export function CustomizationPanel() {
 
   if (!state.templateId) return null;
 
-  const photoId = selectedSlide?.cells[0]?.photoId;
-  const activePhoto = photoId ? state.photos.find((p) => p.id === photoId) : undefined;
   const cropIsDefault =
-    activePhoto?.crop.offsetX === DEFAULT_PHOTO_CROP.offsetX &&
-    activePhoto?.crop.offsetY === DEFAULT_PHOTO_CROP.offsetY &&
-    activePhoto?.crop.scale === DEFAULT_PHOTO_CROP.scale;
+    activeCropPhoto?.crop.offsetX === DEFAULT_PHOTO_CROP.offsetX &&
+    activeCropPhoto?.crop.offsetY === DEFAULT_PHOTO_CROP.offsetY &&
+    activeCropPhoto?.crop.scale === DEFAULT_PHOTO_CROP.scale;
 
   return (
     <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
@@ -44,30 +49,71 @@ export function CustomizationPanel() {
         </h2>
       </div>
 
-      {activePhoto ? (
+      {activeCropPhoto ? (
         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-xs font-medium text-zinc-300">This slide</label>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={cropIsDefault}
-              onClick={() => updateCrop(activePhoto.id, { ...DEFAULT_PHOTO_CROP })}
-            >
-              Reset position
-            </Button>
+            <label className="text-xs font-medium text-zinc-300">Crop</label>
+            <div className="flex gap-2">
+              {!cropModeActive && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  data-testid="customize-enter-crop"
+                  onClick={enterCropMode}
+                >
+                  Adjust on preview
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                data-testid="crop-reset"
+                disabled={cropIsDefault}
+                onClick={() => updateCrop(activeCropPhoto.id, { ...DEFAULT_PHOTO_CROP })}
+              >
+                Reset position
+              </Button>
+            </div>
           </div>
-          <p className="text-[11px] text-zinc-500">Crop and zoom for slide {selectedSlideIndex + 1}</p>
-          <div className="grid grid-cols-2 gap-2 pt-1">
+
+          {slideCropOptions.length > 1 && (
+            <div className="flex flex-wrap gap-2" data-testid="slide-crop-photo-picker">
+              {slideCropOptions.map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  data-testid={`crop-target-${opt.key}`}
+                  onClick={() => setCropPlacement(opt.key as CropPlacementKey)}
+                  className={cn(
+                    pressable,
+                    "rounded-lg px-2.5 py-1 text-xs",
+                    cropPlacementKey === opt.key
+                      ? "bg-blue-600 text-white active:bg-blue-700"
+                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <p className="text-[11px] text-zinc-500">
+            {slideCropOptions.length > 1
+              ? `Crop for ${slideCropOptions.find((o) => o.key === cropPlacementKey)?.label ?? "photo"} on slide ${selectedSlideIndex + 1}`
+              : `Crop and zoom for slide ${selectedSlideIndex + 1}`}
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1" data-testid="crop-sliders">
             <div>
               <span className="text-[10px] text-zinc-500">Horizontal</span>
               <Slider
                 min={-200}
                 max={200}
                 step={1}
-                value={[activePhoto.crop.offsetX]}
+                data-testid="crop-slider-horizontal"
+                value={[activeCropPhoto.crop.offsetX]}
                 onValueChange={([v]) =>
-                  updateCrop(activePhoto.id, { ...activePhoto.crop, offsetX: v })
+                  updateCrop(activeCropPhoto.id, { ...activeCropPhoto.crop, offsetX: v })
                 }
               />
             </div>
@@ -77,27 +123,39 @@ export function CustomizationPanel() {
                 min={-200}
                 max={200}
                 step={1}
-                value={[activePhoto.crop.offsetY]}
+                data-testid="crop-slider-vertical"
+                value={[activeCropPhoto.crop.offsetY]}
                 onValueChange={([v]) =>
-                  updateCrop(activePhoto.id, { ...activePhoto.crop, offsetY: v })
+                  updateCrop(activeCropPhoto.id, { ...activeCropPhoto.crop, offsetY: v })
                 }
               />
             </div>
             <div className="col-span-2">
               <span className="text-[10px] text-zinc-500">
-                Zoom · {activePhoto.crop.scale.toFixed(2)}×
+                Zoom · {activeCropPhoto.crop.scale.toFixed(2)}×
               </span>
               <Slider
                 min={CROP_SCALE_MIN}
                 max={CROP_SCALE_MAX}
                 step={0.01}
-                value={[activePhoto.crop.scale]}
+                data-testid="crop-slider-zoom"
+                value={[activeCropPhoto.crop.scale]}
                 onValueChange={([v]) =>
-                  updateCrop(activePhoto.id, { ...activePhoto.crop, scale: v })
+                  updateCrop(activeCropPhoto.id, { ...activeCropPhoto.crop, scale: v })
                 }
               />
             </div>
           </div>
+          <p
+            className="text-[10px] text-zinc-600"
+            data-testid="crop-offset-display"
+            data-offset-x={activeCropPhoto.crop.offsetX}
+            data-offset-y={activeCropPhoto.crop.offsetY}
+            data-scale={activeCropPhoto.crop.scale}
+          >
+            offset {activeCropPhoto.crop.offsetX}, {activeCropPhoto.crop.offsetY} · scale{" "}
+            {activeCropPhoto.crop.scale.toFixed(2)}
+          </p>
         </div>
       ) : (
         <p className="text-xs text-zinc-500">Select a slide above to adjust its crop.</p>

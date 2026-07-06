@@ -19,6 +19,11 @@ import { isLayeredSpreadTemplate, reflowSpreadSlides } from "@/lib/layered-sprea
 import { buildSlides, normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
 import { preparePhoto } from "@/lib/prepare-photo";
 import { applySmartLayoutPlan, type SmartLayoutPlan } from "@/lib/smart-layout";
+import {
+  findSlideUsingPhoto,
+  slideCropTargets,
+  type CropPlacementKey,
+} from "@/lib/slide-crop";
 import type {
   FilterPreset,
   PhotoItem,
@@ -156,6 +161,14 @@ type ProjectContextValue = {
   selectedSlideIndex: number;
   selectedSlide: Slide | null;
   selectSlide: (slideId: string) => void;
+  cropPlacementKey: CropPlacementKey;
+  cropModeActive: boolean;
+  activeCropPhoto: PhotoItem | null;
+  slideCropOptions: { key: CropPlacementKey; photoId: string; label: string }[];
+  setCropPlacement: (key: CropPlacementKey) => void;
+  enterCropMode: () => void;
+  exitCropMode: () => void;
+  startCropForPhoto: (photoId: string) => void;
   addPhotos: (files: File[]) => Promise<{ added: number; rejected: number; limitHit: boolean }>;
   removePhoto: (id: string) => void;
   setTemplate: (id: TemplateId) => void;
@@ -181,6 +194,8 @@ const ProjectContext = createContext<ProjectContextValue | null>(null);
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
+  const [cropPlacementKey, setCropPlacementKey] = useState<CropPlacementKey>("main");
+  const [cropModeActive, setCropModeActive] = useState(false);
   const [resumeAvailable, setResumeAvailable] = useState(false);
   const pendingRestore = useRef<ProjectState | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -205,9 +220,21 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const selectedSlide = state.slides[selectedSlideIndex] ?? null;
 
+  const slideCropOptions = useMemo(
+    () => (selectedSlide ? slideCropTargets(selectedSlide) : []),
+    [selectedSlide],
+  );
+
+  const activeCropPhoto = useMemo(() => {
+    const match = slideCropOptions.find((t) => t.key === cropPlacementKey);
+    const photoId = match?.photoId ?? slideCropOptions[0]?.photoId;
+    return photoId ? state.photos.find((p) => p.id === photoId) ?? null : null;
+  }, [cropPlacementKey, slideCropOptions, state.photos]);
+
   useEffect(() => {
     if (state.slides.length === 0) {
       setSelectedSlideId(null);
+      setCropModeActive(false);
       return;
     }
     if (!selectedSlideId || !state.slides.some((s) => s.id === selectedSlideId)) {
@@ -215,9 +242,39 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   }, [state.slides, selectedSlideId]);
 
+  useEffect(() => {
+    if (slideCropOptions.length === 0) return;
+    if (!slideCropOptions.some((t) => t.key === cropPlacementKey)) {
+      setCropPlacementKey(slideCropOptions[0].key);
+    }
+  }, [cropPlacementKey, slideCropOptions]);
+
   const selectSlide = useCallback((slideId: string) => {
     setSelectedSlideId(slideId);
   }, []);
+
+  const setCropPlacement = useCallback((key: CropPlacementKey) => {
+    setCropPlacementKey(key);
+  }, []);
+
+  const enterCropMode = useCallback(() => {
+    if (activeCropPhoto) setCropModeActive(true);
+  }, [activeCropPhoto]);
+
+  const exitCropMode = useCallback(() => {
+    setCropModeActive(false);
+  }, []);
+
+  const startCropForPhoto = useCallback(
+    (photoId: string) => {
+      const hit = findSlideUsingPhoto(state.slides, photoId);
+      if (!hit) return;
+      setSelectedSlideId(hit.slideId);
+      setCropPlacementKey(hit.target.key);
+      setCropModeActive(true);
+    },
+    [state.slides],
+  );
 
   useEffect(() => {
     void (async () => {
@@ -312,6 +369,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     selectedSlideIndex,
     selectedSlide,
     selectSlide,
+    cropPlacementKey,
+    cropModeActive,
+    activeCropPhoto,
+    slideCropOptions,
+    setCropPlacement,
+    enterCropMode,
+    exitCropMode,
+    startCropForPhoto,
     addPhotos,
     removePhoto: (id) => dispatch({ type: "REMOVE_PHOTO", photoId: id }),
     setTemplate: (id) => dispatch({ type: "SET_TEMPLATE", templateId: id }),
