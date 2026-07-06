@@ -125,7 +125,7 @@ export function TemplatePicker() {
           </button>
         )}
       </div>
-      <div className="-mx-4 overflow-x-auto scroll-smooth px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-4 overflow-x-auto scroll-smooth px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex snap-x snap-mandatory gap-3">
           {TEMPLATES.map((t) => {
             const selected = state.templateId === t.id;
@@ -140,15 +140,13 @@ export function TemplatePicker() {
                 }}
                 className={cn(
                   pressable,
-                  "w-[min(72vw,200px)] shrink-0 snap-center text-left",
+                  "w-[min(72vw,200px)] shrink-0 snap-center rounded-xl text-left",
+                  selected && "relative z-10 ring-2 ring-blue-500 ring-offset-2 ring-offset-zinc-950",
                 )}
                 data-testid={`template-${t.id}`}
               >
                 <Card
-                  className={cn(
-                    "transition-[border-color,box-shadow] duration-150 hover:border-zinc-600 active:border-zinc-500",
-                    selected && "border-blue-500 ring-1 ring-blue-500",
-                  )}
+                  className="transition-[border-color,box-shadow] duration-150 hover:border-zinc-600 active:border-zinc-500"
                 >
                   <CardHeader className="pb-2">
                     <div className="flex min-w-0 items-center gap-2 text-zinc-200">
