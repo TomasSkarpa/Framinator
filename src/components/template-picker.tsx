@@ -95,7 +95,7 @@ export function TemplatePicker() {
             onClick={() => setExpanded(true)}
             className={cn(
               pressable,
-              "flex shrink-0 items-center gap-1 rounded-lg bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700",
+              "flex shrink-0 items-center gap-1 rounded-lg bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
             )}
           >
             Change
@@ -114,7 +114,10 @@ export function TemplatePicker() {
           <button
             type="button"
             onClick={() => setExpanded(false)}
-            className="text-xs text-zinc-500 hover:text-zinc-300"
+            className={cn(
+              pressable,
+              "rounded-lg px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:bg-zinc-700",
+            )}
           >
             Done
           </button>
