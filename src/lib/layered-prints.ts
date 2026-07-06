@@ -1,90 +1,148 @@
-import type { LayeredPrintsLayout, PhotoItem, Slide } from "./types";
+import type { LayeredPrintsLayout, LayeredPrintsRole, PhotoItem, PrintLayer, Slide } from "./types";
 import { uid } from "./utils";
 
-type SlideRole = "hero" | "diptych" | "caption";
+export type { LayeredPrintsRole };
 
-const DEFAULT_RECIPE: SlideRole[] = ["hero", "caption", "diptych", "diptych"];
+export const LAYERED_PRINTS_RECIPE: LayeredPrintsRole[] = [
+  "hero",
+  "caption",
+  "diptych",
+  "diptych",
+];
 
-function slideCells(...photoIds: string[]) {
-  const seen = new Set<string>();
-  const cells: { photoId: string }[] = [];
-  for (const id of photoIds) {
-    if (!seen.has(id)) {
-      seen.add(id);
-      cells.push({ photoId: id });
-    }
-  }
-  return cells;
+const CAPTION_TEXT = "YOUR CAPTION";
+
+function slotsForRole(role: LayeredPrintsRole): number {
+  if (role === "hero") return 2;
+  if (role === "diptych") return 3;
+  return 2;
 }
 
-function heroSlide(bg: PhotoItem, print: PhotoItem): Slide {
-  const layout: LayeredPrintsLayout = {
-    background: { kind: "photo", photoId: bg.id },
+function totalSlots(roles: LayeredPrintsRole[]): number {
+  return roles.reduce((n, r) => n + slotsForRole(r), 0);
+}
+
+function printSpec(
+  photoId: string | undefined,
+  spec: Omit<PrintLayer, "photoId">,
+): PrintLayer {
+  return photoId ? { photoId, ...spec } : { ...spec };
+}
+
+function heroLayout(bgId?: string, printId?: string): LayeredPrintsLayout {
+  return {
+    role: "hero",
+    background: { kind: "photo", photoId: bgId },
     prints: [
-      {
-        photoId: print.id,
+      printSpec(printId, {
         xPct: 17.5,
         yPct: 18.9,
         wPct: 65,
         hPct: 62.2,
         shadow: true,
-      },
+      }),
     ],
   };
-  return { id: uid(), cells: slideCells(bg.id, print.id), layeredPrints: layout };
 }
 
-function diptychSlide(bg: PhotoItem, p1: PhotoItem, p2: PhotoItem): Slide {
-  const layout: LayeredPrintsLayout = {
-    background: { kind: "photo", photoId: bg.id },
+function diptychLayout(bgId?: string, p1Id?: string, p2Id?: string): LayeredPrintsLayout {
+  return {
+    role: "diptych",
+    background: { kind: "photo", photoId: bgId },
     prints: [
-      { photoId: p1.id, xPct: 38, yPct: 42, wPct: 27, hPct: 55, shadow: true },
-      { photoId: p2.id, xPct: 63, yPct: 40, wPct: 32, hPct: 60, shadow: true },
+      printSpec(p1Id, { xPct: 38, yPct: 42, wPct: 27, hPct: 55, shadow: true }),
+      printSpec(p2Id, {
+        xPct: 63,
+        yPct: 40,
+        wPct: 32,
+        hPct: 60,
+        shadow: true,
+      }),
     ],
   };
-  return { id: uid(), cells: slideCells(bg.id, p1.id, p2.id), layeredPrints: layout };
 }
 
-function captionSlide(p1: PhotoItem, p2: PhotoItem, caption: string): Slide {
-  const layout: LayeredPrintsLayout = {
+function captionLayout(p1Id?: string, p2Id?: string): LayeredPrintsLayout {
+  return {
+    role: "caption",
     background: { kind: "paper", color: "#ffffff" },
     prints: [
-      { photoId: p1.id, xPct: 8, yPct: 5, wPct: 84, hPct: 38 },
-      { photoId: p2.id, xPct: 8, yPct: 46, wPct: 84, hPct: 38 },
+      printSpec(p1Id, { xPct: 8, yPct: 5, wPct: 84, hPct: 38 }),
+      printSpec(p2Id, { xPct: 8, yPct: 46, wPct: 84, hPct: 38 }),
     ],
-    caption,
+    caption: CAPTION_TEXT,
   };
-  return { id: uid(), cells: slideCells(p1.id, p2.id), layeredPrints: layout };
 }
 
-/** hero -> caption -> diptych -> diptych, cycling until photos run out. */
-export function buildLayeredPrintsSlides(photos: PhotoItem[]): Slide[] {
-  const slides: Slide[] = [];
-  let i = 0;
-  let recipeIdx = 0;
+function layoutForRole(role: LayeredPrintsRole, slotIds: (string | undefined)[]): LayeredPrintsLayout {
+  if (role === "hero") return heroLayout(slotIds[0], slotIds[1]);
+  if (role === "diptych") return diptychLayout(slotIds[0], slotIds[1], slotIds[2]);
+  return captionLayout(slotIds[0], slotIds[1]);
+}
 
-  while (i < photos.length) {
-    const role = DEFAULT_RECIPE[recipeIdx % DEFAULT_RECIPE.length];
+export function cellsFromLayeredLayout(layout: LayeredPrintsLayout): { photoId: string }[] {
+  const ids: string[] = [];
+  const add = (id?: string) => {
+    if (id && !ids.includes(id)) ids.push(id);
+  };
+  if (layout.background.kind === "photo") add(layout.background.photoId);
+  for (const p of layout.prints) add(p.photoId);
+  return ids.map((photoId) => ({ photoId }));
+}
+
+function emptySlide(id: string, role: LayeredPrintsRole): Slide {
+  const layout = layoutForRole(role, []);
+  return { id, cells: [], layeredPrints: layout };
+}
+
+/** Grow slide roles until there are enough frames for every photo. */
+export function rolesForPhotoCount(
+  existing: LayeredPrintsRole[],
+  photoCount: number,
+): LayeredPrintsRole[] {
+  const roles = existing.length > 0 ? [...existing] : [LAYERED_PRINTS_RECIPE[0]];
+  let recipeIdx = roles.length;
+  while (totalSlots(roles) < photoCount) {
+    roles.push(LAYERED_PRINTS_RECIPE[recipeIdx % LAYERED_PRINTS_RECIPE.length]);
     recipeIdx++;
-
-    if (role === "hero") {
-      const bg = photos[i];
-      const print = photos[i + 1] ?? bg;
-      slides.push(heroSlide(bg, print));
-      i += photos[i + 1] ? 2 : 1;
-    } else if (role === "diptych") {
-      const bg = photos[i];
-      const p1 = photos[i + 1] ?? bg;
-      const p2 = photos[i + 2] ?? p1;
-      slides.push(diptychSlide(bg, p1, p2));
-      i += Math.min(3, photos.length - i);
-    } else {
-      const p1 = photos[i];
-      const p2 = photos[i + 1] ?? p1;
-      slides.push(captionSlide(p1, p2, "YOUR CAPTION"));
-      i += photos[i + 1] ? 2 : 1;
-    }
   }
+  return roles;
+}
 
-  return slides;
+/** Walk photos in order into slide frames (slide order = recipe order). */
+export function reflowLayeredPrintsSlides(slides: Slide[], photos: PhotoItem[]): Slide[] {
+  const photoIds = photos.map((p) => p.id);
+  let idx = 0;
+
+  return slides.map((slide) => {
+    const role = slide.layeredPrints?.role ?? "hero";
+    const count = slotsForRole(role);
+    const slotIds: (string | undefined)[] = [];
+    for (let s = 0; s < count; s++) {
+      slotIds.push(photoIds[idx]);
+      if (photoIds[idx]) idx++;
+    }
+    const layout = layoutForRole(role, slotIds);
+    const cells = cellsFromLayeredLayout(layout);
+    return { ...slide, layeredPrints: layout, cells };
+  });
+}
+
+/** Add slides / reflow photos. Preserves slide ids and order on reorder. */
+export function syncLayeredPrintsSlides(existing: Slide[], photos: PhotoItem[]): Slide[] {
+  const roles = rolesForPhotoCount(
+    existing.map((s) => s.layeredPrints?.role).filter((r): r is LayeredPrintsRole => !!r),
+    photos.length,
+  );
+  const slides = roles.map((role, i) => {
+    const prior = existing[i];
+    if (prior?.layeredPrints?.role === role) return prior;
+    return emptySlide(prior?.id ?? uid(), role);
+  });
+  return reflowLayeredPrintsSlides(slides, photos);
+}
+
+export function buildLayeredPrintsSlides(photos: PhotoItem[]): Slide[] {
+  if (photos.length === 0) return [];
+  return syncLayeredPrintsSlides([], photos);
 }

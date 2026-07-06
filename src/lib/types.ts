@@ -47,21 +47,25 @@ export type SlideCell = {
 
 /** White-bordered print on a layered-prints slide (% of canvas). */
 export type PrintLayer = {
-  photoId: string;
+  photoId?: string;
   xPct: number;
   yPct: number;
   wPct: number;
   hPct: number;
   rotationDeg?: number;
   borderPx?: number;
+  borderColor?: string;
   shadow?: boolean;
 };
 
+export type LayeredPrintsRole = "hero" | "diptych" | "caption";
+
 export type LayeredPrintsBackground =
-  | { kind: "photo"; photoId: string }
+  | { kind: "photo"; photoId?: string }
   | { kind: "paper"; color: string };
 
 export type LayeredPrintsLayout = {
+  role: LayeredPrintsRole;
   background: LayeredPrintsBackground;
   prints: PrintLayer[];
   caption?: string;

@@ -1,4 +1,4 @@
-import { buildLayeredPrintsSlides } from "./layered-prints";
+import { buildLayeredPrintsSlides, syncLayeredPrintsSlides } from "./layered-prints";
 import { uid } from "./utils";
 import type { PhotoItem, Slide, TemplateId, TemplateMeta } from "./types";
 
@@ -46,12 +46,18 @@ export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[
   }));
 }
 
-/** Rebuild all slides from the current photo list and template (auto-extend). */
+/** Rebuild slides; layered-prints preserves slide order and reflows photos. */
 export function slidesFromPhotos(
   templateId: TemplateId | null,
   photos: PhotoItem[],
+  existing: Slide[] = [],
 ): Slide[] {
   if (!templateId || photos.length === 0) return [];
+  if (templateId === "layered-prints") {
+    return existing.length > 0
+      ? syncLayeredPrintsSlides(existing, photos)
+      : buildLayeredPrintsSlides(photos);
+  }
   return buildSlides(templateId, photos);
 }
 
@@ -62,11 +68,11 @@ export function usedPhotoIds(slides: Slide[]): Set<string> {
     for (const cell of slide.cells) {
       ids.add(cell.photoId);
     }
-    if (slide.layeredPrints?.background.kind === "photo") {
+    if (slide.layeredPrints?.background.kind === "photo" && slide.layeredPrints.background.photoId) {
       ids.add(slide.layeredPrints.background.photoId);
     }
     for (const print of slide.layeredPrints?.prints ?? []) {
-      ids.add(print.photoId);
+      if (print.photoId) ids.add(print.photoId);
     }
   }
   return ids;

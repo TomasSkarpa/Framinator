@@ -270,6 +270,28 @@ async function drawKodakStrip(
   drawKodakMarkings(ctx, frameX, frameY, frameW, frameH, border, labelW, frameNo);
 }
 
+function drawEmptyFrame(
+  ctx: CanvasRenderingContext2D,
+  rect: { xPct: number; yPct: number; wPct: number; hPct: number },
+  canvasW: number,
+  canvasH: number,
+  onPaper = false,
+) {
+  const x = (rect.xPct / 100) * canvasW;
+  const y = (rect.yPct / 100) * canvasH;
+  const w = (rect.wPct / 100) * canvasW;
+  const h = (rect.hPct / 100) * canvasH;
+
+  ctx.save();
+  ctx.fillStyle = onPaper ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = onPaper ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.45)";
+  ctx.setLineDash([canvasW * 0.012, canvasW * 0.01]);
+  ctx.lineWidth = Math.max(2, canvasW * 0.003);
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+}
+
 async function drawPrintLayer(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -299,7 +321,7 @@ async function drawPrintLayer(
     ctx.shadowBlur = canvasW * 0.018;
     ctx.shadowOffsetY = canvasW * 0.006;
   }
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = layer.borderColor ?? "#ffffff";
   ctx.fillRect(outerX, outerY, outerW, outerH);
   ctx.shadowColor = "transparent";
 
@@ -336,22 +358,35 @@ async function drawLayeredPrints(
   h: number,
   lut: Lut3D | null,
 ) {
+  const onPaper = layout.background.kind === "paper";
+
   if (layout.background.kind === "paper") {
     ctx.fillStyle = layout.background.color;
     ctx.fillRect(0, 0, w, h);
-  } else {
+  } else if (layout.background.photoId) {
     const bg = photosById.get(layout.background.photoId);
     if (bg) {
       const img = await loadImage(bg.objectUrl);
       await drawCoverWithLut(ctx, img, bg.crop, 0, 0, w, h, lut);
+    } else {
+      drawEmptyFrame(ctx, { xPct: 0, yPct: 0, wPct: 100, hPct: 100 }, w, h, false);
     }
+  } else {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, w, h);
+    drawEmptyFrame(ctx, { xPct: 0, yPct: 0, wPct: 100, hPct: 100 }, w, h, false);
   }
 
   for (const layer of layout.prints) {
-    const photo = photosById.get(layer.photoId);
-    if (!photo) continue;
-    const img = await loadImage(photo.objectUrl);
-    await drawPrintLayer(ctx, img, photo.crop, layer, w, h, lut);
+    if (layer.photoId) {
+      const photo = photosById.get(layer.photoId);
+      if (photo) {
+        const img = await loadImage(photo.objectUrl);
+        await drawPrintLayer(ctx, img, photo.crop, layer, w, h, lut);
+        continue;
+      }
+    }
+    drawEmptyFrame(ctx, layer, w, h, onPaper);
   }
 
   if (layout.caption) {

@@ -14,6 +14,7 @@ import {
 import { DEFAULT_PHOTO_CROP, MAX_PHOTOS } from "@/lib/constants";
 import { clearProject, loadProject, saveProject } from "@/lib/persistence";
 import { normalizeFilter } from "@/lib/filters";
+import { reflowLayeredPrintsSlides } from "@/lib/layered-prints";
 import { normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
 import { preparePhoto } from "@/lib/prepare-photo";
 import type {
@@ -64,7 +65,7 @@ function reducer(state: ProjectState, action: Action): ProjectState {
       }));
       const photos = [...state.photos, ...added];
       const slides = state.templateId
-        ? slidesFromPhotos(state.templateId, photos)
+        ? slidesFromPhotos(state.templateId, photos, state.slides)
         : state.slides;
       return { ...state, photos, slides };
     }
@@ -76,7 +77,7 @@ function reducer(state: ProjectState, action: Action): ProjectState {
         photos.length === 0
           ? []
           : state.templateId
-            ? slidesFromPhotos(state.templateId, photos)
+            ? slidesFromPhotos(state.templateId, photos, state.slides)
             : state.slides;
       return {
         ...state,
@@ -96,6 +97,9 @@ function reducer(state: ProjectState, action: Action): ProjectState {
       const slides = [...state.slides];
       const [moved] = slides.splice(action.from, 1);
       slides.splice(action.to, 0, moved);
+      if (state.templateId === "layered-prints") {
+        return { ...state, slides: reflowLayeredPrintsSlides(slides, state.photos) };
+      }
       return { ...state, slides };
     }
     case "ASSIGN_PHOTO": {
