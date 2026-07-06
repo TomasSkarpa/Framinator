@@ -1,4 +1,5 @@
 import type { LayeredPrintsLayout, LayeredPrintsRole, PhotoItem, PrintLayer, Slide } from "./types";
+import { DEFAULT_PHOTO_CROP } from "./constants";
 import { uid } from "./utils";
 
 export type { LayeredPrintsRole };
@@ -92,12 +93,24 @@ function emptySlide(id: string, role: LayeredPrintsRole): Slide {
   return { id, cells: [], layeredPrints: layout };
 }
 
-/** Grow slide roles until there are enough frames for every photo. */
+/** Full recipe cycle with dashed placeholders (no photos assigned). */
+export function createRecipeSlides(roles: LayeredPrintsRole[] = LAYERED_PRINTS_RECIPE): Slide[] {
+  return roles.map((role) => emptySlide(uid(), role));
+}
+
+function rolesFromExisting(existing: Slide[]): LayeredPrintsRole[] {
+  const roles = existing
+    .map((s) => s.layeredPrints?.role)
+    .filter((r): r is LayeredPrintsRole => !!r);
+  return roles.length > 0 ? roles : [...LAYERED_PRINTS_RECIPE];
+}
+
+/** Grow slide roles until there are enough frames for every photo; always at least one recipe cycle. */
 export function rolesForPhotoCount(
   existing: LayeredPrintsRole[],
   photoCount: number,
 ): LayeredPrintsRole[] {
-  const roles = existing.length > 0 ? [...existing] : [LAYERED_PRINTS_RECIPE[0]];
+  const roles = existing.length > 0 ? [...existing] : [...LAYERED_PRINTS_RECIPE];
   let recipeIdx = roles.length;
   while (totalSlots(roles) < photoCount) {
     roles.push(LAYERED_PRINTS_RECIPE[recipeIdx % LAYERED_PRINTS_RECIPE.length]);
@@ -106,7 +119,7 @@ export function rolesForPhotoCount(
   return roles;
 }
 
-/** Walk photos in order into slide frames (slide order = recipe order). */
+/** Walk tray photos in order into slide frames (slide order unchanged). */
 export function reflowLayeredPrintsSlides(slides: Slide[], photos: PhotoItem[]): Slide[] {
   const photoIds = photos.map((p) => p.id);
   let idx = 0;
@@ -125,12 +138,10 @@ export function reflowLayeredPrintsSlides(slides: Slide[], photos: PhotoItem[]):
   });
 }
 
-/** Add slides / reflow photos. Preserves slide ids and order on reorder. */
+/** Extend slide list if needed, then reflow photos. Preserves slide ids and carousel order. */
 export function syncLayeredPrintsSlides(existing: Slide[], photos: PhotoItem[]): Slide[] {
-  const roles = rolesForPhotoCount(
-    existing.map((s) => s.layeredPrints?.role).filter((r): r is LayeredPrintsRole => !!r),
-    photos.length,
-  );
+  const existingRoles = rolesFromExisting(existing);
+  const roles = rolesForPhotoCount(existingRoles, photos.length);
   const slides = roles.map((role, i) => {
     const prior = existing[i];
     if (prior?.layeredPrints?.role === role) return prior;
@@ -140,6 +151,38 @@ export function syncLayeredPrintsSlides(existing: Slide[], photos: PhotoItem[]):
 }
 
 export function buildLayeredPrintsSlides(photos: PhotoItem[]): Slide[] {
-  if (photos.length === 0) return [];
   return syncLayeredPrintsSlides([], photos);
+}
+
+/** True when at least one frame on the slide has a photo (export skips empty slides). */
+export function layeredPrintsSlideHasContent(slide: Slide): boolean {
+  const lp = slide.layeredPrints;
+  if (!lp) return false;
+  if (lp.background.kind === "photo" && lp.background.photoId) return true;
+  return lp.prints.some((p) => p.photoId);
+}
+
+// ponytail: dev-only guard; fails if slide reorder incorrectly reflows photos
+if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+  const stub = (id: string): PhotoItem => ({
+    id,
+    name: id,
+    objectUrl: "",
+    crop: { ...DEFAULT_PHOTO_CROP },
+  });
+  const photos = [stub("a"), stub("b"), stub("c"), stub("d")];
+  const built = buildLayeredPrintsSlides(photos);
+  const captionIdx = built.findIndex((s) => s.layeredPrints?.role === "caption");
+  const captionPhotos = built[captionIdx]?.layeredPrints?.prints.map((p) => p.photoId);
+  const swapped = [...built];
+  [swapped[0], swapped[captionIdx]] = [swapped[captionIdx], swapped[0]];
+  const stickyBg = swapped[0].layeredPrints?.prints[0]?.photoId;
+  if (stickyBg !== captionPhotos?.[0]) {
+    throw new Error("layered-prints self-check: sticky slide reorder broken");
+  }
+  const reflowed = reflowLayeredPrintsSlides(built, [stub("d"), stub("c"), stub("b"), stub("a")]);
+  const heroBg = reflowed[0].layeredPrints?.background;
+  if (heroBg?.kind !== "photo" || heroBg.photoId !== "d") {
+    throw new Error("layered-prints self-check: photo tray reorder reflow broken");
+  }
 }

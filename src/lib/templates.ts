@@ -38,26 +38,25 @@ export function normalizeTemplateId(value: string | null | undefined): TemplateI
 
 /** Build slide list from photos + template. Preserves photo order. */
 export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[] {
-  if (photos.length === 0) return [];
   if (templateId === "layered-prints") return buildLayeredPrintsSlides(photos);
+  if (photos.length === 0) return [];
   return photos.map((p) => ({
     id: uid(),
     cells: [{ photoId: p.id }],
   }));
 }
 
-/** Rebuild slides; layered-prints preserves slide order and reflows photos. */
+/** Rebuild slides; layered-prints keeps carousel order and reflows photos from tray order. */
 export function slidesFromPhotos(
   templateId: TemplateId | null,
   photos: PhotoItem[],
   existing: Slide[] = [],
 ): Slide[] {
-  if (!templateId || photos.length === 0) return [];
+  if (!templateId) return [];
   if (templateId === "layered-prints") {
-    return existing.length > 0
-      ? syncLayeredPrintsSlides(existing, photos)
-      : buildLayeredPrintsSlides(photos);
+    return syncLayeredPrintsSlides(existing, photos);
   }
+  if (photos.length === 0) return [];
   return buildSlides(templateId, photos);
 }
 

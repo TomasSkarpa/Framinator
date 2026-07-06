@@ -15,7 +15,7 @@ import { DEFAULT_PHOTO_CROP, MAX_PHOTOS } from "@/lib/constants";
 import { clearProject, loadProject, saveProject } from "@/lib/persistence";
 import { normalizeFilter } from "@/lib/filters";
 import { reflowLayeredPrintsSlides } from "@/lib/layered-prints";
-import { normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
+import { buildSlides, normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
 import { preparePhoto } from "@/lib/prepare-photo";
 import type {
   FilterPreset,
@@ -31,6 +31,7 @@ type Action =
   | { type: "REMOVE_PHOTO"; photoId: string }
   | { type: "SET_TEMPLATE"; templateId: TemplateId }
   | { type: "REORDER_SLIDES"; from: number; to: number }
+  | { type: "REORDER_PHOTOS"; from: number; to: number }
   | { type: "ASSIGN_PHOTO"; slideId: string; photoId: string }
   | { type: "SET_FILTER"; filter: FilterPreset }
   | { type: "SET_BORDER"; borderWidth: number }
@@ -97,10 +98,19 @@ function reducer(state: ProjectState, action: Action): ProjectState {
       const slides = [...state.slides];
       const [moved] = slides.splice(action.from, 1);
       slides.splice(action.to, 0, moved);
-      if (state.templateId === "layered-prints") {
-        return { ...state, slides: reflowLayeredPrintsSlides(slides, state.photos) };
-      }
       return { ...state, slides };
+    }
+    case "REORDER_PHOTOS": {
+      const photos = [...state.photos];
+      const [moved] = photos.splice(action.from, 1);
+      photos.splice(action.to, 0, moved);
+      const slides =
+        state.templateId === "layered-prints"
+          ? reflowLayeredPrintsSlides(state.slides, photos)
+          : state.templateId
+            ? buildSlides(state.templateId, photos)
+            : state.slides;
+      return { ...state, photos, slides };
     }
     case "ASSIGN_PHOTO": {
       const slides = state.slides.map((s) =>
@@ -143,6 +153,7 @@ type ProjectContextValue = {
   removePhoto: (id: string) => void;
   setTemplate: (id: TemplateId) => void;
   reorderSlides: (from: number, to: number) => void;
+  reorderPhotos: (from: number, to: number) => void;
   assignPhoto: (slideId: string, photoId: string) => void;
   setFilter: (f: FilterPreset) => void;
   setBorder: (n: number) => void;
@@ -296,6 +307,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     removePhoto: (id) => dispatch({ type: "REMOVE_PHOTO", photoId: id }),
     setTemplate: (id) => dispatch({ type: "SET_TEMPLATE", templateId: id }),
     reorderSlides: (from, to) => dispatch({ type: "REORDER_SLIDES", from, to }),
+    reorderPhotos: (from, to) => dispatch({ type: "REORDER_PHOTOS", from, to }),
     assignPhoto: (slideId, photoId) =>
       dispatch({ type: "ASSIGN_PHOTO", slideId, photoId }),
     setFilter: (f) => dispatch({ type: "SET_FILTER", filter: f }),

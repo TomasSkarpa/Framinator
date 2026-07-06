@@ -1,7 +1,13 @@
 import JSZip from "jszip";
 import { renderSlideToCanvas } from "./canvas-render";
 import { EXPORT_WIDTH, exportHeight } from "./constants";
-import type { PhotoItem, ProjectState, Slide } from "./types";
+import { layeredPrintsSlideHasContent } from "./layered-prints";
+import type { PhotoItem, ProjectState, Slide, TemplateId } from "./types";
+
+export function slidesForExport(slides: Slide[], templateId: TemplateId | null): Slide[] {
+  if (templateId !== "layered-prints") return slides;
+  return slides.filter(layeredPrintsSlideHasContent);
+}
 
 export type ExportFormat = "jpeg" | "png";
 
@@ -101,11 +107,12 @@ export async function renderAllSlides(
 ): Promise<RenderedSlide[]> {
   if (!project.templateId) return [];
 
+  const exportSlides = slidesForExport(slides, project.templateId);
   const photosById = new Map(photos.map((p) => [p.id, p]));
   const rendered: RenderedSlide[] = [];
 
-  for (let i = 0; i < slides.length; i++) {
-    const blob = await renderSlideBlob(slides[i], i, photosById, project, format);
+  for (let i = 0; i < exportSlides.length; i++) {
+    const blob = await renderSlideBlob(exportSlides[i], i, photosById, project, format);
     rendered.push({
       index: i,
       filename: slideFilename(i, format),

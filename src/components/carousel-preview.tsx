@@ -234,6 +234,7 @@ function SortableSlide({
   isActive: boolean;
   onSelect: () => void;
 }) {
+  const { state } = useProject();
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: slide.id,
   });
@@ -242,11 +243,31 @@ function SortableSlide({
     transition,
   };
 
+  const assignedNames =
+    state.templateId === "layered-prints" && slide.layeredPrints
+      ? [
+          slide.layeredPrints.background.kind === "photo"
+            ? slide.layeredPrints.background.photoId
+            : undefined,
+          ...slide.layeredPrints.prints.map((p) => p.photoId),
+        ]
+          .filter(Boolean)
+          .map((id) => state.photos.find((p) => p.id === id)?.name ?? "")
+          .filter(Boolean)
+          .join("|")
+      : undefined;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn("relative shrink-0", isActive && "z-10")}
+      {...(assignedNames !== undefined
+        ? {
+            "data-assigned-names": assignedNames || "empty",
+            "data-slide-role": slide.layeredPrints?.role ?? "",
+          }
+        : {})}
     >
       <button
         type="button"
@@ -343,7 +364,9 @@ export function CarouselPreview() {
           Reorder slides
         </h3>
         <p className="mb-3 text-xs text-zinc-500">
-          Tap a slide to select it for cropping below
+          {state.templateId === "layered-prints"
+            ? "Drag slides to change carousel order. Photos stay on each slide."
+            : "Tap a slide to select it for cropping below"}
         </p>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext
