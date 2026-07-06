@@ -99,20 +99,7 @@ export function SmartLayoutButton() {
 
   return (
     <>
-      <div className="flex flex-col items-end gap-2">
-        {undoSnapshot && (
-          <button
-            type="button"
-            onClick={handleUndo}
-            className={cn(
-              pressable,
-              "rounded-md border border-zinc-700 bg-zinc-900/90 px-2.5 py-1 text-[11px] text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 active:bg-zinc-700",
-            )}
-          >
-            Undo smart layout
-          </button>
-        )}
-
+      <div className="flex items-center gap-2" data-testid="smart-layout-actions">
         <button
           type="button"
           data-testid="smart-layout-button"
@@ -121,7 +108,7 @@ export function SmartLayoutButton() {
           title={canRun ? "AI suggests photo order, slides, and crops" : "Add at least 2 photos"}
           className={cn(
             pressable,
-            "group relative isolate inline-flex min-h-9 items-center gap-2 overflow-hidden rounded-lg px-3.5 py-2 text-xs font-semibold tracking-wide",
+            "group relative isolate inline-flex min-h-8 shrink-0 items-center gap-2 overflow-hidden rounded-lg px-3.5 py-2 text-xs font-semibold tracking-wide",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
             "disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100",
             canRun && "active:scale-[0.98]",
@@ -156,6 +143,19 @@ export function SmartLayoutButton() {
             Smart layout
           </span>
         </button>
+
+        {undoSnapshot && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="smart-layout-undo"
+            onClick={handleUndo}
+            className="shrink-0 border-zinc-600 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800/80"
+          >
+            Undo layout
+          </Button>
+        )}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

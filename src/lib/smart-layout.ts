@@ -4,8 +4,10 @@ import { reflowLayeredPrintsSlides } from "./layered-prints";
 import { isLayeredSpreadTemplate, reflowSpreadSlides } from "./layered-spreads";
 import {
   buildSlides,
+  isLayeredTemplate,
   normalizeTemplateId,
   slidesFromPhotos,
+  syncSimpleSlides,
   TEMPLATES,
 } from "./templates";
 import type { FilterPreset, PhotoCrop, PhotoItem, ProjectState, TemplateId } from "./types";
@@ -122,13 +124,17 @@ export function applySmartLayoutPlan(state: ProjectState, plan: SmartLayoutPlan)
   const nextTemplateId = plan.templateId ?? state.templateId;
   const templateChanged =
     plan.templateId != null && plan.templateId !== state.templateId;
-  let slides = nextTemplateId
-    ? slidesFromPhotos(
-        nextTemplateId,
-        photos,
-        templateChanged ? [] : state.slides,
-      )
-    : state.slides;
+
+  let slides = state.slides;
+  if (nextTemplateId) {
+    if (templateChanged) {
+      slides = slidesFromPhotos(nextTemplateId, photos, []);
+    } else if (isLayeredTemplate(nextTemplateId)) {
+      slides = slidesFromPhotos(nextTemplateId, photos, state.slides);
+    } else {
+      slides = syncSimpleSlides(state.slides, photos);
+    }
+  }
 
   if (plan.slideOrder && plan.slideOrder.length > 0) {
     slides = reorderByIds(slides, plan.slideOrder);

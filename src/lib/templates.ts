@@ -110,7 +110,24 @@ export function slidesFromPhotos(
     return syncSpreadSlides(templateId, existing, photos);
   }
   if (photos.length === 0) return [];
+  if (existing.length > 0) {
+    return syncSimpleSlides(existing, photos);
+  }
   return buildSlides(templateId, photos);
+}
+
+/** One photo per slide; keep slide ids when tray order changes. */
+export function syncSimpleSlides(existing: Slide[], photos: PhotoItem[]): Slide[] {
+  const byPhoto = new Map<string, Slide>();
+  for (const slide of existing) {
+    const photoId = slide.cells[0]?.photoId;
+    if (photoId) byPhoto.set(photoId, slide);
+  }
+  return photos.map((photo) => {
+    const prior = byPhoto.get(photo.id);
+    if (prior) return { ...prior, cells: [{ photoId: photo.id }] };
+    return { id: uid(), cells: [{ photoId: photo.id }] };
+  });
 }
 
 export function isLayeredTemplate(templateId: TemplateId | null): boolean {

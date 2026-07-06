@@ -113,7 +113,7 @@ function reducer(state: ProjectState, action: Action): ProjectState {
           : isLayeredSpreadTemplate(state.templateId)
             ? reflowSpreadSlides(state.templateId, state.slides, photos)
             : state.templateId
-              ? buildSlides(state.templateId, photos)
+              ? slidesFromPhotos(state.templateId, photos, state.slides)
               : state.slides;
       return { ...state, photos, slides };
     }

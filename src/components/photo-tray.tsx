@@ -149,7 +149,7 @@ export function PhotoTray() {
         <h2 className="text-sm font-medium text-zinc-300">
           Your photos · {state.photos.length} selected
         </h2>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {state.photos.length >= 2 && <SmartLayoutButton />}
           {state.photos.length < MAX_PHOTOS && (
             <Button variant="secondary" size="sm" onClick={pickPhotos} disabled={importing}>
