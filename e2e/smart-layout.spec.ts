@@ -2,6 +2,7 @@
  * E2E tests generated from docs/features/smart-layout.feature
  */
 import { expect, test } from "@playwright/test";
+import { buildSmartLayoutPrompt } from "../src/lib/smart-layout";
 import {
   E2E_CHECKER_FIXTURE_PATH,
   E2E_FIXTURE_PATH,
@@ -30,6 +31,36 @@ test.describe("Smart layout", () => {
     ensureE2eFixture();
     await ensureCheckerFixture();
     await ensurePortraitRightSubjectFixture();
+  });
+
+  test("Smart layout prompt describes every template frame specifically", async () => {
+    const panoramaPrompt = buildSmartLayoutPrompt(
+      [{ index: 0, name: "wide-subject.jpg" }],
+      "layered-prints-panorama",
+      ["panorama-left", "panorama-right"],
+      "4:5",
+    );
+    expect(panoramaPrompt).toContain("two-slide panorama spread");
+    expect(panoramaPrompt).toContain("wide horizontal print");
+    expect(panoramaPrompt).toContain("center seam");
+
+    const splitPrompt = buildSmartLayoutPrompt(
+      [{ index: 0, name: "hero.jpg" }],
+      "layered-spread-split",
+      ["split-left", "split-right"],
+      "4:5",
+    );
+    expect(splitPrompt).toContain("large hero print");
+    expect(splitPrompt).toContain("small detail prints");
+
+    const softFocusPrompt = buildSmartLayoutPrompt(
+      [{ index: 0, name: "portrait.jpg" }],
+      "soft-focus",
+      [],
+      "4:5",
+    );
+    expect(softFocusPrompt).toContain("blurred full-slide backdrop");
+    expect(softFocusPrompt).toContain("foreground photo");
   });
 
   test("Smart layout hidden with fewer than two photos", async ({ page }) => {
@@ -156,5 +187,27 @@ test.describe("Smart layout", () => {
     expect(requestBody?.templateId).toBe("kodak-strip");
     expect(requestBody?.aspectRatio).toBe("4:5");
     expect(Array.isArray(requestBody?.photos)).toBe(true);
+  });
+
+  test("Panorama smart layout request includes spread-specific roles", async ({ page }) => {
+    await gotoBuilder(page);
+    await uploadPhotos(page, [
+      E2E_FIXTURE_PATH,
+      E2E_CHECKER_FIXTURE_PATH,
+      E2E_FIXTURE_PATH,
+    ]);
+    await selectTemplate(page, "layered-prints-panorama");
+
+    let requestBody: Record<string, unknown> | null = null;
+    await mockSmartLayout(page, DEFAULT_SMART_LAYOUT_PAYLOAD, (body) => {
+      requestBody = body;
+    });
+
+    await openSmartLayout(page);
+    await confirmSmartLayout(page);
+    await expect(page.getByTestId("smart-layout-undo")).toBeVisible({ timeout: 15_000 });
+
+    expect(requestBody?.templateId).toBe("layered-prints-panorama");
+    expect(requestBody?.slideRoles).toEqual(["panorama-left", "panorama-right"]);
   });
 });
