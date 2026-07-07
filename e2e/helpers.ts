@@ -112,6 +112,71 @@ export async function nudgeCropHorizontal(page: Page, steps = 20) {
   }
 }
 
+export type PreviewColorStats = {
+  count: number;
+  ratio: number;
+  centerX: number;
+  centerY: number;
+};
+
+export async function readFeedPreviewRedStats(page: Page): Promise<PreviewColorStats> {
+  const image = page.getByTestId("feed-preview-image");
+  await expect(image).toBeVisible();
+  return image.evaluate(async (img) => {
+    const el = img as HTMLImageElement;
+    if (!el.complete) {
+      await new Promise<void>((resolve, reject) => {
+        el.onload = () => resolve();
+        el.onerror = () => reject(new Error("Preview image failed to load"));
+      });
+    }
+
+    const probe = document.createElement("img");
+    probe.crossOrigin = "anonymous";
+    probe.src = el.currentSrc || el.src;
+    await new Promise<void>((resolve, reject) => {
+      probe.onload = () => resolve();
+      probe.onerror = () => reject(new Error("Preview probe failed to load"));
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = probe.naturalWidth;
+    canvas.height = probe.naturalHeight;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("Canvas unavailable");
+    ctx.drawImage(probe, 0, 0);
+
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let count = 0;
+    let sumX = 0;
+    let sumY = 0;
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const i = (y * canvas.width + x) * 4;
+        const r = pixels[i] ?? 0;
+        const g = pixels[i + 1] ?? 0;
+        const b = pixels[i + 2] ?? 0;
+        if (r > 150 && g < 80 && b < 80) {
+          count++;
+          sumX += x;
+          sumY += y;
+        }
+      }
+    }
+
+    if (count === 0) {
+      return { count: 0, ratio: 0, centerX: Number.NaN, centerY: Number.NaN };
+    }
+
+    return {
+      count,
+      ratio: count / (canvas.width * canvas.height),
+      centerX: sumX / count / canvas.width,
+      centerY: sumY / count / canvas.height,
+    };
+  });
+}
+
 /** dnd-kit needs a pointer move past activation distance (6px). */
 export async function dragSortable(
   page: Page,

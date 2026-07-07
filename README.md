@@ -16,6 +16,14 @@ Coolify + root `docker-compose.yml`, domain `framinator.skarpa.dev`. See [home_s
 
 Smart layout: set `GEMINI_API_KEY` and optional `GEMINI_API_KEY_FALLBACK` in Coolify (not in git). Fallback is used on rate limit.
 
+Smart layout crop alignment debug:
+
+```bash
+npm run debug:smart-layout-alignment
+```
+
+See `docs/smart-layout-alignment-debug.md` for the horizontal, vertical, and zoom debug process.
+
 ## What it does
 
 - Upload up to 25 photos

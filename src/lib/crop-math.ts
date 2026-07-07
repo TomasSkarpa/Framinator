@@ -68,8 +68,8 @@ export function drawCover(
     return;
   }
 
-  const sx = (iw - sw) / 2 - crop.offsetX / eff;
-  const sy = (ih - sh) / 2 - crop.offsetY / eff;
+  const sx = (iw - sw) / 2 + crop.offsetX / eff;
+  const sy = (ih - sh) / 2 + crop.offsetY / eff;
   const x0 = Math.max(0, sx);
   const y0 = Math.max(0, sy);
   const x1 = Math.min(iw, sx + sw);

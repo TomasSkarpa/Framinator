@@ -11,6 +11,10 @@ const FIXTURE_PNG = Buffer.from(
 export const E2E_FIXTURE_DIR = path.join(__dirname, "fixtures");
 export const E2E_FIXTURE_PATH = path.join(E2E_FIXTURE_DIR, "test-photo.png");
 export const E2E_CHECKER_FIXTURE_PATH = path.join(E2E_FIXTURE_DIR, "checker-photo.png");
+export const E2E_ALIGNMENT_FIXTURE_PATH = path.join(
+  E2E_FIXTURE_DIR,
+  "alignment-subject-right-low.png",
+);
 
 export function ensureE2eFixture(): string {
   mkdirSync(E2E_FIXTURE_DIR, { recursive: true });
@@ -86,4 +90,46 @@ export async function ensureCheckerFixture(): Promise<string> {
   await browser.close();
   writeFileSync(E2E_CHECKER_FIXTURE_PATH, Buffer.from(b64, "base64"));
   return E2E_CHECKER_FIXTURE_PATH;
+}
+
+export async function ensureAlignmentFixture(): Promise<string> {
+  mkdirSync(E2E_FIXTURE_DIR, { recursive: true });
+  if (existsSync(E2E_ALIGNMENT_FIXTURE_PATH)) return E2E_ALIGNMENT_FIXTURE_PATH;
+
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  const b64 = await page.evaluate(() => {
+    const w = 1200;
+    const h = 1200;
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d");
+    if (!ctx) return "";
+
+    ctx.fillStyle = "#d8dde5";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#88919c";
+    for (let x = 80; x < w; x += 120) {
+      ctx.fillRect(x, 0, 14, h);
+    }
+    for (let y = 80; y < h; y += 120) {
+      ctx.fillRect(0, y, w, 14);
+    }
+
+    ctx.fillStyle = "#d71920";
+    ctx.beginPath();
+    ctx.arc(900, 760, 95, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 52px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("AI", 900, 760);
+
+    return c.toDataURL("image/png").split(",")[1] ?? "";
+  });
+  await browser.close();
+  writeFileSync(E2E_ALIGNMENT_FIXTURE_PATH, Buffer.from(b64, "base64"));
+  return E2E_ALIGNMENT_FIXTURE_PATH;
 }
