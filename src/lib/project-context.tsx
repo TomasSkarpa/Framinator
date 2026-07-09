@@ -164,7 +164,12 @@ type ProjectContextValue = {
   activeCropPhoto: PhotoItem | null;
   slideCropOptions: { key: CropPlacementKey; photoId: string; label: string }[];
   setCropPlacement: (key: CropPlacementKey) => void;
-  addPhotos: (files: File[]) => Promise<{ added: number; rejected: number; limitHit: boolean }>;
+  addPhotos: (files: File[]) => Promise<{
+    added: number;
+    rejected: number;
+    failed: number;
+    limitHit: boolean;
+  }>;
   removePhoto: (id: string) => void;
   setTemplate: (id: TemplateId) => void;
   reorderSlides: (from: number, to: number) => void;
@@ -315,10 +320,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     const limitHit = unique.length > room;
     const accepted = unique.slice(0, room);
     const prepared = await Promise.all(accepted.map((f) => preparePhoto(f)));
-    dispatch({ type: "ADD_PHOTOS", files: prepared });
+    const ready = prepared.filter((f): f is File => f !== null);
+    dispatch({ type: "ADD_PHOTOS", files: ready });
     return {
-      added: prepared.length,
+      added: ready.length,
       rejected: files.length - unique.length,
+      failed: accepted.length - ready.length,
       limitHit,
     };
   }, [state.photos]);

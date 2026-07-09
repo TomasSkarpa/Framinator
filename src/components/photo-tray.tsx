@@ -99,9 +99,12 @@ export function PhotoTray() {
     (accepted: File[]) => {
       setImporting(true);
       void addPhotos(accepted)
-        .then(({ added, rejected, limitHit }) => {
+        .then(({ rejected, failed, limitHit }) => {
           if (rejected > 0) {
             toast(`${rejected} duplicate file${rejected > 1 ? "s" : ""} skipped`);
+          }
+          if (failed > 0) {
+            toast(`${failed} photo${failed > 1 ? "s" : ""} couldn't be opened`);
           }
           if (limitHit) {
             toast(`Maximum ${MAX_PHOTOS} photos per project`);
