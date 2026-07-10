@@ -45,6 +45,8 @@ test.describe("Template picker", () => {
     await expect(page.getByTestId("template-framed-polaroid")).toBeVisible();
     await expect(page.getByTestId("template-kodak-strip")).toBeVisible();
     await expect(page.getByTestId("template-soft-focus")).toBeVisible();
+    await expect(page.getByTestId("template-clean-carousel")).toHaveCount(0);
+    await expect(page.getByTestId("template-layered-prints")).toHaveCount(0);
 
     const preview = page.getByTestId("template-framed-polaroid").locator("img");
     await expect(preview).toHaveAttribute("src", /^data:image\/jpeg/);

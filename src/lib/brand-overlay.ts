@@ -36,11 +36,6 @@ async function drawContainedLogo(
   centerY: number,
   maxW: number,
   maxH: number,
-  opts: {
-    opacity?: number;
-    rotationDeg?: number;
-    blendMode?: GlobalCompositeOperation;
-  } = {},
 ) {
   const logo = await loadOverlayImage(src);
   const iw = logo.naturalWidth || logo.width;
@@ -50,11 +45,7 @@ async function drawContainedLogo(
   const h = ih * scale;
 
   ctx.save();
-  ctx.globalAlpha = opts.opacity ?? 1;
-  ctx.globalCompositeOperation = opts.blendMode ?? "source-over";
-  ctx.translate(centerX, centerY);
-  if (opts.rotationDeg) ctx.rotate((opts.rotationDeg * Math.PI) / 180);
-  ctx.drawImage(logo, -w / 2, -h / 2, w, h);
+  ctx.drawImage(logo, centerX - w / 2, centerY - h / 2, w, h);
   ctx.restore();
 }
 
@@ -116,139 +107,6 @@ async function drawPolaroidFrameOverlay(
   );
 }
 
-async function drawGhostLogo(
-  ctx: CanvasRenderingContext2D,
-  overlay: BrandOverlay,
-  canvasW: number,
-  canvasH: number,
-) {
-  await drawContainedLogo(
-    ctx,
-    overlay.logoSrc,
-    canvasW * ((overlay.xPct ?? 78) / 100),
-    canvasH * ((overlay.yPct ?? 88) / 100),
-    canvasW * ((overlay.widthPct ?? 34) / 100),
-    canvasH * ((overlay.maxLogoHeightPct ?? overlay.heightPct ?? 12) / 100),
-    {
-      opacity: overlay.opacity ?? 0.3,
-      rotationDeg: overlay.rotationDeg,
-      blendMode: overlay.blendMode,
-    },
-  );
-}
-
-async function drawDiagonalStamp(
-  ctx: CanvasRenderingContext2D,
-  overlay: BrandOverlay,
-  canvasW: number,
-  canvasH: number,
-) {
-  await drawContainedLogo(
-    ctx,
-    overlay.logoSrc,
-    canvasW * ((overlay.xPct ?? 50) / 100),
-    canvasH * ((overlay.yPct ?? 50) / 100),
-    canvasW * ((overlay.widthPct ?? 30) / 100),
-    canvasH * ((overlay.maxLogoHeightPct ?? overlay.heightPct ?? 10) / 100),
-    {
-      opacity: overlay.opacity ?? 0.65,
-      rotationDeg: overlay.rotationDeg ?? -10,
-      blendMode: overlay.blendMode,
-    },
-  );
-}
-
-async function drawCornerBadge(
-  ctx: CanvasRenderingContext2D,
-  overlay: BrandOverlay,
-  canvasW: number,
-  canvasH: number,
-) {
-  const badgeW = canvasW * ((overlay.widthPct ?? 24) / 100);
-  const badgeH = canvasH * ((overlay.heightPct ?? 6) / 100);
-  const corner = overlay.corner ?? "top-right";
-  const x = corner.endsWith("right") ? canvasW - badgeW : 0;
-  const y = corner.startsWith("bottom") ? canvasH - badgeH : 0;
-
-  ctx.fillStyle = overlay.backgroundColor ?? "#000000";
-  ctx.fillRect(x, y, badgeW, badgeH);
-  await drawContainedLogo(
-    ctx,
-    overlay.logoSrc,
-    x + badgeW / 2,
-    y + badgeH / 2,
-    canvasW * ((overlay.maxLogoWidthPct ?? overlay.widthPct ?? 14) / 100),
-    canvasH * ((overlay.maxLogoHeightPct ?? 2.6) / 100),
-  );
-}
-
-async function drawEdgeRibbon(
-  ctx: CanvasRenderingContext2D,
-  overlay: BrandOverlay,
-  canvasW: number,
-  canvasH: number,
-) {
-  const edge = overlay.edge ?? "left";
-  const ribbonW = canvasW * ((overlay.widthPct ?? 6) / 100);
-  const ribbonH = canvasH * ((overlay.heightPct ?? 4) / 100);
-  ctx.fillStyle = overlay.backgroundColor ?? "#000000";
-
-  if (edge === "left" || edge === "right") {
-    const x = edge === "right" ? canvasW - ribbonW : 0;
-    ctx.fillRect(x, 0, ribbonW, canvasH);
-    await drawContainedLogo(
-      ctx,
-      overlay.logoSrc,
-      x + ribbonW / 2,
-      canvasH / 2,
-      canvasH * ((overlay.maxLogoWidthPct ?? 18) / 100),
-      ribbonW * 0.58,
-      { rotationDeg: edge === "left" ? -90 : 90 },
-    );
-    return;
-  }
-
-  const y = edge === "bottom" ? canvasH - ribbonH : 0;
-  ctx.fillRect(0, y, canvasW, ribbonH);
-  await drawContainedLogo(
-    ctx,
-    overlay.logoSrc,
-    canvasW / 2,
-    y + ribbonH / 2,
-    canvasW * ((overlay.maxLogoWidthPct ?? 20) / 100),
-    canvasH * ((overlay.maxLogoHeightPct ?? 2.4) / 100),
-  );
-}
-
-async function drawPanoramaSeam(
-  ctx: CanvasRenderingContext2D,
-  overlay: BrandOverlay,
-  canvasW: number,
-  canvasH: number,
-) {
-  const bandW = canvasW * ((overlay.widthPct ?? 34) / 100);
-  const bandH = canvasH * ((overlay.heightPct ?? 5.5) / 100);
-  const x = (canvasW - bandW) / 2;
-  const y = canvasH * 0.5 - bandH / 2;
-
-  ctx.globalAlpha = overlay.opacity ?? 0.92;
-  ctx.fillStyle = overlay.backgroundColor ?? "#000000";
-  ctx.fillRect(x, y, bandW, bandH);
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = overlay.backgroundColor ?? "#000000";
-  ctx.fillRect(canvasW / 2 - 1, canvasH * 0.08, 2, canvasH * 0.84);
-
-  await drawContainedLogo(
-    ctx,
-    overlay.logoSrc,
-    canvasW / 2,
-    canvasH / 2,
-    bandW * 0.62,
-    bandH * 0.42,
-  );
-}
-
 async function drawBottomMark(
   ctx: CanvasRenderingContext2D,
   overlay: BrandOverlay,
@@ -291,16 +149,6 @@ export async function drawBrandOverlay(
       await drawBottomBand(ctx, overlay, width, height);
     } else if (overlay.placement === "bottom-mark") {
       await drawBottomMark(ctx, overlay, width, height);
-    } else if (overlay.placement === "corner-badge") {
-      await drawCornerBadge(ctx, overlay, width, height);
-    } else if (overlay.placement === "diagonal-stamp") {
-      await drawDiagonalStamp(ctx, overlay, width, height);
-    } else if (overlay.placement === "edge-ribbon") {
-      await drawEdgeRibbon(ctx, overlay, width, height);
-    } else if (overlay.placement === "ghost-logo") {
-      await drawGhostLogo(ctx, overlay, width, height);
-    } else if (overlay.placement === "panorama-seam") {
-      await drawPanoramaSeam(ctx, overlay, width, height);
     }
     ctx.restore();
   }
