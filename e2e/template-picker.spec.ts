@@ -51,10 +51,10 @@ test.describe("Template picker", () => {
     await expect(page.getByTestId("template-clean-carousel")).toHaveCount(0);
     await expect(page.getByTestId("template-kodak-strip")).toHaveCount(0);
     await expect(page.getByTestId("template-soft-focus")).toHaveCount(0);
-    await expect(page.getByTestId("template-layered-spread-scatter")).toHaveCount(0);
-    await expect(page.getByTestId("template-layered-prints")).toHaveCount(0);
-    await expect(page.getByTestId("template-layered-prints-panorama")).toHaveCount(0);
-    await expect(page.getByTestId("template-layered-spread-cascade")).toHaveCount(0);
+    await expect(page.getByTestId("template-layered-spread-scatter")).toBeVisible();
+    await expect(page.getByTestId("template-layered-prints")).toBeVisible();
+    await expect(page.getByTestId("template-layered-prints-panorama")).toBeVisible();
+    await expect(page.getByTestId("template-layered-spread-cascade")).toBeVisible();
 
     const preview = page.getByTestId("template-mdc-editorial-poster-frame").locator("img");
     await expect(preview).toHaveAttribute("src", /^data:image\/jpeg/);
