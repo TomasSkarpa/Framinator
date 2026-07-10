@@ -88,11 +88,17 @@ async function drawPolaroidFrameOverlay(
   const border = overlay.backgroundColor ?? "#000000";
   const pad = borderWidth * 3;
   const bottomExtra = borderWidth * 5;
+  const bottomFrameH = Math.max(
+    bottomExtra,
+    canvasH * ((overlay.heightPct ?? 7.5) / 100),
+  );
   const innerX = pad;
   const innerY = pad;
   const innerW = canvasW - pad * 2;
-  const innerH = canvasH - pad - bottomExtra;
-  const bandH = canvasH * ((overlay.heightPct ?? 7.5) / 100);
+  const innerH = canvasH - pad - bottomFrameH;
+  const logoY = overlay.yPct
+    ? canvasH * (overlay.yPct / 100)
+    : canvasH - bottomFrameH * 0.58;
 
   ctx.fillStyle = border;
   ctx.fillRect(0, 0, canvasW, innerY);
@@ -104,7 +110,7 @@ async function drawPolaroidFrameOverlay(
     ctx,
     overlay.logoSrc,
     canvasW / 2,
-    canvasH - bandH / 2,
+    logoY,
     canvasW * ((overlay.maxLogoWidthPct ?? 28) / 100),
     canvasH * ((overlay.maxLogoHeightPct ?? 3.2) / 100),
   );
