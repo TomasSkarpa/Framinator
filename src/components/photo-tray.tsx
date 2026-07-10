@@ -17,7 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useCallback, useState, type MouseEvent } from "react";
 import { useDropzone } from "react-dropzone";
-import { GripVertical, ImagePlus, X } from "lucide-react";
+import { GripVertical, ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SmartLayoutButton } from "@/components/smart-layout-button";
 import { MAX_PHOTOS } from "@/lib/constants";
@@ -121,14 +121,16 @@ export function PhotoTray() {
     multiple: true,
     noClick: true,
     noKeyboard: true,
+    disabled: importing,
   });
 
   const pickPhotos = useCallback(
     (e: MouseEvent) => {
+      if (importing) return;
       e.stopPropagation();
       open();
     },
-    [open],
+    [importing, open],
   );
 
   const onPhotoDragEnd = useCallback(
@@ -170,7 +172,12 @@ export function PhotoTray() {
 
       <div
         {...getRootProps()}
-        className={`flex gap-2 overflow-x-auto pb-2 ${isDragActive ? "ring-2 ring-blue-500 rounded-xl p-2" : ""}`}
+        aria-busy={importing}
+        className={cn(
+          "flex gap-2 overflow-x-auto pb-2",
+          isDragActive && !importing && "rounded-xl p-2 ring-2 ring-blue-500",
+          importing && "opacity-90",
+        )}
       >
         <input {...getInputProps()} />
         {state.photos.length > 0 && sortable ? (
@@ -217,26 +224,45 @@ export function PhotoTray() {
           <button
             type="button"
             onClick={pickPhotos}
+            disabled={importing}
+            aria-busy={importing}
             className={cn(
               pressable,
               "flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/50 px-6 py-10 text-zinc-400 hover:border-zinc-500 hover:bg-zinc-900/70 hover:text-zinc-200 active:border-zinc-400 active:bg-zinc-800/80 sm:min-h-40",
+              importing && "cursor-wait border-zinc-500 bg-zinc-900/70 text-zinc-300",
             )}
           >
-            <ImagePlus className="h-6 w-6" />
-            <span className="text-xs">Tap or drop photos here</span>
+            {importing ? (
+              <>
+                <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                <span className="text-xs">Processing photos…</span>
+              </>
+            ) : (
+              <>
+                <ImagePlus className="h-6 w-6" />
+                <span className="text-xs">Tap or drop photos here</span>
+              </>
+            )}
           </button>
         )}
         {state.photos.length > 0 && state.photos.length < MAX_PHOTOS && (
           <button
             type="button"
             onClick={pickPhotos}
+            disabled={importing}
+            aria-busy={importing}
+            aria-label={importing ? "Processing photos" : "Add more photos"}
             className={cn(
               pressable,
               "flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-600 text-zinc-500 hover:border-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-300 active:border-zinc-300 active:bg-zinc-800/80",
+              importing && "cursor-wait border-zinc-500 bg-zinc-900/60 text-zinc-400",
             )}
-            aria-label="Add more photos"
           >
-            <ImagePlus className="h-5 w-5" />
+            {importing ? (
+              <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+            ) : (
+              <ImagePlus className="h-5 w-5" />
+            )}
           </button>
         )}
       </div>
