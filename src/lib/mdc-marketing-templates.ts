@@ -1,0 +1,739 @@
+import { drawCover } from "./crop-math";
+import { applyLutToCanvas, type Lut3D } from "./lut";
+import type { PhotoCrop, TemplateId, TemplateMeta } from "./types";
+
+export const MDC_MARKETING_TEMPLATE_IDS = [
+  "mdc-editorial-poster-frame",
+  "mdc-red-bracket-system",
+  "mdc-floating-caption-bar",
+  "mdc-white-logo-red-shadow",
+  "mdc-gradient-footer-takeover",
+  "mdc-red-duotone-split",
+  "mdc-conference-masthead",
+  "mdc-repeating-event-spine",
+  "mdc-diagonal-campaign-wrap",
+  "mdc-black-lower-third-plate",
+  "mdc-sharp-red-corner-wedge",
+  "mdc-right-side-brand-slab",
+  "mdc-cropped-logo-landscape",
+  "mdc-repeating-logo-texture",
+  "mdc-neon-sightline-mark",
+  "mdc-rough-red-sticker",
+  "mdc-oversized-translucent-mark",
+  "mdc-monochrome-red-footer-fade",
+  "mdc-white-ticket-label",
+  "mdc-editorial-side-block",
+  "mdc-red-poster-window",
+] as const satisfies readonly TemplateId[];
+
+export type MdcMarketingTemplateId = (typeof MDC_MARKETING_TEMPLATE_IDS)[number];
+
+export const MDC_MARKETING_TEMPLATES: TemplateMeta[] = [
+  {
+    id: "mdc-editorial-poster-frame",
+    name: "Editorial poster frame",
+    description: "V2 / 01",
+    icon: "frame",
+  },
+  {
+    id: "mdc-red-bracket-system",
+    name: "Red bracket system",
+    description: "V2 / 02",
+    icon: "corner",
+  },
+  {
+    id: "mdc-floating-caption-bar",
+    name: "Floating caption bar",
+    description: "V2 / 03",
+    icon: "focus",
+  },
+  {
+    id: "mdc-white-logo-red-shadow",
+    name: "White mark red shadow",
+    description: "V2 / 04",
+    icon: "frame",
+  },
+  {
+    id: "mdc-gradient-footer-takeover",
+    name: "Gradient footer takeover",
+    description: "V2 / 05",
+    icon: "focus",
+  },
+  {
+    id: "mdc-red-duotone-split",
+    name: "Red duotone split",
+    description: "V2 / 06",
+    icon: "split",
+  },
+  {
+    id: "mdc-conference-masthead",
+    name: "Conference masthead",
+    description: "V2 / 07",
+    icon: "panorama",
+  },
+  {
+    id: "mdc-repeating-event-spine",
+    name: "Repeating event spine",
+    description: "V2 / 08",
+    icon: "layers",
+  },
+  {
+    id: "mdc-diagonal-campaign-wrap",
+    name: "Diagonal campaign wrap",
+    description: "V2 / 09",
+    icon: "tilted",
+  },
+  {
+    id: "mdc-black-lower-third-plate",
+    name: "Black lower-third plate",
+    description: "V2 / 10",
+    icon: "split",
+  },
+  {
+    id: "mdc-sharp-red-corner-wedge",
+    name: "Sharp red corner wedge",
+    description: "V2 / 11",
+    icon: "corner",
+  },
+  {
+    id: "mdc-right-side-brand-slab",
+    name: "Right-side brand slab",
+    description: "V2 / 12",
+    icon: "split",
+  },
+  {
+    id: "mdc-cropped-logo-landscape",
+    name: "Cropped logo landscape",
+    description: "V2 / 13",
+    icon: "panorama",
+  },
+  {
+    id: "mdc-repeating-logo-texture",
+    name: "Repeating logo texture",
+    description: "V2 / 14",
+    icon: "layers",
+  },
+  {
+    id: "mdc-neon-sightline-mark",
+    name: "Neon sightline mark",
+    description: "V2 / 18",
+    icon: "focus",
+  },
+  {
+    id: "mdc-rough-red-sticker",
+    name: "Rough red sticker",
+    description: "V2 / 19",
+    icon: "tilted",
+  },
+  {
+    id: "mdc-oversized-translucent-mark",
+    name: "Oversized translucent mark",
+    description: "V2 / 20",
+    icon: "frame",
+  },
+  {
+    id: "mdc-monochrome-red-footer-fade",
+    name: "Monochrome red footer fade",
+    description: "V2 / 22",
+    icon: "focus",
+  },
+  {
+    id: "mdc-white-ticket-label",
+    name: "White ticket label",
+    description: "V2 / 23",
+    icon: "frame",
+  },
+  {
+    id: "mdc-editorial-side-block",
+    name: "Editorial side block",
+    description: "V2 / 24",
+    icon: "split",
+  },
+  {
+    id: "mdc-red-poster-window",
+    name: "Red poster window",
+    description: "V2 / 25",
+    icon: "frame",
+  },
+];
+
+const RED = "#ee0015";
+const INK = "#111111";
+const PAPER = "#f2eee6";
+const WHITE = "#ffffff";
+const LOGO_WHITE = "/branding/mdc/logo-white.png";
+const LOGO_RED = "/branding/mdc/logo-red.png";
+
+const logoCache = new Map<string, Promise<HTMLImageElement>>();
+
+function loadLogo(src: string): Promise<HTMLImageElement> {
+  let pending = logoCache.get(src);
+  if (!pending) {
+    pending = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+    logoCache.set(src, pending);
+  }
+  return pending;
+}
+
+export function isMdcMarketingTemplate(
+  templateId: TemplateId | null,
+): templateId is MdcMarketingTemplateId {
+  return !!templateId && MDC_MARKETING_TEMPLATE_IDS.includes(templateId as MdcMarketingTemplateId);
+}
+
+async function drawCoverWithLut(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoCrop,
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  lut: Lut3D | null,
+) {
+  if (!lut) {
+    drawCover(ctx, img, crop, dx, dy, dw, dh);
+    return;
+  }
+
+  const tmp = document.createElement("canvas");
+  tmp.width = Math.max(1, Math.round(dw));
+  tmp.height = Math.max(1, Math.round(dh));
+  const tctx = tmp.getContext("2d");
+  if (!tctx) {
+    drawCover(ctx, img, crop, dx, dy, dw, dh);
+    return;
+  }
+  drawCover(tctx, img, crop, 0, 0, tmp.width, tmp.height);
+  applyLutToCanvas(tmp, lut);
+  ctx.drawImage(tmp, dx, dy, dw, dh);
+}
+
+async function drawPhoto(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  crop: PhotoCrop,
+  canvasW: number,
+  canvasH: number,
+  lut: Lut3D | null,
+  rect = { x: 0, y: 0, w: canvasW, h: canvasH },
+  filter?: string,
+) {
+  ctx.save();
+  if (filter) ctx.filter = filter;
+  await drawCoverWithLut(ctx, img, crop, rect.x, rect.y, rect.w, rect.h, lut);
+  ctx.restore();
+}
+
+function pctW(canvasW: number, pct: number) {
+  return canvasW * (pct / 100);
+}
+
+function pctH(canvasH: number, pct: number) {
+  return canvasH * (pct / 100);
+}
+
+function drawMicroText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  opts: { align?: CanvasTextAlign; bg?: string; color?: string } = {},
+) {
+  ctx.save();
+  const fontSize = Math.max(10, Math.round(x * 0.018));
+  ctx.font = `800 ${fontSize}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = opts.align ?? "left";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = opts.color ?? WHITE;
+  if (opts.bg) {
+    const metrics = ctx.measureText(text);
+    const pad = fontSize * 0.5;
+    const rectX = opts.align === "right" ? x - metrics.width - pad : x - pad;
+    ctx.fillStyle = opts.bg;
+    ctx.fillRect(rectX, y - pad * 0.55, metrics.width + pad * 2, fontSize + pad);
+    ctx.fillStyle = opts.color ?? WHITE;
+  }
+  ctx.fillText(text.toUpperCase(), x, y);
+  ctx.restore();
+}
+
+async function drawLogo(
+  ctx: CanvasRenderingContext2D,
+  src: string,
+  canvasW: number,
+  canvasH: number,
+  opts: {
+    cx?: number;
+    cy?: number;
+    left?: number;
+    right?: number;
+    top?: number;
+    bottom?: number;
+    widthPct: number;
+    rotateDeg?: number;
+    opacity?: number;
+    blendMode?: GlobalCompositeOperation;
+    shadowColor?: string;
+    shadowOffsetXPct?: number;
+    shadowOffsetYPct?: number;
+    shadowBlurPct?: number;
+  },
+) {
+  const logo = await loadLogo(src);
+  const iw = logo.naturalWidth || logo.width;
+  const ih = logo.naturalHeight || logo.height;
+  const drawW = pctW(canvasW, opts.widthPct);
+  const drawH = drawW * (ih / iw);
+  let x = opts.cx !== undefined ? opts.cx - drawW / 2 : 0;
+  let y = opts.cy !== undefined ? opts.cy - drawH / 2 : 0;
+  if (opts.left !== undefined) x = opts.left;
+  if (opts.right !== undefined) x = canvasW - opts.right - drawW;
+  if (opts.top !== undefined) y = opts.top;
+  if (opts.bottom !== undefined) y = canvasH - opts.bottom - drawH;
+
+  ctx.save();
+  ctx.globalAlpha = opts.opacity ?? 1;
+  ctx.globalCompositeOperation = opts.blendMode ?? "source-over";
+  if (opts.shadowColor) {
+    ctx.shadowColor = opts.shadowColor;
+    ctx.shadowOffsetX = pctW(canvasW, opts.shadowOffsetXPct ?? 0);
+    ctx.shadowOffsetY = pctW(canvasW, opts.shadowOffsetYPct ?? 0);
+    ctx.shadowBlur = pctW(canvasW, opts.shadowBlurPct ?? 0);
+  }
+  if (opts.rotateDeg) {
+    ctx.translate(x + drawW / 2, y + drawH / 2);
+    ctx.rotate((opts.rotateDeg * Math.PI) / 180);
+    ctx.drawImage(logo, -drawW / 2, -drawH / 2, drawW, drawH);
+  } else {
+    ctx.drawImage(logo, x, y, drawW, drawH);
+  }
+  ctx.restore();
+}
+
+async function drawLogoInBox(
+  ctx: CanvasRenderingContext2D,
+  src: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fillPct = 0.72,
+  rotateDeg = 0,
+) {
+  const logo = await loadLogo(src);
+  const iw = logo.naturalWidth || logo.width;
+  const ih = logo.naturalHeight || logo.height;
+  const scale = Math.min((w * fillPct) / iw, (h * fillPct) / ih);
+  const drawW = iw * scale;
+  const drawH = ih * scale;
+
+  ctx.save();
+  ctx.translate(x + w / 2, y + h / 2);
+  if (rotateDeg) ctx.rotate((rotateDeg * Math.PI) / 180);
+  ctx.drawImage(logo, -drawW / 2, -drawH / 2, drawW, drawH);
+  ctx.restore();
+}
+
+function drawBottomBar(ctx: CanvasRenderingContext2D, canvasW: number, canvasH: number, yPct: number, hPct: number, color = RED, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, pctH(canvasH, yPct), canvasW, pctH(canvasH, hPct));
+  ctx.restore();
+}
+
+async function drawRepeatedLogoPattern(
+  ctx: CanvasRenderingContext2D,
+  canvasW: number,
+  canvasH: number,
+) {
+  const logo = await loadLogo(LOGO_RED);
+  const tileW = pctW(canvasW, 43);
+  const tileH = tileW * ((logo.naturalHeight || logo.height) / (logo.naturalWidth || logo.width));
+  ctx.save();
+  ctx.globalAlpha = 0.42;
+  ctx.globalCompositeOperation = "multiply";
+  ctx.translate(canvasW / 2, canvasH / 2);
+  ctx.rotate((-18 * Math.PI) / 180);
+  ctx.translate(-canvasW / 2, -canvasH / 2);
+  for (let y = -canvasH * 0.2; y < canvasH * 1.2; y += tileH * 1.45) {
+    for (let x = -canvasW * 0.28; x < canvasW * 1.25; x += tileW * 0.95) {
+      ctx.drawImage(logo, x, y, tileW, tileH);
+    }
+  }
+  ctx.restore();
+}
+
+function drawRedGradientFooter(
+  ctx: CanvasRenderingContext2D,
+  canvasW: number,
+  canvasH: number,
+  startPct = 52,
+) {
+  const y = pctH(canvasH, startPct);
+  const gradient = ctx.createLinearGradient(0, y, 0, canvasH);
+  gradient.addColorStop(0, "rgba(238,0,21,0)");
+  gradient.addColorStop(0.56, "rgba(238,0,21,0.72)");
+  gradient.addColorStop(1, "rgba(238,0,21,0.96)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, y, canvasW, canvasH - y);
+}
+
+function drawFirstSlideOnlyNotice(
+  ctx: CanvasRenderingContext2D,
+  canvasW: number,
+  canvasH: number,
+) {
+  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.fillRect(0, 0, canvasW, canvasH);
+}
+
+export async function drawMdcMarketingTemplate(
+  ctx: CanvasRenderingContext2D,
+  templateId: MdcMarketingTemplateId,
+  img: HTMLImageElement,
+  crop: PhotoCrop,
+  canvasW: number,
+  canvasH: number,
+  lut: Lut3D | null,
+  slideIndex = 0,
+) {
+  if (slideIndex > 0) {
+    await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+    drawFirstSlideOnlyNotice(ctx, canvasW, canvasH);
+    return;
+  }
+
+  switch (templateId) {
+    case "mdc-editorial-poster-frame": {
+      ctx.fillStyle = PAPER;
+      ctx.fillRect(0, 0, canvasW, canvasH);
+      const padX = pctW(canvasW, 5.8);
+      const top = pctW(canvasW, 5.8);
+      const bottom = pctH(canvasH, 13.4);
+      const border = pctW(canvasW, 4.2);
+      const outer = { x: padX, y: top, w: canvasW - padX * 2, h: canvasH - top - bottom };
+      ctx.fillStyle = RED;
+      ctx.fillRect(outer.x, outer.y, outer.w, outer.h);
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, {
+        x: outer.x + border,
+        y: outer.y + border,
+        w: outer.w - border * 2,
+        h: outer.h - border * 2,
+      });
+      const badgeW = pctW(canvasW, 30);
+      const badgeH = pctH(canvasH, 6.5);
+      const badgeX = canvasW - pctW(canvasW, 9) - badgeW;
+      const badgeY = canvasH - pctH(canvasH, 6) - badgeH;
+      ctx.fillStyle = RED;
+      ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+      await drawLogoInBox(ctx, LOGO_WHITE, badgeX, badgeY, badgeW, badgeH, 0.72);
+      break;
+    }
+    case "mdc-red-bracket-system": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, undefined, "contrast(1.08) saturate(0.9)");
+      const line = pctW(canvasW, 4.2);
+      const inset = pctW(canvasW, 7);
+      const bottomY = canvasH - pctH(canvasH, 8) - line;
+      ctx.fillStyle = RED;
+      ctx.fillRect(inset, pctH(canvasH, 20), line, pctH(canvasH, 72));
+      ctx.fillRect(inset, bottomY, pctW(canvasW, 58), line);
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        left: pctW(canvasW, 12),
+        bottom: pctH(canvasH, 13),
+        widthPct: 32,
+      });
+      break;
+    }
+    case "mdc-floating-caption-bar": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      drawBottomBar(ctx, canvasW, canvasH, 74, 13, RED, 0.92);
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        cx: canvasW / 2,
+        cy: pctH(canvasH, 80.5),
+        widthPct: 39,
+      });
+      break;
+    }
+    case "mdc-white-logo-red-shadow": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        cx: canvasW / 2,
+        bottom: pctH(canvasH, 8),
+        widthPct: 46,
+        shadowColor: RED,
+        shadowOffsetXPct: 1.9,
+        shadowOffsetYPct: 1.9,
+        shadowBlurPct: 0,
+      });
+      break;
+    }
+    case "mdc-gradient-footer-takeover": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      drawRedGradientFooter(ctx, canvasW, canvasH, 52);
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        cx: canvasW / 2,
+        bottom: pctH(canvasH, 6),
+        widthPct: 42,
+      });
+      break;
+    }
+    case "mdc-red-duotone-split": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, undefined, "grayscale(1) contrast(1.25)");
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = RED;
+      ctx.fillRect(0, 0, pctW(canvasW, 56), canvasH);
+      ctx.restore();
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        left: pctW(canvasW, 7),
+        bottom: pctH(canvasH, 8),
+        widthPct: 34,
+      });
+      drawMicroText(ctx, "FIELD REPORT", pctW(canvasW, 93), pctH(canvasH, 7), { align: "right" });
+      break;
+    }
+    case "mdc-conference-masthead": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      ctx.fillStyle = RED;
+      ctx.fillRect(0, 0, canvasW, pctH(canvasH, 16));
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        left: pctW(canvasW, 7),
+        top: pctH(canvasH, 5.2),
+        widthPct: 31,
+      });
+      drawMicroText(ctx, "WORLD CONGRESS", pctW(canvasW, 93), pctH(canvasH, 7), { align: "right" });
+      ctx.fillStyle = WHITE;
+      ctx.fillRect(0, pctH(canvasH, 16), canvasW, Math.max(2, pctW(canvasW, 0.9)));
+      break;
+    }
+    case "mdc-repeating-event-spine": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      const spineW = pctW(canvasW, 22);
+      ctx.fillStyle = RED;
+      ctx.fillRect(0, 0, spineW, canvasH);
+      for (const cy of [0.17, 0.5, 0.83]) {
+        await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+          cx: spineW / 2,
+          cy: canvasH * cy,
+          widthPct: 37,
+          rotateDeg: -90,
+        });
+      }
+      break;
+    }
+    case "mdc-diagonal-campaign-wrap": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      ctx.save();
+      ctx.translate(canvasW / 2, pctH(canvasH, 50));
+      ctx.rotate((-17 * Math.PI) / 180);
+      ctx.fillStyle = RED;
+      ctx.shadowColor = "rgba(0,0,0,0.25)";
+      ctx.shadowBlur = pctW(canvasW, 4);
+      ctx.shadowOffsetY = pctW(canvasW, 2.5);
+      ctx.fillRect(-canvasW * 0.62, -pctH(canvasH, 8), canvasW * 1.24, pctH(canvasH, 16));
+      ctx.shadowColor = "transparent";
+      await drawLogoInBox(ctx, LOGO_WHITE, -canvasW * 0.18, -pctH(canvasH, 8), canvasW * 0.36, pctH(canvasH, 16), 0.92);
+      ctx.restore();
+      break;
+    }
+    case "mdc-black-lower-third-plate": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      const x = pctW(canvasW, 6);
+      const y = pctH(canvasH, 76);
+      const bw = pctW(canvasW, 88);
+      const bh = pctH(canvasH, 17);
+      ctx.fillStyle = INK;
+      ctx.fillRect(x, y, bw, bh);
+      ctx.fillStyle = RED;
+      ctx.fillRect(x, y, bw, pctW(canvasW, 2.6));
+      await drawLogoInBox(ctx, LOGO_WHITE, x, y, bw, bh, 0.41);
+      break;
+    }
+    case "mdc-sharp-red-corner-wedge": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, undefined, "saturate(1.1) contrast(1.08)");
+      ctx.fillStyle = RED;
+      ctx.beginPath();
+      ctx.moveTo(canvasW, 0);
+      ctx.lineTo(canvasW, pctH(canvasH, 34));
+      ctx.lineTo(pctW(canvasW, 24), 0);
+      ctx.closePath();
+      ctx.fill();
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        right: pctW(canvasW, 8),
+        top: pctH(canvasH, 7),
+        widthPct: 32,
+      });
+      break;
+    }
+    case "mdc-right-side-brand-slab": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      drawMicroText(ctx, "MDC / LIVE", pctW(canvasW, 7), pctH(canvasH, 7), { bg: INK });
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = RED;
+      ctx.fillRect(pctW(canvasW, 66), 0, pctW(canvasW, 34), canvasH);
+      ctx.restore();
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        cx: pctW(canvasW, 83),
+        cy: canvasH / 2,
+        widthPct: 41,
+        rotateDeg: 90,
+      });
+      break;
+    }
+    case "mdc-cropped-logo-landscape": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      ctx.save();
+      const gradient = ctx.createLinearGradient(0, pctH(canvasH, 65), 0, canvasH);
+      gradient.addColorStop(0, "rgba(255,255,255,0)");
+      gradient.addColorStop(1, "rgba(255,255,255,0.18)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvasW, canvasH);
+      ctx.restore();
+      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
+        left: -pctW(canvasW, 48),
+        bottom: -pctH(canvasH, 3),
+        widthPct: 132,
+        opacity: 0.95,
+        blendMode: "multiply",
+      });
+      break;
+    }
+    case "mdc-repeating-logo-texture": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, undefined, "contrast(1.05)");
+      await drawRepeatedLogoPattern(ctx, canvasW, canvasH);
+      break;
+    }
+    case "mdc-neon-sightline-mark": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      ctx.fillStyle = RED;
+      ctx.shadowColor = "rgba(238,0,21,0.8)";
+      ctx.shadowBlur = pctW(canvasW, 7);
+      ctx.fillRect(0, pctH(canvasH, 35), canvasW, Math.max(3, pctW(canvasW, 1.5)));
+      ctx.shadowColor = "transparent";
+      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
+        left: pctW(canvasW, 7),
+        top: pctH(canvasH, 28),
+        widthPct: 36,
+        shadowColor: "rgba(238,0,21,0.65)",
+        shadowBlurPct: 4.5,
+      });
+      break;
+    }
+    case "mdc-rough-red-sticker": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      const cx = pctW(canvasW, 69);
+      const cy = pctH(canvasH, 84.5);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate((4 * Math.PI) / 180);
+      ctx.fillStyle = RED;
+      ctx.beginPath();
+      const sw = pctW(canvasW, 50);
+      const sh = pctH(canvasH, 17);
+      const x = -sw / 2;
+      const y = -sh / 2;
+      ctx.moveTo(x, y + sh * 0.12);
+      ctx.lineTo(x + sw * 0.1, y);
+      ctx.lineTo(x + sw, y + sh * 0.08);
+      ctx.lineTo(x + sw * 0.94, y + sh);
+      ctx.lineTo(x + sw * 0.04, y + sh * 0.92);
+      ctx.closePath();
+      ctx.fill();
+      await drawLogoInBox(ctx, LOGO_WHITE, x, y, sw, sh, 0.72);
+      ctx.restore();
+      break;
+    }
+    case "mdc-oversized-translucent-mark": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      ctx.fillStyle = "rgba(238,0,21,0.16)";
+      ctx.fillRect(0, 0, canvasW, canvasH);
+      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
+        cx: canvasW / 2,
+        cy: pctH(canvasH, 52),
+        widthPct: 118,
+        opacity: 0.52,
+        blendMode: "multiply",
+      });
+      break;
+    }
+    case "mdc-monochrome-red-footer-fade": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, undefined, "grayscale(1) contrast(1.18)");
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = "rgba(238,0,21,0.2)";
+      ctx.fillRect(0, 0, canvasW, canvasH);
+      ctx.restore();
+      const gradient = ctx.createLinearGradient(0, pctH(canvasH, 62), 0, canvasH);
+      gradient.addColorStop(0, "rgba(17,17,17,0)");
+      gradient.addColorStop(1, INK);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, pctH(canvasH, 62), canvasW, pctH(canvasH, 38));
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        cx: canvasW / 2,
+        bottom: pctH(canvasH, 7),
+        widthPct: 40,
+      });
+      break;
+    }
+    case "mdc-white-ticket-label": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      const x = pctW(canvasW, 7);
+      const y = pctH(canvasH, 7);
+      const bw = pctW(canvasW, 48);
+      const bh = pctH(canvasH, 13);
+      ctx.fillStyle = WHITE;
+      ctx.shadowColor = "rgba(0,0,0,0.2)";
+      ctx.shadowBlur = pctW(canvasW, 3.5);
+      ctx.shadowOffsetY = pctW(canvasW, 2);
+      ctx.fillRect(x, y, bw, bh);
+      ctx.shadowColor = "transparent";
+      ctx.strokeStyle = RED;
+      ctx.lineWidth = Math.max(2, pctW(canvasW, 0.7));
+      ctx.strokeRect(x + pctW(canvasW, 2), y + pctW(canvasW, 2), bw - pctW(canvasW, 4), bh - pctW(canvasW, 4));
+      await drawLogoInBox(ctx, LOGO_RED, x, y, bw, bh, 0.72);
+      break;
+    }
+    case "mdc-editorial-side-block": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      ctx.fillStyle = PAPER;
+      ctx.fillRect(0, 0, pctW(canvasW, 34), canvasH);
+      ctx.fillStyle = RED;
+      ctx.fillRect(pctW(canvasW, 34), 0, pctW(canvasW, 4.5), canvasH);
+      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
+        cx: pctW(canvasW, 17),
+        cy: pctH(canvasH, 48),
+        widthPct: 54,
+        rotateDeg: -90,
+      });
+      drawMicroText(ctx, "WAD 2026", pctW(canvasW, 93), pctH(canvasH, 92), {
+        align: "right",
+        bg: RED,
+      });
+      break;
+    }
+    case "mdc-red-poster-window": {
+      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
+      const inset = pctW(canvasW, 6);
+      const border = pctW(canvasW, 3.2);
+      ctx.strokeStyle = RED;
+      ctx.lineWidth = border;
+      ctx.strokeRect(inset + border / 2, inset + border / 2, canvasW - inset * 2 - border, canvasH - inset * 2 - border);
+      ctx.fillStyle = RED;
+      ctx.fillRect(inset, canvasH - inset - pctH(canvasH, 16), canvasW - inset * 2, pctH(canvasH, 16));
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        cx: canvasW / 2,
+        bottom: pctH(canvasH, 8.5),
+        widthPct: 38,
+      });
+      break;
+    }
+  }
+}

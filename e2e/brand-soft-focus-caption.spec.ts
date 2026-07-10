@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 import { E2E_CHECKER_FIXTURE_PATH } from "./ensure-fixture";
 import { clearSavedProject, uploadPhoto } from "./helpers";
 
-test("MDC soft-focus caption bar renders on both aspect ratios", async ({ page }) => {
+test("MDC floating caption template renders on both aspect ratios", async ({ page }) => {
   await clearSavedProject(page);
   await page.goto("/brand/mdc");
   await uploadPhoto(page, E2E_CHECKER_FIXTURE_PATH);
-  await page.getByTestId("template-soft-focus").click();
+  await page.getByTestId("template-mdc-floating-caption-bar").click();
   await page.getByTestId("customization-panel").waitFor({ timeout: 10_000 });
 
   const sampleCaptionBar = async (label: string) => {

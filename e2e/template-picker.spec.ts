@@ -32,7 +32,7 @@ test.describe("Template picker", () => {
     expect(cursor).toBe("pointer");
   });
 
-  test("brand route uses generic templates with render-time MDC overlay", async ({ page }) => {
+  test("brand route uses MDC-specific templates", async ({ page }) => {
     await gotoBuilder(page);
     await uploadPhoto(page, FIXTURE);
     await expect(page.getByText("Carousel builder")).toBeVisible();
@@ -42,16 +42,21 @@ test.describe("Template picker", () => {
     await uploadPhoto(page, FIXTURE);
 
     await expect(page.getByText("MDC branding")).toBeVisible();
-    await expect(page.getByTestId("template-framed-polaroid")).toBeVisible();
-    await expect(page.getByTestId("template-clean-carousel")).toBeVisible();
-    await expect(page.getByTestId("template-kodak-strip")).toBeVisible();
-    await expect(page.getByTestId("template-soft-focus")).toBeVisible();
-    await expect(page.getByTestId("template-layered-spread-scatter")).toBeVisible();
+    await expect(page.getByTestId("template-mdc-editorial-poster-frame")).toBeVisible();
+    await expect(page.getByTestId("template-mdc-red-bracket-system")).toBeVisible();
+    await expect(page.getByTestId("template-mdc-floating-caption-bar")).toBeVisible();
+    await expect(page.getByTestId("template-mdc-white-logo-red-shadow")).toBeVisible();
+    await expect(page.getByTestId("template-mdc-red-poster-window")).toBeVisible();
+    await expect(page.getByTestId("template-framed-polaroid")).toHaveCount(0);
+    await expect(page.getByTestId("template-clean-carousel")).toHaveCount(0);
+    await expect(page.getByTestId("template-kodak-strip")).toHaveCount(0);
+    await expect(page.getByTestId("template-soft-focus")).toHaveCount(0);
+    await expect(page.getByTestId("template-layered-spread-scatter")).toHaveCount(0);
     await expect(page.getByTestId("template-layered-prints")).toHaveCount(0);
     await expect(page.getByTestId("template-layered-prints-panorama")).toHaveCount(0);
     await expect(page.getByTestId("template-layered-spread-cascade")).toHaveCount(0);
 
-    const preview = page.getByTestId("template-framed-polaroid").locator("img");
+    const preview = page.getByTestId("template-mdc-editorial-poster-frame").locator("img");
     await expect(preview).toHaveAttribute("src", /^data:image\/jpeg/);
 
     const posterFrameRed = await preview.evaluate(async (img) => {

@@ -31,7 +31,28 @@ export type TemplateId =
   | "layered-spread-corner"
   | "layered-spread-tilted"
   | "layered-spread-split"
-  | "soft-focus";
+  | "soft-focus"
+  | "mdc-editorial-poster-frame"
+  | "mdc-red-bracket-system"
+  | "mdc-floating-caption-bar"
+  | "mdc-white-logo-red-shadow"
+  | "mdc-gradient-footer-takeover"
+  | "mdc-red-duotone-split"
+  | "mdc-conference-masthead"
+  | "mdc-repeating-event-spine"
+  | "mdc-diagonal-campaign-wrap"
+  | "mdc-black-lower-third-plate"
+  | "mdc-sharp-red-corner-wedge"
+  | "mdc-right-side-brand-slab"
+  | "mdc-cropped-logo-landscape"
+  | "mdc-repeating-logo-texture"
+  | "mdc-neon-sightline-mark"
+  | "mdc-rough-red-sticker"
+  | "mdc-oversized-translucent-mark"
+  | "mdc-monochrome-red-footer-fade"
+  | "mdc-white-ticket-label"
+  | "mdc-editorial-side-block"
+  | "mdc-red-poster-window";
 
 export type PhotoCrop = {
   offsetX: number;

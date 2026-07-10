@@ -6,6 +6,7 @@ import {
   spreadSlideHasContent,
   syncSpreadSlides,
 } from "./layered-spreads";
+import { MDC_MARKETING_TEMPLATES } from "./mdc-marketing-templates";
 import { uid } from "./utils";
 import type { PhotoItem, Slide, TemplateId, TemplateMeta } from "./types";
 
@@ -90,6 +91,7 @@ export const TEMPLATES: TemplateMeta[] = [
     description: "Blurred backdrop, framed photo",
     icon: "focus",
   },
+  ...MDC_MARKETING_TEMPLATES,
 ];
 
 const VALID_TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));

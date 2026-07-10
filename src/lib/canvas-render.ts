@@ -12,6 +12,7 @@ import { blurCanvas, supportsCanvasFilter } from "./canvas-blur";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
 import { isLayeredSpreadTemplate, spreadIndexFromRole } from "./layered-spreads";
+import { drawMdcMarketingTemplate, isMdcMarketingTemplate } from "./mdc-marketing-templates";
 import type { BrandConfig } from "./brands";
 import type {
   FilterPreset,
@@ -544,7 +545,26 @@ export async function renderSlideToCanvas(
 
   const lut = await loadLut(opts.filter);
 
-  if (isLayeredSpreadTemplate(opts.templateId) && slide.layeredPrints) {
+  if (isMdcMarketingTemplate(opts.templateId)) {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, w, h);
+
+    const cell = slide.cells[0];
+    const photo = cell ? photosById.get(cell.photoId) : null;
+    if (photo) {
+      const img = await loadImage(photo.objectUrl);
+      await drawMdcMarketingTemplate(
+        ctx,
+        opts.templateId,
+        img,
+        photo.crop,
+        w,
+        h,
+        lut,
+        opts.slideIndex ?? 0,
+      );
+    }
+  } else if (isLayeredSpreadTemplate(opts.templateId) && slide.layeredPrints) {
     await drawSpreadLayeredSlide(ctx, slide.layeredPrints, photosById, w, h, lut);
   } else if (opts.templateId === "layered-prints" && slide.layeredPrints) {
     await drawLayeredPrints(ctx, slide.layeredPrints, photosById, w, h, lut);
