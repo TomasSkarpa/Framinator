@@ -596,7 +596,6 @@ export async function renderSlideToCanvas(
     templateId: opts.templateId,
     width: w,
     height: h,
-    overlayEnabled: slide.overlayEnabled,
   });
 
   return canvas;

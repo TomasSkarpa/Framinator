@@ -6,7 +6,6 @@ type DrawBrandOverlayOpts = {
   templateId: TemplateId;
   width: number;
   height: number;
-  overlayEnabled?: boolean;
 };
 
 const overlayImageCache = new Map<string, Promise<HTMLImageElement>>();
@@ -206,8 +205,8 @@ export async function drawBrandOverlay(
   ctx: CanvasRenderingContext2D,
   opts: DrawBrandOverlayOpts,
 ) {
-  const { brand, templateId, width, height, overlayEnabled } = opts;
-  if (!brand || overlayEnabled === false) return;
+  const { brand, templateId, width, height } = opts;
+  if (!brand) return;
 
   for (const overlay of brand.overlays) {
     if (!overlayApplies(overlay, templateId)) continue;

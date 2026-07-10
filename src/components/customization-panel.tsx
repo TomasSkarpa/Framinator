@@ -9,7 +9,7 @@ import { preloadLuts } from "@/lib/lut";
 import { useProject } from "@/lib/project-context";
 import type { CropPlacementKey } from "@/lib/slide-crop";
 import { isFramedPolaroidTemplate } from "@/lib/templates";
-import { usesPerSlideBrandOverlay } from "@/lib/brands";
+import { isMdcMarketingTemplate } from "@/lib/mdc-marketing-templates";
 import { cn, pressable } from "@/lib/utils";
 
 export function CustomizationPanel() {
@@ -40,7 +40,7 @@ export function CustomizationPanel() {
     activeCropPhoto?.crop.scale === DEFAULT_PHOTO_CROP.scale;
 
   const showOverlayToggle =
-    usesPerSlideBrandOverlay(state.templateId) && selectedSlide !== null;
+    isMdcMarketingTemplate(state.templateId) && selectedSlide !== null;
 
   return (
     <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5" data-testid="customization-panel">

@@ -6,7 +6,6 @@ import {
   spreadSlideHasContent,
   syncSpreadSlides,
 } from "./layered-spreads";
-import { isMdcCarouselTemplate } from "./brands";
 import { isMdcMarketingTemplate, MDC_MARKETING_TEMPLATES } from "./mdc-marketing-templates";
 import { uid } from "./utils";
 import type { PhotoItem, Slide, TemplateId, TemplateMeta } from "./types";
@@ -119,26 +118,16 @@ export function isSoftFocusTemplate(templateId: TemplateId | null): boolean {
   return templateId === "soft-focus";
 }
 
-function applyCarouselBrandOverlay(slides: Slide[], templateId: TemplateId): Slide[] {
-  if (!isMdcCarouselTemplate(templateId)) return slides;
-  return slides.map((s) => ({ ...s, overlayEnabled: s.overlayEnabled ?? true }));
-}
-
 /** Build slide list from photos + template. Preserves photo order. */
 export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[] {
-  if (templateId === "layered-prints") {
-    return applyCarouselBrandOverlay(buildLayeredPrintsSlides(photos), templateId);
-  }
-  if (isLayeredSpreadTemplate(templateId)) {
-    return applyCarouselBrandOverlay(buildSpreadSlides(templateId, photos), templateId);
-  }
+  if (templateId === "layered-prints") return buildLayeredPrintsSlides(photos);
+  if (isLayeredSpreadTemplate(templateId)) return buildSpreadSlides(templateId, photos);
   if (photos.length === 0) return [];
-  const slides = photos.map((p, i) => ({
+  return photos.map((p, i) => ({
     id: uid(),
     cells: [{ photoId: p.id }],
     ...(isMdcMarketingTemplate(templateId) ? { overlayEnabled: i === 0 } : {}),
   }));
-  return applyCarouselBrandOverlay(slides, templateId);
 }
 
 /** Rebuild slides; layered templates keep carousel order and reflow photos from tray order. */
@@ -149,14 +138,14 @@ export function slidesFromPhotos(
 ): Slide[] {
   if (!templateId) return [];
   if (templateId === "layered-prints") {
-    return applyCarouselBrandOverlay(syncLayeredPrintsSlides(existing, photos), templateId);
+    return syncLayeredPrintsSlides(existing, photos);
   }
   if (isLayeredSpreadTemplate(templateId)) {
-    return applyCarouselBrandOverlay(syncSpreadSlides(templateId, existing, photos), templateId);
+    return syncSpreadSlides(templateId, existing, photos);
   }
   if (photos.length === 0) return [];
   if (existing.length > 0) {
-    return applyCarouselBrandOverlay(syncSimpleSlides(existing, photos), templateId);
+    return syncSimpleSlides(existing, photos);
   }
   return buildSlides(templateId, photos);
 }
