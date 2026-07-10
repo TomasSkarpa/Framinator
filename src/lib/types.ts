@@ -127,6 +127,8 @@ export type Slide = {
   id: string;
   cells: SlideCell[];
   layeredPrints?: LayeredPrintsLayout;
+  /** MDC marketing templates: branded frame on this slide when true. */
+  overlayEnabled?: boolean;
 };
 
 export type ProjectState = {

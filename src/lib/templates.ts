@@ -6,7 +6,7 @@ import {
   spreadSlideHasContent,
   syncSpreadSlides,
 } from "./layered-spreads";
-import { MDC_MARKETING_TEMPLATES } from "./mdc-marketing-templates";
+import { isMdcMarketingTemplate, MDC_MARKETING_TEMPLATES } from "./mdc-marketing-templates";
 import { uid } from "./utils";
 import type { PhotoItem, Slide, TemplateId, TemplateMeta } from "./types";
 
@@ -123,9 +123,10 @@ export function buildSlides(templateId: TemplateId, photos: PhotoItem[]): Slide[
   if (templateId === "layered-prints") return buildLayeredPrintsSlides(photos);
   if (isLayeredSpreadTemplate(templateId)) return buildSpreadSlides(templateId, photos);
   if (photos.length === 0) return [];
-  return photos.map((p) => ({
+  return photos.map((p, i) => ({
     id: uid(),
     cells: [{ photoId: p.id }],
+    ...(isMdcMarketingTemplate(templateId) ? { overlayEnabled: i === 0 } : {}),
   }));
 }
 

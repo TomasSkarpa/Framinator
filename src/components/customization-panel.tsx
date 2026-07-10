@@ -9,6 +9,7 @@ import { preloadLuts } from "@/lib/lut";
 import { useProject } from "@/lib/project-context";
 import type { CropPlacementKey } from "@/lib/slide-crop";
 import { isFramedPolaroidTemplate } from "@/lib/templates";
+import { isMdcMarketingTemplate } from "@/lib/mdc-marketing-templates";
 import { cn, pressable } from "@/lib/utils";
 
 export function CustomizationPanel() {
@@ -24,6 +25,7 @@ export function CustomizationPanel() {
     slideCropOptions,
     cropPlacementKey,
     setCropPlacement,
+    setSlideOverlay,
   } = useProject();
 
   useEffect(() => {
@@ -36,6 +38,9 @@ export function CustomizationPanel() {
     activeCropPhoto?.crop.offsetX === DEFAULT_PHOTO_CROP.offsetX &&
     activeCropPhoto?.crop.offsetY === DEFAULT_PHOTO_CROP.offsetY &&
     activeCropPhoto?.crop.scale === DEFAULT_PHOTO_CROP.scale;
+
+  const showOverlayToggle =
+    isMdcMarketingTemplate(state.templateId) && selectedSlide !== null;
 
   return (
     <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5" data-testid="customization-panel">
@@ -146,6 +151,25 @@ export function CustomizationPanel() {
         </div>
       ) : (
         <p className="text-xs text-zinc-500">Select a slide above to adjust its crop.</p>
+      )}
+
+      {showOverlayToggle && selectedSlide && (
+        <label
+          className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3"
+          data-testid="slide-overlay-toggle"
+        >
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-950"
+            checked={selectedSlide.overlayEnabled ?? false}
+            onChange={(e) => setSlideOverlay(selectedSlide.id, e.target.checked)}
+            data-testid="slide-overlay-checkbox"
+          />
+          <span className="text-xs font-medium text-zinc-300">Brand overlay</span>
+          <span className="text-[11px] text-zinc-500">
+            Apply the selected template frame to this slide
+          </span>
+        </label>
       )}
 
       <div className="space-y-4 border-t border-zinc-800 pt-4">

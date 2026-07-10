@@ -360,9 +360,9 @@ export async function drawMdcMarketingTemplate(
   canvasW: number,
   canvasH: number,
   lut: Lut3D | null,
-  slideIndex = 0,
+  overlayEnabled = false,
 ) {
-  if (slideIndex > 0) {
+  if (!overlayEnabled) {
     await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
     drawFirstSlideOnlyNotice(ctx, canvasW, canvasH);
     return;

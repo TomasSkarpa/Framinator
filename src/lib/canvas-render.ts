@@ -561,7 +561,7 @@ export async function renderSlideToCanvas(
         w,
         h,
         lut,
-        opts.slideIndex ?? 0,
+        slide.overlayEnabled ?? false,
       );
     }
   } else if (isLayeredSpreadTemplate(opts.templateId) && slide.layeredPrints) {

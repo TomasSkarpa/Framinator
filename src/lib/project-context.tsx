@@ -51,6 +51,7 @@ type Action =
   | { type: "SET_BORDER"; borderWidth: number }
   | { type: "SET_ASPECT"; aspectRatio: ProjectState["aspectRatio"] }
   | { type: "UPDATE_CROP"; photoId: string; crop: PhotoItem["crop"] }
+  | { type: "SET_SLIDE_OVERLAY"; slideId: string; enabled: boolean }
   | { type: "RESTORE"; state: ProjectState }
   | { type: "APPLY_SMART_LAYOUT"; plan: SmartLayoutPlan }
   | { type: "RESET" };
@@ -150,6 +151,13 @@ function reducer(state: ProjectState, action: Action): ProjectState {
           p.id === action.photoId ? { ...p, crop: action.crop } : p,
         ),
       };
+    case "SET_SLIDE_OVERLAY":
+      return {
+        ...state,
+        slides: state.slides.map((s) =>
+          s.id === action.slideId ? { ...s, overlayEnabled: action.enabled } : s,
+        ),
+      };
     case "RESTORE":
       return action.state;
     case "APPLY_SMART_LAYOUT":
@@ -187,6 +195,7 @@ type ProjectContextValue = {
   setBorder: (n: number) => void;
   setAspect: (a: ProjectState["aspectRatio"]) => void;
   updateCrop: (photoId: string, crop: PhotoItem["crop"]) => void;
+  setSlideOverlay: (slideId: string, enabled: boolean) => void;
   applySmartLayout: (plan: SmartLayoutPlan) => void;
   restoreState: (state: ProjectState) => void;
   reset: () => void;
@@ -295,10 +304,18 @@ export function ProjectProvider({
       const templateId = normalizeTemplateId(stored.templateId);
       const availableTemplateId =
         templateId && availableTemplateIds.has(templateId) ? templateId : null;
+      const restoredSlides: Slide[] = stored.slides.map((s) => ({
+        id: s.id,
+        cells: s.cells,
+        layeredPrints: s.layeredPrints,
+        overlayEnabled: s.overlayEnabled,
+      }));
       pendingRestore.current = {
         photos,
         templateId: availableTemplateId,
-        slides: availableTemplateId ? slidesFromPhotos(availableTemplateId, photos) : [],
+        slides: availableTemplateId
+          ? slidesFromPhotos(availableTemplateId, photos, restoredSlides)
+          : [],
         filter: normalizeFilter(stored.filter),
         borderWidth: stored.borderWidth,
         aspectRatio: stored.aspectRatio,
@@ -397,6 +414,8 @@ export function ProjectProvider({
     setAspect: (a) => dispatch({ type: "SET_ASPECT", aspectRatio: a }),
     updateCrop: (photoId, crop) =>
       dispatch({ type: "UPDATE_CROP", photoId, crop }),
+    setSlideOverlay: (slideId, enabled) =>
+      dispatch({ type: "SET_SLIDE_OVERLAY", slideId, enabled }),
     applySmartLayout: (plan) => {
       const templateId =
         plan.templateId && availableTemplateIds.has(plan.templateId)

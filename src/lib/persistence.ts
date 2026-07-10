@@ -18,6 +18,7 @@ type StoredSlide = {
   id: string;
   cells: { photoId: string }[];
   layeredPrints?: LayeredPrintsLayout;
+  overlayEnabled?: boolean;
 };
 
 export type StoredProject = {
