@@ -576,7 +576,6 @@ export async function renderSlideToCanvas(
     templateId: opts.templateId,
     width: w,
     height: h,
-    borderWidth: opts.borderWidth,
   });
 
   return canvas;

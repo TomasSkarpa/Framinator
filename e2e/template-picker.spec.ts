@@ -43,15 +43,18 @@ test.describe("Template picker", () => {
 
     await expect(page.getByText("MDC branding")).toBeVisible();
     await expect(page.getByTestId("template-framed-polaroid")).toBeVisible();
+    await expect(page.getByTestId("template-clean-carousel")).toBeVisible();
     await expect(page.getByTestId("template-kodak-strip")).toBeVisible();
     await expect(page.getByTestId("template-soft-focus")).toBeVisible();
-    await expect(page.getByTestId("template-clean-carousel")).toHaveCount(0);
+    await expect(page.getByTestId("template-layered-spread-scatter")).toBeVisible();
     await expect(page.getByTestId("template-layered-prints")).toHaveCount(0);
+    await expect(page.getByTestId("template-layered-prints-panorama")).toHaveCount(0);
+    await expect(page.getByTestId("template-layered-spread-cascade")).toHaveCount(0);
 
     const preview = page.getByTestId("template-framed-polaroid").locator("img");
     await expect(preview).toHaveAttribute("src", /^data:image\/jpeg/);
 
-    const bottomCenter = await preview.evaluate(async (img) => {
+    const posterFrameRed = await preview.evaluate(async (img) => {
       const image = img as HTMLImageElement;
       if (!image.complete) {
         await new Promise((resolve) => image.addEventListener("load", resolve, { once: true }));
@@ -63,12 +66,13 @@ test.describe("Template picker", () => {
       if (!ctx) throw new Error("Canvas unavailable");
       ctx.drawImage(image, 0, 0);
       return Array.from(
-        ctx.getImageData(Math.floor(canvas.width / 2), canvas.height - 8, 1, 1).data,
+        ctx.getImageData(Math.floor(canvas.width * 0.08), Math.floor(canvas.height * 0.5), 1, 1)
+          .data,
       );
     });
 
-    expect(bottomCenter[0]).toBeGreaterThan(180);
-    expect(bottomCenter[1]).toBeLessThan(60);
-    expect(bottomCenter[2]).toBeLessThan(60);
+    expect(posterFrameRed[0]).toBeGreaterThan(180);
+    expect(posterFrameRed[1]).toBeLessThan(70);
+    expect(posterFrameRed[2]).toBeLessThan(70);
   });
 });

@@ -1,9 +1,11 @@
 import type { TemplateId } from "./types";
 
 export type BrandOverlayPlacement =
-  | "bottom-band"
-  | "bottom-mark"
-  | "polaroid-frame";
+  | "bracket-composition"
+  | "floating-caption-bar"
+  | "gradient-footer"
+  | "logo-shadow"
+  | "poster-frame";
 
 export type BrandOverlay = {
   placement: BrandOverlayPlacement;
@@ -15,8 +17,11 @@ export type BrandOverlay = {
   maxLogoWidthPct?: number;
   maxLogoHeightPct?: number;
   yPct?: number;
-  ruleWidthPct?: number;
-  ruleHeightPct?: number;
+  xPct?: number;
+  insetPct?: number;
+  borderPct?: number;
+  lineWidthPct?: number;
+  shadowOffsetPct?: number;
 };
 
 export type BrandConfig = {
@@ -53,36 +58,64 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
       logoLight: "/branding/mdc/logo-white.png",
       logoDark: "/branding/mdc/logo-black.png",
     },
-    enabledTemplateIds: ["framed-polaroid", "kodak-strip", "soft-focus"],
+    enabledTemplateIds: [
+      "framed-polaroid",
+      "clean-carousel",
+      "soft-focus",
+      "kodak-strip",
+      "layered-spread-scatter",
+    ],
     overlays: [
       {
-        placement: "polaroid-frame",
+        placement: "poster-frame",
         templateIds: ["framed-polaroid"],
         logoSrc: "/branding/mdc/logo-white.png",
         backgroundColor: "#ee0015",
-        heightPct: 7.5,
-        maxLogoWidthPct: 28,
-        maxLogoHeightPct: 3.2,
+        foregroundColor: "#f4f1ea",
+        insetPct: 6,
+        borderPct: 4,
+        maxLogoWidthPct: 24,
+        maxLogoHeightPct: 2.8,
       },
       {
-        placement: "bottom-band",
+        placement: "bracket-composition",
+        templateIds: ["clean-carousel"],
+        logoSrc: "/branding/mdc/logo-white.png",
+        backgroundColor: "#ee0015",
+        insetPct: 6.5,
+        lineWidthPct: 4.2,
+        maxLogoWidthPct: 26,
+        maxLogoHeightPct: 2.9,
+      },
+      {
+        placement: "floating-caption-bar",
         templateIds: ["soft-focus"],
         logoSrc: "/branding/mdc/logo-white.png",
         backgroundColor: "#ee0015",
-        heightPct: 7.5,
-        maxLogoWidthPct: 28,
-        maxLogoHeightPct: 3.2,
+        yPct: 82,
+        heightPct: 13,
+        maxLogoWidthPct: 38,
+        maxLogoHeightPct: 3.6,
       },
       {
-        placement: "bottom-mark",
+        placement: "logo-shadow",
         templateIds: ["kodak-strip"],
-        logoSrc: "/branding/mdc/logo-red.png",
+        logoSrc: "/branding/mdc/logo-white.png",
         foregroundColor: "#ee0015",
-        yPct: 94,
-        maxLogoWidthPct: 26,
-        maxLogoHeightPct: 3,
-        ruleWidthPct: 30,
-        ruleHeightPct: 0.5,
+        xPct: 50,
+        yPct: 91,
+        maxLogoWidthPct: 42,
+        maxLogoHeightPct: 4,
+        shadowOffsetPct: 1.2,
+      },
+      {
+        placement: "gradient-footer",
+        templateIds: ["layered-spread-scatter"],
+        logoSrc: "/branding/mdc/logo-white.png",
+        backgroundColor: "#ee0015",
+        heightPct: 48,
+        maxLogoWidthPct: 42,
+        maxLogoHeightPct: 3.8,
       },
     ],
   },
