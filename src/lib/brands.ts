@@ -1,5 +1,29 @@
-import { MDC_MARKETING_TEMPLATE_IDS } from "./mdc-marketing-templates";
+import {
+  isMdcMarketingTemplate,
+  MDC_MARKETING_TEMPLATE_IDS,
+} from "./mdc-marketing-templates";
 import type { TemplateId } from "./types";
+
+/** Multi-slide carousel layouts on brand routes; branding via `overlays`, not MDC frame templates. */
+export const MDC_CAROUSEL_TEMPLATE_IDS = [
+  "layered-prints",
+  "layered-prints-panorama",
+  "layered-spread-scatter",
+  "layered-spread-cascade",
+  "layered-spread-corner",
+  "layered-spread-tilted",
+  "layered-spread-split",
+] as const satisfies readonly TemplateId[];
+
+export function isMdcCarouselTemplate(
+  templateId: TemplateId | null,
+): templateId is (typeof MDC_CAROUSEL_TEMPLATE_IDS)[number] {
+  return !!templateId && (MDC_CAROUSEL_TEMPLATE_IDS as readonly string[]).includes(templateId);
+}
+
+export function usesPerSlideBrandOverlay(templateId: TemplateId | null): boolean {
+  return isMdcMarketingTemplate(templateId) || isMdcCarouselTemplate(templateId);
+}
 
 export type BrandOverlayPlacement =
   | "bracket-composition"
@@ -59,8 +83,17 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
       logoLight: "/branding/mdc/logo-white.png",
       logoDark: "/branding/mdc/logo-black.png",
     },
-    enabledTemplateIds: MDC_MARKETING_TEMPLATE_IDS,
-    overlays: [],
+    enabledTemplateIds: [...MDC_MARKETING_TEMPLATE_IDS, ...MDC_CAROUSEL_TEMPLATE_IDS],
+    overlays: [
+      {
+        placement: "gradient-footer",
+        templateIds: MDC_CAROUSEL_TEMPLATE_IDS,
+        logoSrc: "/branding/mdc/logo-white.png",
+        backgroundColor: "#ee0015",
+        heightPct: 42,
+        maxLogoWidthPct: 38,
+      },
+    ],
   },
 };
 
