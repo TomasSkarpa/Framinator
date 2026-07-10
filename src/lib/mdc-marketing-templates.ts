@@ -15,15 +15,9 @@ export const MDC_MARKETING_TEMPLATE_IDS = [
   "mdc-black-lower-third-plate",
   "mdc-sharp-red-corner-wedge",
   "mdc-right-side-brand-slab",
-  "mdc-cropped-logo-landscape",
   "mdc-repeating-logo-texture",
-  "mdc-neon-sightline-mark",
-  "mdc-rough-red-sticker",
   "mdc-oversized-translucent-mark",
   "mdc-monochrome-red-footer-fade",
-  "mdc-white-ticket-label",
-  "mdc-editorial-side-block",
-  "mdc-red-poster-window",
 ] as const satisfies readonly TemplateId[];
 
 export type MdcMarketingTemplateId = (typeof MDC_MARKETING_TEMPLATE_IDS)[number];
@@ -102,28 +96,10 @@ export const MDC_MARKETING_TEMPLATES: TemplateMeta[] = [
     icon: "split",
   },
   {
-    id: "mdc-cropped-logo-landscape",
-    name: "Cropped logo landscape",
-    description: "V2 / 13",
-    icon: "panorama",
-  },
-  {
     id: "mdc-repeating-logo-texture",
     name: "Repeating logo texture",
     description: "V2 / 14",
     icon: "layers",
-  },
-  {
-    id: "mdc-neon-sightline-mark",
-    name: "Neon sightline mark",
-    description: "V2 / 18",
-    icon: "focus",
-  },
-  {
-    id: "mdc-rough-red-sticker",
-    name: "Rough red sticker",
-    description: "V2 / 19",
-    icon: "tilted",
   },
   {
     id: "mdc-oversized-translucent-mark",
@@ -136,24 +112,6 @@ export const MDC_MARKETING_TEMPLATES: TemplateMeta[] = [
     name: "Monochrome red footer fade",
     description: "V2 / 22",
     icon: "focus",
-  },
-  {
-    id: "mdc-white-ticket-label",
-    name: "White ticket label",
-    description: "V2 / 23",
-    icon: "frame",
-  },
-  {
-    id: "mdc-editorial-side-block",
-    name: "Editorial side block",
-    description: "V2 / 24",
-    icon: "split",
-  },
-  {
-    id: "mdc-red-poster-window",
-    name: "Red poster window",
-    description: "V2 / 25",
-    icon: "frame",
   },
 ];
 
@@ -588,67 +546,9 @@ export async function drawMdcMarketingTemplate(
       });
       break;
     }
-    case "mdc-cropped-logo-landscape": {
-      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
-      ctx.save();
-      const gradient = ctx.createLinearGradient(0, pctH(canvasH, 65), 0, canvasH);
-      gradient.addColorStop(0, "rgba(255,255,255,0)");
-      gradient.addColorStop(1, "rgba(255,255,255,0.18)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvasW, canvasH);
-      ctx.restore();
-      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
-        left: -pctW(canvasW, 48),
-        bottom: -pctH(canvasH, 3),
-        widthPct: 132,
-        opacity: 0.95,
-        blendMode: "multiply",
-      });
-      break;
-    }
     case "mdc-repeating-logo-texture": {
       await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, undefined, "contrast(1.05)");
       await drawRepeatedLogoPattern(ctx, canvasW, canvasH);
-      break;
-    }
-    case "mdc-neon-sightline-mark": {
-      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
-      ctx.fillStyle = RED;
-      ctx.shadowColor = "rgba(238,0,21,0.8)";
-      ctx.shadowBlur = pctW(canvasW, 7);
-      ctx.fillRect(0, pctH(canvasH, 35), canvasW, Math.max(3, pctW(canvasW, 1.5)));
-      ctx.shadowColor = "transparent";
-      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
-        left: pctW(canvasW, 7),
-        top: pctH(canvasH, 28),
-        widthPct: 36,
-        shadowColor: "rgba(238,0,21,0.65)",
-        shadowBlurPct: 4.5,
-      });
-      break;
-    }
-    case "mdc-rough-red-sticker": {
-      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
-      const cx = pctW(canvasW, 69);
-      const cy = pctH(canvasH, 84.5);
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate((4 * Math.PI) / 180);
-      ctx.fillStyle = RED;
-      ctx.beginPath();
-      const sw = pctW(canvasW, 50);
-      const sh = pctH(canvasH, 17);
-      const x = -sw / 2;
-      const y = -sh / 2;
-      ctx.moveTo(x, y + sh * 0.12);
-      ctx.lineTo(x + sw * 0.1, y);
-      ctx.lineTo(x + sw, y + sh * 0.08);
-      ctx.lineTo(x + sw * 0.94, y + sh);
-      ctx.lineTo(x + sw * 0.04, y + sh * 0.92);
-      ctx.closePath();
-      ctx.fill();
-      await drawLogoInBox(ctx, LOGO_WHITE, x, y, sw, sh, 0.72);
-      ctx.restore();
       break;
     }
     case "mdc-oversized-translucent-mark": {
@@ -680,58 +580,6 @@ export async function drawMdcMarketingTemplate(
         cx: canvasW / 2,
         bottom: pctH(canvasH, 7),
         widthPct: 40,
-      });
-      break;
-    }
-    case "mdc-white-ticket-label": {
-      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
-      const x = pctW(canvasW, 7);
-      const y = pctH(canvasH, 7);
-      const bw = pctW(canvasW, 48);
-      const bh = pctH(canvasH, 13);
-      ctx.fillStyle = WHITE;
-      ctx.shadowColor = "rgba(0,0,0,0.2)";
-      ctx.shadowBlur = pctW(canvasW, 3.5);
-      ctx.shadowOffsetY = pctW(canvasW, 2);
-      ctx.fillRect(x, y, bw, bh);
-      ctx.shadowColor = "transparent";
-      ctx.strokeStyle = RED;
-      ctx.lineWidth = Math.max(2, pctW(canvasW, 0.7));
-      ctx.strokeRect(x + pctW(canvasW, 2), y + pctW(canvasW, 2), bw - pctW(canvasW, 4), bh - pctW(canvasW, 4));
-      await drawLogoInBox(ctx, LOGO_RED, x, y, bw, bh, 0.72);
-      break;
-    }
-    case "mdc-editorial-side-block": {
-      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
-      ctx.fillStyle = PAPER;
-      ctx.fillRect(0, 0, pctW(canvasW, 34), canvasH);
-      ctx.fillStyle = RED;
-      ctx.fillRect(pctW(canvasW, 34), 0, pctW(canvasW, 4.5), canvasH);
-      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
-        cx: pctW(canvasW, 17),
-        cy: pctH(canvasH, 48),
-        widthPct: 54,
-        rotateDeg: -90,
-      });
-      drawMicroText(ctx, "WAD 2026", pctW(canvasW, 93), pctH(canvasH, 92), {
-        align: "right",
-        bg: RED,
-      });
-      break;
-    }
-    case "mdc-red-poster-window": {
-      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
-      const inset = pctW(canvasW, 6);
-      const border = pctW(canvasW, 3.2);
-      ctx.strokeStyle = RED;
-      ctx.lineWidth = border;
-      ctx.strokeRect(inset + border / 2, inset + border / 2, canvasW - inset * 2 - border, canvasH - inset * 2 - border);
-      ctx.fillStyle = RED;
-      ctx.fillRect(inset, canvasH - inset - pctH(canvasH, 16), canvasW - inset * 2, pctH(canvasH, 16));
-      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
-        cx: canvasW / 2,
-        bottom: pctH(canvasH, 8.5),
-        widthPct: 38,
       });
       break;
     }

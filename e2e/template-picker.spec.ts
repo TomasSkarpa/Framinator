@@ -46,7 +46,7 @@ test.describe("Template picker", () => {
     await expect(page.getByTestId("template-mdc-red-bracket-system")).toBeVisible();
     await expect(page.getByTestId("template-mdc-floating-caption-bar")).toBeVisible();
     await expect(page.getByTestId("template-mdc-white-logo-red-shadow")).toBeVisible();
-    await expect(page.getByTestId("template-mdc-red-poster-window")).toBeVisible();
+    await expect(page.getByTestId("template-mdc-repeating-logo-texture")).toBeVisible();
     await expect(page.getByTestId("template-framed-polaroid")).toHaveCount(0);
     await expect(page.getByTestId("template-clean-carousel")).toHaveCount(0);
     await expect(page.getByTestId("template-kodak-strip")).toHaveCount(0);

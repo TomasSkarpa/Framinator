@@ -44,15 +44,9 @@ export type TemplateId =
   | "mdc-black-lower-third-plate"
   | "mdc-sharp-red-corner-wedge"
   | "mdc-right-side-brand-slab"
-  | "mdc-cropped-logo-landscape"
   | "mdc-repeating-logo-texture"
-  | "mdc-neon-sightline-mark"
-  | "mdc-rough-red-sticker"
   | "mdc-oversized-translucent-mark"
-  | "mdc-monochrome-red-footer-fade"
-  | "mdc-white-ticket-label"
-  | "mdc-editorial-side-block"
-  | "mdc-red-poster-window";
+  | "mdc-monochrome-red-footer-fade";
 
 export type PhotoCrop = {
   offsetX: number;
