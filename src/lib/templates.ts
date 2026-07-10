@@ -9,6 +9,20 @@ import {
 import { uid } from "./utils";
 import type { PhotoItem, Slide, TemplateId, TemplateMeta } from "./types";
 
+export const BASE_TEMPLATE_IDS = [
+  "framed-polaroid",
+  "clean-carousel",
+  "kodak-strip",
+  "layered-prints",
+  "layered-prints-panorama",
+  "layered-spread-scatter",
+  "layered-spread-cascade",
+  "layered-spread-corner",
+  "layered-spread-tilted",
+  "layered-spread-split",
+  "soft-focus",
+] as const satisfies readonly TemplateId[];
+
 export const TEMPLATES: TemplateMeta[] = [
   {
     id: "framed-polaroid",
@@ -79,10 +93,27 @@ export const TEMPLATES: TemplateMeta[] = [
 ];
 
 const VALID_TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));
+const TEMPLATE_META_BY_ID = new Map(TEMPLATES.map((t) => [t.id, t]));
 
 export function normalizeTemplateId(value: string | null | undefined): TemplateId | null {
   if (!value || !VALID_TEMPLATE_IDS.has(value as TemplateId)) return null;
   return value as TemplateId;
+}
+
+export function templatesForIds(ids: readonly TemplateId[]): TemplateMeta[] {
+  return ids.map((id) => TEMPLATE_META_BY_ID.get(id)).filter((t): t is TemplateMeta => !!t);
+}
+
+export function isFramedPolaroidTemplate(templateId: TemplateId | null): boolean {
+  return templateId === "framed-polaroid";
+}
+
+export function isKodakStripTemplate(templateId: TemplateId | null): boolean {
+  return templateId === "kodak-strip";
+}
+
+export function isSoftFocusTemplate(templateId: TemplateId | null): boolean {
+  return templateId === "soft-focus";
 }
 
 /** Build slide list from photos + template. Preserves photo order. */

@@ -18,7 +18,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
 import { useProject } from "@/lib/project-context";
-import { buildSlides, TEMPLATES } from "@/lib/templates";
+import { buildSlides } from "@/lib/templates";
 import type { TemplateId } from "@/lib/types";
 import { cn, pressable } from "@/lib/utils";
 
@@ -41,7 +41,7 @@ function TemplatePreview({
 }: {
   templateId: TemplateId;
 }) {
-  const { state } = useProject();
+  const { state, brand } = useProject();
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,13 +57,14 @@ function TemplatePreview({
       templateId,
       aspectRatio: state.aspectRatio,
       slideIndex: 0,
+      brand,
     }).then((u) => {
       if (!cancelled) setUrl(u);
     });
     return () => {
       cancelled = true;
     };
-  }, [templateId, state.photos, state.filter, state.borderWidth, state.aspectRatio]);
+  }, [brand, templateId, state.photos, state.filter, state.borderWidth, state.aspectRatio]);
 
   if (!url) {
     return <div className="aspect-[4/5] w-full animate-pulse rounded-md bg-zinc-800" />;
@@ -78,10 +79,10 @@ function TemplatePreview({
 }
 
 export function TemplatePicker() {
-  const { state, setTemplate } = useProject();
+  const { state, setTemplate, availableTemplates } = useProject();
   const selectedRef = useRef<HTMLButtonElement>(null);
   const [expanded, setExpanded] = useState(true);
-  const chosen = TEMPLATES.find((t) => t.id === state.templateId);
+  const chosen = availableTemplates.find((t) => t.id === state.templateId);
   const showPicker = !state.templateId || expanded;
 
   useEffect(() => {
@@ -146,7 +147,7 @@ export function TemplatePicker() {
         )}
       </div>
       <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TEMPLATES.map((t) => {
+          {availableTemplates.map((t) => {
             const selected = state.templateId === t.id;
             return (
               <button

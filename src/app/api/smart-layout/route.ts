@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { geminiApiKeys, geminiGenerateContent } from "@/lib/gemini-request";
 import { normalizeFilter } from "@/lib/filters";
 import { buildSmartLayoutPrompt, type SmartLayoutApiPayload } from "@/lib/smart-layout";
-import { normalizeTemplateId } from "@/lib/templates";
+import { BASE_TEMPLATE_IDS, normalizeTemplateId, templatesForIds } from "@/lib/templates";
 import type { AspectRatio } from "@/lib/constants";
 import type { TemplateId } from "@/lib/types";
 
 type RequestBody = {
   photos: { id: string; name: string; thumbnailBase64: string }[];
   templateId: TemplateId | null;
+  availableTemplateIds?: string[];
   slideRoles: string[];
   aspectRatio?: AspectRatio;
 };
@@ -63,10 +64,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many photos" }, { status: 400 });
   }
 
-  const templateId = body.templateId ? normalizeTemplateId(body.templateId) : null;
+  const availableTemplateIds = Array.isArray(body.availableTemplateIds)
+    ? body.availableTemplateIds
+        .map((id) => normalizeTemplateId(id))
+        .filter((id): id is TemplateId => !!id)
+    : [...BASE_TEMPLATE_IDS];
+  const availableTemplateIdSet = new Set(availableTemplateIds);
+  const normalizedTemplateId = body.templateId ? normalizeTemplateId(body.templateId) : null;
+  const templateId =
+    normalizedTemplateId && availableTemplateIdSet.has(normalizedTemplateId)
+      ? normalizedTemplateId
+      : null;
   const aspectRatio: AspectRatio = body.aspectRatio === "1:1" ? "1:1" : "4:5";
   const indexedPhotos = body.photos.map((p, index) => ({ index, name: p.name }));
-  const prompt = buildSmartLayoutPrompt(indexedPhotos, templateId, body.slideRoles ?? [], aspectRatio);
+  const prompt = buildSmartLayoutPrompt(
+    indexedPhotos,
+    templateId,
+    body.slideRoles ?? [],
+    aspectRatio,
+    templatesForIds(availableTemplateIds),
+  );
 
   const parts: { text?: string; inline_data?: { mime_type: string; data: string } }[] = [
     { text: prompt },
@@ -119,7 +136,8 @@ export async function POST(req: Request) {
 
   if (payload.templateId) {
     const normalized = normalizeTemplateId(payload.templateId);
-    payload.templateId = normalized ?? undefined;
+    payload.templateId =
+      normalized && availableTemplateIdSet.has(normalized) ? normalized : undefined;
   }
   if (payload.filter) {
     payload.filter = normalizeFilter(payload.filter);

@@ -5,14 +5,15 @@ import { normalizeFilter } from "./filters";
 import { reflowLayeredPrintsSlides } from "./layered-prints";
 import { isLayeredSpreadTemplate, reflowSpreadSlides } from "./layered-spreads";
 import {
+  BASE_TEMPLATE_IDS,
   buildSlides,
   isLayeredTemplate,
   normalizeTemplateId,
   slidesFromPhotos,
   syncSimpleSlides,
-  TEMPLATES,
+  templatesForIds,
 } from "./templates";
-import type { FilterPreset, PhotoCrop, PhotoItem, ProjectState, TemplateId } from "./types";
+import type { FilterPreset, PhotoCrop, PhotoItem, ProjectState, TemplateId, TemplateMeta } from "./types";
 
 export type SmartLayoutCrop = {
   offsetX: number;
@@ -99,6 +100,7 @@ export function apiPayloadToPlan(
   payload: SmartLayoutApiPayload,
   photos: PhotoItem[],
   slides: { id: string }[],
+  availableTemplateIds?: readonly TemplateId[],
 ): SmartLayoutPlan | null {
   if (!Array.isArray(payload.photoOrder) || payload.photoOrder.length === 0) return null;
 
@@ -119,9 +121,14 @@ export function apiPayloadToPlan(
     }
   }
 
-  const templateId = payload.templateId
+  const available = availableTemplateIds ? new Set(availableTemplateIds) : null;
+  const normalizedTemplateId = payload.templateId
     ? normalizeTemplateId(payload.templateId) ?? undefined
     : undefined;
+  const templateId =
+    normalizedTemplateId && (!available || available.has(normalizedTemplateId))
+      ? normalizedTemplateId
+      : undefined;
 
   return {
     photoOrder,
@@ -215,12 +222,13 @@ export function buildSmartLayoutPrompt(
   templateId: TemplateId | null,
   slideRoles: string[],
   aspectRatio: AspectRatio = "4:5",
+  availableTemplates: readonly TemplateMeta[] = templatesForIds(BASE_TEMPLATE_IDS),
 ): string {
   const templateLine = templateId
     ? `Current template: ${templateId}. Keep this template unless none was selected.`
     : "No template selected yet; pick the best fit from the list.";
 
-  const templateList = TEMPLATES.map((t) => `${t.id} (${t.description})`).join(", ");
+  const templateList = availableTemplates.map((t) => `${t.id} (${t.description})`).join(", ");
   const frameContext = smartLayoutFrameContext(templateId, aspectRatio);
 
   return `You are arranging photos for an Instagram carousel app.

@@ -8,6 +8,7 @@ import { FILTERS } from "@/lib/filters";
 import { preloadLuts } from "@/lib/lut";
 import { useProject } from "@/lib/project-context";
 import type { CropPlacementKey } from "@/lib/slide-crop";
+import { isFramedPolaroidTemplate } from "@/lib/templates";
 import { cn, pressable } from "@/lib/utils";
 
 export function CustomizationPanel() {
@@ -195,7 +196,7 @@ export function CustomizationPanel() {
           </div>
         </div>
 
-        {state.templateId === "framed-polaroid" && (
+        {isFramedPolaroidTemplate(state.templateId) && (
           <div className="space-y-2">
             <label className="text-xs text-zinc-400">
               Border width · {state.borderWidth}px

@@ -20,7 +20,7 @@ import { cn, pressable } from "@/lib/utils";
 type DialogPhase = "confirm" | "loading" | "error";
 
 export function SmartLayoutButton() {
-  const { state, applySmartLayout, restoreState } = useProject();
+  const { state, applySmartLayout, restoreState, availableTemplates } = useProject();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<DialogPhase>("confirm");
@@ -57,6 +57,7 @@ export function SmartLayoutButton() {
         body: JSON.stringify({
           photos: requestPhotos,
           templateId: state.templateId,
+          availableTemplateIds: availableTemplates.map((t) => t.id),
           slideRoles,
           aspectRatio: state.aspectRatio,
         }),
@@ -68,7 +69,12 @@ export function SmartLayoutButton() {
         throw new Error(body.error ?? "Smart layout failed");
       }
 
-      const plan = apiPayloadToPlan(body, state.photos, state.slides);
+      const plan = apiPayloadToPlan(
+        body,
+        state.photos,
+        state.slides,
+        availableTemplates.map((t) => t.id),
+      );
       if (!plan) {
         throw new Error("Could not parse layout suggestion");
       }
@@ -85,7 +91,7 @@ export function SmartLayoutButton() {
       setPhase("error");
       setErrorMessage(err instanceof Error ? err.message : "Something went wrong");
     }
-  }, [applySmartLayout, clearUndo, state, toast]);
+  }, [applySmartLayout, availableTemplates, clearUndo, state, toast]);
 
   const handleUndo = useCallback(() => {
     if (!undoSnapshot) return;

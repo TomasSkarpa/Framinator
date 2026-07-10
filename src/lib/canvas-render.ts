@@ -6,11 +6,13 @@ import {
   PREVIEW_MAX_DPR,
   type AspectRatio,
 } from "./constants";
+import { drawBrandOverlay } from "./brand-overlay";
 import { drawCover } from "./crop-math";
 import { blurCanvas, supportsCanvasFilter } from "./canvas-blur";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
 import { isLayeredSpreadTemplate, spreadIndexFromRole } from "./layered-spreads";
+import type { BrandConfig } from "./brands";
 import type {
   FilterPreset,
   LayeredPrintsLayout,
@@ -30,6 +32,7 @@ type RenderOpts = {
   aspectRatio: AspectRatio;
   /** Kodak strip: decorative frame counter (0-based slide index). */
   slideIndex?: number;
+  brand?: BrandConfig | null;
 };
 
 const imageCache = new Map<string, Promise<HTMLImageElement>>();
@@ -543,35 +546,37 @@ export async function renderSlideToCanvas(
 
   if (isLayeredSpreadTemplate(opts.templateId) && slide.layeredPrints) {
     await drawSpreadLayeredSlide(ctx, slide.layeredPrints, photosById, w, h, lut);
-    return canvas;
-  }
-
-  if (opts.templateId === "layered-prints" && slide.layeredPrints) {
+  } else if (opts.templateId === "layered-prints" && slide.layeredPrints) {
     await drawLayeredPrints(ctx, slide.layeredPrints, photosById, w, h, lut);
-    return canvas;
-  }
-
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, w, h);
-
-  const cell = slide.cells[0];
-  if (!cell) return canvas;
-
-  const photo = photosById.get(cell.photoId);
-  if (!photo) return canvas;
-
-  const img = await loadImage(photo.objectUrl);
-
-  if (opts.templateId === "framed-polaroid") {
-    const frame = drawPolaroidFrame(ctx, w, h, opts.borderWidth);
-    await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
-  } else if (opts.templateId === "kodak-strip") {
-    await drawKodakStrip(ctx, w, h, img, photo.crop, lut, opts.slideIndex ?? 0);
-  } else if (opts.templateId === "soft-focus") {
-    await drawSoftFocus(ctx, img, photo.crop, w, h, lut);
   } else {
-    await drawCoverWithLut(ctx, img, photo.crop, 0, 0, w, h, lut);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, w, h);
+
+    const cell = slide.cells[0];
+    const photo = cell ? photosById.get(cell.photoId) : null;
+
+    if (photo) {
+      const img = await loadImage(photo.objectUrl);
+
+      if (opts.templateId === "framed-polaroid") {
+        const frame = drawPolaroidFrame(ctx, w, h, opts.borderWidth);
+        await drawCoverWithLut(ctx, img, photo.crop, frame.x, frame.y, frame.w, frame.h, lut);
+      } else if (opts.templateId === "kodak-strip") {
+        await drawKodakStrip(ctx, w, h, img, photo.crop, lut, opts.slideIndex ?? 0);
+      } else if (opts.templateId === "soft-focus") {
+        await drawSoftFocus(ctx, img, photo.crop, w, h, lut);
+      } else {
+        await drawCoverWithLut(ctx, img, photo.crop, 0, 0, w, h, lut);
+      }
+    }
   }
+
+  await drawBrandOverlay(ctx, {
+    brand: opts.brand,
+    templateId: opts.templateId,
+    width: w,
+    height: h,
+  });
 
   return canvas;
 }

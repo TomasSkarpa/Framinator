@@ -25,7 +25,7 @@ type ExportOverlayProps = {
 };
 
 export function ExportOverlay({ open, onClose }: ExportOverlayProps) {
-  const { state } = useProject();
+  const { state, brand } = useProject();
   const { toast } = useToast();
   const [rendered, setRendered] = useState<RenderedSlide[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,9 +39,10 @@ export function ExportOverlay({ open, onClose }: ExportOverlayProps) {
             borderWidth: state.borderWidth,
             templateId: state.templateId,
             aspectRatio: state.aspectRatio,
+            brand,
           }
         : null,
-    [state.filter, state.borderWidth, state.templateId, state.aspectRatio],
+    [brand, state.filter, state.borderWidth, state.templateId, state.aspectRatio],
   );
 
   const aspect = project

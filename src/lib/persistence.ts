@@ -21,7 +21,7 @@ type StoredSlide = {
 };
 
 export type StoredProject = {
-  id: "current";
+  id: string;
   templateId: TemplateId | null;
   slides: StoredSlide[];
   filter: FilterPreset;
@@ -33,7 +33,7 @@ export type StoredProject = {
 
 interface FraminatorDB extends DBSchema {
   project: {
-    key: "current";
+    key: string;
     value: StoredProject;
   };
 }
@@ -51,17 +51,17 @@ function getDb() {
   return dbPromise;
 }
 
-export async function saveProject(project: StoredProject): Promise<void> {
+export async function saveProject(project: StoredProject, key = "current"): Promise<void> {
   const db = await getDb();
-  await db.put("project", { ...project, updatedAt: Date.now() }, "current");
+  await db.put("project", { ...project, id: key, updatedAt: Date.now() }, key);
 }
 
-export async function loadProject(): Promise<StoredProject | null> {
+export async function loadProject(key = "current"): Promise<StoredProject | null> {
   const db = await getDb();
-  return (await db.get("project", "current")) ?? null;
+  return (await db.get("project", key)) ?? null;
 }
 
-export async function clearProject(): Promise<void> {
+export async function clearProject(key = "current"): Promise<void> {
   const db = await getDb();
-  await db.delete("project", "current");
+  await db.delete("project", key);
 }

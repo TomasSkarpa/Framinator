@@ -7,7 +7,7 @@ import { isLayeredTemplate } from "@/lib/templates";
 import type { Slide } from "@/lib/types";
 
 export function useSlidePreviewUrl(slide: Slide | null): string | null {
-  const { state } = useProject();
+  const { state, brand } = useProject();
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,6 +27,7 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
         templateId,
         aspectRatio: state.aspectRatio,
         slideIndex: slideIndex >= 0 ? slideIndex : 0,
+        brand,
       }).then((u) => {
         if (!cancelled) setUrl(u);
       });
@@ -35,7 +36,7 @@ export function useSlidePreviewUrl(slide: Slide | null): string | null {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [slide, state.photos, state.slides, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
+  }, [brand, slide, state.photos, state.slides, state.templateId, state.filter, state.borderWidth, state.aspectRatio]);
 
   return url;
 }

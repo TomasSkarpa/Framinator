@@ -16,9 +16,16 @@ import { clearProject, loadProject, saveProject } from "@/lib/persistence";
 import { normalizeFilter } from "@/lib/filters";
 import { reflowLayeredPrintsSlides } from "@/lib/layered-prints";
 import { isLayeredSpreadTemplate, reflowSpreadSlides } from "@/lib/layered-spreads";
-import { buildSlides, normalizeTemplateId, slidesFromPhotos, usedPhotoIds } from "@/lib/templates";
+import {
+  BASE_TEMPLATE_IDS,
+  normalizeTemplateId,
+  slidesFromPhotos,
+  templatesForIds,
+  usedPhotoIds,
+} from "@/lib/templates";
 import { preparePhoto } from "@/lib/prepare-photo";
 import { applySmartLayoutPlan, type SmartLayoutPlan } from "@/lib/smart-layout";
+import { getBrandConfig, type BrandConfig } from "@/lib/brands";
 import {
   slideCropTargets,
   type CropPlacementKey,
@@ -29,6 +36,7 @@ import type {
   ProjectState,
   Slide,
   TemplateId,
+  TemplateMeta,
 } from "@/lib/types";
 import { uid } from "@/lib/utils";
 
@@ -182,6 +190,8 @@ type ProjectContextValue = {
   applySmartLayout: (plan: SmartLayoutPlan) => void;
   restoreState: (state: ProjectState) => void;
   reset: () => void;
+  brand: BrandConfig | null;
+  availableTemplates: TemplateMeta[];
   unusedPhotos: PhotoItem[];
   fileByPhotoId: Map<string, File>;
   resumeAvailable: boolean;
@@ -191,13 +201,29 @@ type ProjectContextValue = {
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
 
-export function ProjectProvider({ children }: { children: ReactNode }) {
+export function ProjectProvider({
+  children,
+  brandId,
+}: {
+  children: ReactNode;
+  brandId?: string;
+}) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const [cropPlacementKey, setCropPlacementKey] = useState<CropPlacementKey>("main");
   const [resumeAvailable, setResumeAvailable] = useState(false);
   const pendingRestore = useRef<ProjectState | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const brand = useMemo(() => getBrandConfig(brandId), [brandId]);
+  const storageKey = brand?.storageKey ?? "current";
+  const availableTemplates = useMemo(
+    () => templatesForIds(brand?.enabledTemplateIds ?? BASE_TEMPLATE_IDS),
+    [brand],
+  );
+  const availableTemplateIds = useMemo(
+    () => new Set<TemplateId>(availableTemplates.map((t) => t.id)),
+    [availableTemplates],
+  );
   const fileByPhotoId = useMemo(() => {
     const m = new Map<string, File>();
     for (const p of state.photos) {
@@ -257,7 +283,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void (async () => {
-      const stored = await loadProject();
+      const stored = await loadProject(storageKey);
       if (!stored || stored.photos.length === 0) return;
       const photos: PhotoItem[] = stored.photos.map((sp) => ({
         id: sp.id,
@@ -267,17 +293,19 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         _file: new File([sp.blob], sp.name, { type: sp.blob.type }),
       }));
       const templateId = normalizeTemplateId(stored.templateId);
+      const availableTemplateId =
+        templateId && availableTemplateIds.has(templateId) ? templateId : null;
       pendingRestore.current = {
         photos,
-        templateId,
-        slides: templateId ? slidesFromPhotos(templateId, photos) : [],
+        templateId: availableTemplateId,
+        slides: availableTemplateId ? slidesFromPhotos(availableTemplateId, photos) : [],
         filter: normalizeFilter(stored.filter),
         borderWidth: stored.borderWidth,
         aspectRatio: stored.aspectRatio,
       };
       setResumeAvailable(true);
     })();
-  }, []);
+  }, [availableTemplateIds, storageKey]);
 
   useEffect(() => {
     if (state.photos.length === 0 && !state.templateId) return;
@@ -297,7 +325,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           }),
         );
         await saveProject({
-          id: "current",
+          id: storageKey,
           templateId: state.templateId,
           slides: state.slides,
           filter: state.filter,
@@ -305,13 +333,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           aspectRatio: state.aspectRatio,
           photos: blobs,
           updatedAt: Date.now(),
-        });
+        }, storageKey);
       })();
     }, 5000);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [state, fileByPhotoId]);
+  }, [state, fileByPhotoId, storageKey]);
 
   const addPhotos = useCallback(async (files: File[]) => {
     const existingNames = new Set(state.photos.map((p) => p.name));
@@ -339,10 +367,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissResume = useCallback(async () => {
-    await clearProject();
+    await clearProject(storageKey);
     pendingRestore.current = null;
     setResumeAvailable(false);
-  }, []);
+  }, [storageKey]);
 
   const value: ProjectContextValue = {
     state,
@@ -356,7 +384,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setCropPlacement,
     addPhotos,
     removePhoto: (id) => dispatch({ type: "REMOVE_PHOTO", photoId: id }),
-    setTemplate: (id) => dispatch({ type: "SET_TEMPLATE", templateId: id }),
+    setTemplate: (id) => {
+      if (!availableTemplateIds.has(id)) return;
+      dispatch({ type: "SET_TEMPLATE", templateId: id });
+    },
     reorderSlides: (from, to) => dispatch({ type: "REORDER_SLIDES", from, to }),
     reorderPhotos: (from, to) => dispatch({ type: "REORDER_PHOTOS", from, to }),
     assignPhoto: (slideId, photoId) =>
@@ -366,13 +397,21 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setAspect: (a) => dispatch({ type: "SET_ASPECT", aspectRatio: a }),
     updateCrop: (photoId, crop) =>
       dispatch({ type: "UPDATE_CROP", photoId, crop }),
-    applySmartLayout: (plan) => dispatch({ type: "APPLY_SMART_LAYOUT", plan }),
+    applySmartLayout: (plan) => {
+      const templateId =
+        plan.templateId && availableTemplateIds.has(plan.templateId)
+          ? plan.templateId
+          : undefined;
+      dispatch({ type: "APPLY_SMART_LAYOUT", plan: { ...plan, templateId } });
+    },
     restoreState: (snapshot) => dispatch({ type: "RESTORE", state: snapshot }),
     reset: () => {
-      void clearProject();
+      void clearProject(storageKey);
       setSelectedSlideId(null);
       dispatch({ type: "RESET" });
     },
+    brand,
+    availableTemplates,
     unusedPhotos,
     fileByPhotoId,
     resumeAvailable,

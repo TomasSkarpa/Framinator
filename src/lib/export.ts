@@ -3,6 +3,7 @@ import { renderSlideToCanvas } from "./canvas-render";
 import { EXPORT_WIDTH, exportHeight } from "./constants";
 import { layeredPrintsSlideHasContent } from "./layered-prints";
 import { isLayeredSpreadTemplate, spreadSlideHasContent } from "./layered-spreads";
+import type { BrandConfig } from "./brands";
 import type { PhotoItem, ProjectState, Slide, TemplateId } from "./types";
 
 export function slidesForExport(slides: Slide[], templateId: TemplateId | null): Slide[] {
@@ -16,7 +17,9 @@ export type ExportFormat = "jpeg" | "png";
 export type ExportProject = Pick<
   ProjectState,
   "filter" | "borderWidth" | "templateId" | "aspectRatio"
->;
+> & {
+  brand?: BrandConfig | null;
+};
 
 export type RenderedSlide = {
   index: number;
@@ -97,6 +100,7 @@ async function renderSlideBlob(
     slideIndex: index,
     width: EXPORT_WIDTH,
     height: exportHeight(project.aspectRatio),
+    brand: project.brand,
   });
   return canvasToBlob(canvas, mimeForFormat(format));
 }
