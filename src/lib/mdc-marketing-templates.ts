@@ -1,6 +1,6 @@
 import { drawCover } from "./crop-math";
 import { applyLutToCanvas, type Lut3D } from "./lut";
-import type { PhotoCrop, TemplateId, TemplateMeta } from "./types";
+import type { LayeredPrintsRole, PhotoCrop, TemplateId, TemplateMeta } from "./types";
 
 export const MDC_MARKETING_TEMPLATE_IDS = [
   "mdc-editorial-poster-frame",
@@ -580,6 +580,90 @@ export async function drawMdcMarketingTemplate(
         cx: canvasW / 2,
         bottom: pctH(canvasH, 7),
         widthPct: 40,
+      });
+      break;
+    }
+  }
+}
+
+const MDC_BRANDED_SPREAD_TEMPLATES = new Set<TemplateId>([
+  "layered-prints-panorama",
+  "layered-spread-scatter",
+]);
+
+export function hasMdcBrandedSpreadAccent(templateId: TemplateId | null): boolean {
+  return !!templateId && MDC_BRANDED_SPREAD_TEMPLATES.has(templateId);
+}
+
+/**
+ * Draws MDC brand accents on top of an already-rendered spread slide.
+ * Each accent is placed in a pixel zone where no print layer lands, so they
+ * never fight the composition. Call after drawSpreadLayeredSlide.
+ *
+ * Panorama geometry: wide print occupies y=58–86% on both slides.
+ *   Left  → full conference masthead bar (0–14%), white divider line below.
+ *   Right → quiet bottom badge (y=93–100%), right-aligned logo.
+ *
+ * Scatter geometry: prints start at y=8% on the left, last print ends at y=88% on the right.
+ *   Left  → thin masthead (0–7%), logo right-aligned (asymmetric; echoes the scattered composition).
+ *   Right → thin bottom bar (93–100%), logo left-aligned (bookend reversal).
+ */
+export async function drawMdcBrandedSpreadAccent(
+  ctx: CanvasRenderingContext2D,
+  role: LayeredPrintsRole,
+  canvasW: number,
+  canvasH: number,
+): Promise<void> {
+  switch (role) {
+    case "panorama-left": {
+      // Full masthead bar — same language as mdc-conference-masthead.
+      ctx.fillStyle = RED;
+      ctx.fillRect(0, 0, canvasW, pctH(canvasH, 14));
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        left: pctW(canvasW, 7),
+        top: pctH(canvasH, 4),
+        widthPct: 31,
+      });
+      drawMicroText(ctx, "WORLD CONGRESS", pctW(canvasW, 93), pctH(canvasH, 7), { align: "right" });
+      ctx.fillStyle = WHITE;
+      ctx.fillRect(0, pctH(canvasH, 14), canvasW, Math.max(2, pctW(canvasW, 0.9)));
+      break;
+    }
+    case "panorama-right": {
+      // Quiet bottom badge — bookend to the left masthead.
+      const badgeH = pctH(canvasH, 6);
+      ctx.fillStyle = RED;
+      ctx.fillRect(0, canvasH - badgeH, canvasW, badgeH);
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        right: pctW(canvasW, 7),
+        bottom: pctH(canvasH, 0.8),
+        widthPct: 27,
+      });
+      break;
+    }
+    case "scatter-left": {
+      // Thin masthead above the prints (prints start at yPct=8, bar is 7%).
+      // Logo right-aligned: asymmetry matches the scattered, left-leaning print layout.
+      const barH = pctH(canvasH, 7);
+      ctx.fillStyle = RED;
+      ctx.fillRect(0, 0, canvasW, barH);
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        right: pctW(canvasW, 5),
+        top: pctH(canvasH, 0.8),
+        widthPct: 28,
+      });
+      break;
+    }
+    case "scatter-right": {
+      // Bottom badge below the last print (last print ends at yPct=88, bar is 7%).
+      // Logo left-aligned: reverses the left-slide asymmetry, closing the spread.
+      const barH = pctH(canvasH, 7);
+      ctx.fillStyle = RED;
+      ctx.fillRect(0, canvasH - barH, canvasW, barH);
+      await drawLogo(ctx, LOGO_WHITE, canvasW, canvasH, {
+        left: pctW(canvasW, 5),
+        bottom: pctH(canvasH, 0.8),
+        widthPct: 28,
       });
       break;
     }

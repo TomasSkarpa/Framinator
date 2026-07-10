@@ -12,7 +12,7 @@ import { blurCanvas, supportsCanvasFilter } from "./canvas-blur";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
 import { isLayeredSpreadTemplate, spreadIndexFromRole } from "./layered-spreads";
-import { drawMdcMarketingTemplate, isMdcMarketingTemplate } from "./mdc-marketing-templates";
+import { drawMdcBrandedSpreadAccent, drawMdcMarketingTemplate, hasMdcBrandedSpreadAccent, isMdcMarketingTemplate } from "./mdc-marketing-templates";
 import type { BrandConfig } from "./brands";
 import type {
   FilterPreset,
@@ -566,6 +566,9 @@ export async function renderSlideToCanvas(
     }
   } else if (isLayeredSpreadTemplate(opts.templateId) && slide.layeredPrints) {
     await drawSpreadLayeredSlide(ctx, slide.layeredPrints, photosById, w, h, lut);
+    if (opts.brand?.id === "mdc" && hasMdcBrandedSpreadAccent(opts.templateId) && slide.layeredPrints.role) {
+      await drawMdcBrandedSpreadAccent(ctx, slide.layeredPrints.role, w, h);
+    }
   } else if (opts.templateId === "layered-prints" && slide.layeredPrints) {
     await drawLayeredPrints(ctx, slide.layeredPrints, photosById, w, h, lut);
   } else {

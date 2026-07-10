@@ -59,7 +59,11 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
       logoLight: "/branding/mdc/logo-white.png",
       logoDark: "/branding/mdc/logo-black.png",
     },
-    enabledTemplateIds: MDC_MARKETING_TEMPLATE_IDS,
+    enabledTemplateIds: [
+      ...MDC_MARKETING_TEMPLATE_IDS,
+      "layered-prints-panorama",
+      "layered-spread-scatter",
+    ] as const satisfies readonly TemplateId[],
     overlays: [],
   },
 };
