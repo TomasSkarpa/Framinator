@@ -16,7 +16,6 @@ export const MDC_MARKETING_TEMPLATE_IDS = [
   "mdc-sharp-red-corner-wedge",
   "mdc-right-side-brand-slab",
   "mdc-repeating-logo-texture",
-  "mdc-oversized-translucent-mark",
   "mdc-monochrome-red-footer-fade",
 ] as const satisfies readonly TemplateId[];
 
@@ -26,91 +25,85 @@ export const MDC_MARKETING_TEMPLATES: TemplateMeta[] = [
   {
     id: "mdc-editorial-poster-frame",
     name: "Editorial poster frame",
-    description: "V2 / 01",
+    description: "Bold border and editorial label",
     icon: "frame",
   },
   {
     id: "mdc-red-bracket-system",
     name: "Red bracket system",
-    description: "V2 / 02",
+    description: "Photo framed by red brackets",
     icon: "corner",
   },
   {
     id: "mdc-floating-caption-bar",
     name: "Floating caption bar",
-    description: "V2 / 03",
+    description: "Image with a floating caption",
     icon: "focus",
   },
   {
     id: "mdc-white-logo-red-shadow",
     name: "White mark red shadow",
-    description: "V2 / 04",
+    description: "White mark with a red offset",
     icon: "frame",
   },
   {
     id: "mdc-gradient-footer-takeover",
     name: "Gradient footer takeover",
-    description: "V2 / 05",
+    description: "Photo fading into a bold footer",
     icon: "focus",
   },
   {
     id: "mdc-red-duotone-split",
     name: "Red duotone split",
-    description: "V2 / 06",
+    description: "High-contrast red split layout",
     icon: "split",
   },
   {
     id: "mdc-conference-masthead",
     name: "Conference masthead",
-    description: "V2 / 07",
+    description: "Wide event headline treatment",
     icon: "panorama",
   },
   {
     id: "mdc-repeating-event-spine",
     name: "Repeating event spine",
-    description: "V2 / 08",
+    description: "Repeating event details on the edge",
     icon: "layers",
   },
   {
     id: "mdc-diagonal-campaign-wrap",
     name: "Diagonal campaign wrap",
-    description: "V2 / 09",
+    description: "Photo wrapped in a diagonal band",
     icon: "tilted",
   },
   {
     id: "mdc-black-lower-third-plate",
     name: "Black lower-third plate",
-    description: "V2 / 10",
+    description: "Dark caption plate over the photo",
     icon: "split",
   },
   {
     id: "mdc-sharp-red-corner-wedge",
     name: "Sharp red corner wedge",
-    description: "V2 / 11",
+    description: "Angular red corner accent",
     icon: "corner",
   },
   {
     id: "mdc-right-side-brand-slab",
     name: "Right-side brand slab",
-    description: "V2 / 12",
+    description: "Vertical red logo panel",
     icon: "split",
   },
   {
     id: "mdc-repeating-logo-texture",
     name: "Repeating logo texture",
-    description: "V2 / 14",
+    description: "Photo overlaid with repeating marks",
     icon: "layers",
-  },
-  {
-    id: "mdc-oversized-translucent-mark",
-    name: "Oversized translucent mark",
-    description: "V2 / 20",
-    icon: "frame",
   },
   {
     id: "mdc-monochrome-red-footer-fade",
     name: "Monochrome red footer fade",
-    description: "V2 / 22",
+    description: "Monochrome photo with a red fade",
     icon: "focus",
   },
 ];
@@ -549,19 +542,6 @@ export async function drawMdcMarketingTemplate(
     case "mdc-repeating-logo-texture": {
       await drawPhoto(ctx, img, crop, canvasW, canvasH, lut, undefined, "contrast(1.05)");
       await drawRepeatedLogoPattern(ctx, canvasW, canvasH);
-      break;
-    }
-    case "mdc-oversized-translucent-mark": {
-      await drawPhoto(ctx, img, crop, canvasW, canvasH, lut);
-      ctx.fillStyle = "rgba(238,0,21,0.16)";
-      ctx.fillRect(0, 0, canvasW, canvasH);
-      await drawLogo(ctx, LOGO_RED, canvasW, canvasH, {
-        cx: canvasW / 2,
-        cy: pctH(canvasH, 52),
-        widthPct: 118,
-        opacity: 0.52,
-        blendMode: "multiply",
-      });
       break;
     }
     case "mdc-monochrome-red-footer-fade": {
