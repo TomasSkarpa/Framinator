@@ -39,6 +39,10 @@ export function CustomizationPanel() {
     activeCropPhoto?.crop.offsetY === DEFAULT_PHOTO_CROP.offsetY &&
     activeCropPhoto?.crop.scale === DEFAULT_PHOTO_CROP.scale;
 
+  const activePhotoNumber = activeCropPhoto
+    ? state.photos.findIndex((photo) => photo.id === activeCropPhoto.id) + 1
+    : null;
+
   const showOverlayToggle =
     isMdcMarketingTemplate(state.templateId) && selectedSlide !== null;
 
@@ -55,6 +59,32 @@ export function CustomizationPanel() {
 
       {activeCropPhoto ? (
         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+          <div
+            className="flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 p-2.5"
+            data-testid="active-customization-photo"
+          >
+            <div className="relative shrink-0">
+              <img
+                src={activeCropPhoto.objectUrl}
+                alt=""
+                className="h-12 w-12 rounded-md border-2 border-blue-500 object-cover"
+              />
+              <span className="absolute -bottom-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white ring-2 ring-zinc-950">
+                {activePhotoNumber}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-blue-300">
+                Selected photo
+              </p>
+              <p className="text-sm font-semibold text-white">Photo {activePhotoNumber}</p>
+              <p className="truncate text-[11px] text-zinc-400" title={activeCropPhoto.name}>
+                {activeCropPhoto.name}
+              </p>
+            </div>
+            <span className="shrink-0 text-xs text-zinc-500">Slide {selectedSlideIndex + 1}</span>
+          </div>
+
           <div className="flex items-center justify-between gap-2">
             <label className="text-xs font-medium text-zinc-300">Crop</label>
             <Button
@@ -84,7 +114,8 @@ export function CustomizationPanel() {
                       : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
                   )}
                 >
-                  {opt.label}
+                  {opt.label} · Photo{" "}
+                  {state.photos.findIndex((photo) => photo.id === opt.photoId) + 1}
                 </button>
               ))}
             </div>

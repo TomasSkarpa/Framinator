@@ -39,6 +39,16 @@ test.describe("Per-photo crop and zoom", () => {
     await expect(page.getByTestId("crop-slider-horizontal")).toBeVisible();
   });
 
+  test("Photo numbers connect the order tray to Customize", async ({ page }) => {
+    await expect(page.getByTestId("photo-tray-item-0")).toContainText("Photo 1");
+    await expect(page.getByTestId("photo-tray-item-1")).toContainText("Photo 2");
+
+    await page.getByTestId("slide-thumb-2").click();
+
+    await expect(page.getByTestId("active-customization-photo")).toContainText("Photo 2");
+    await expect(page.getByTestId("active-customization-photo")).toContainText("Slide 2");
+  });
+
   test("Customize panel adjusts the selected slide photo", async ({ page }) => {
     const before = await readCropOffset(page);
     await setCropHorizontal(page, 55);

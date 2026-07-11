@@ -58,6 +58,9 @@ function SortablePhoto({
         loading="lazy"
         className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
       />
+      <span className="pointer-events-none absolute bottom-1 left-1 rounded-md bg-blue-600/95 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+        Photo {index + 1}
+      </span>
       <button
         type="button"
         className={cn(
@@ -152,7 +155,7 @@ export function PhotoTray() {
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-sm font-medium text-zinc-300">
-          Your photos · {state.photos.length} selected
+          Photo order · {state.photos.length} selected
         </h2>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {state.photos.length >= 2 && <SmartLayoutButton />}
@@ -166,7 +169,7 @@ export function PhotoTray() {
 
       {sortable && (
         <p className="text-xs text-zinc-500">
-          Drag photos to set fill order. Leftmost fills the first frame.
+          Drag to reorder. Photo 1 fills the first frame.
         </p>
       )}
 
@@ -206,6 +209,9 @@ export function PhotoTray() {
                 loading="lazy"
                 className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
               />
+              <span className="pointer-events-none absolute bottom-1 left-1 rounded-md bg-blue-600/95 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                Photo {index + 1}
+              </span>
               <button
                 type="button"
                 onClick={() => removePhoto(photo.id)}
