@@ -29,6 +29,7 @@ export function SmartLayoutButton() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<DialogPhase>("confirm");
+  const [loadingMessage, setLoadingMessage] = useState("Studying your photos…");
   const [errorMessage, setErrorMessage] = useState("");
   const [undoSnapshot, setUndoSnapshot] = useState<ProjectState | null>(null);
   const [notice, setNotice] = useState<SmartLayoutNotice | null>(null);
@@ -48,6 +49,7 @@ export function SmartLayoutButton() {
 
   const runSmartLayout = useCallback(async () => {
     setPhase("loading");
+    setLoadingMessage("Studying your photos…");
     setErrorMessage("");
 
     try {
@@ -87,6 +89,7 @@ export function SmartLayoutButton() {
       const candidate = applySmartLayoutPlan(state, plan);
       if (shouldReviewSmartLayout(candidate.templateId)) {
         try {
+          setLoadingMessage("Reviewing the final composition…");
           const previews = await renderSmartLayoutReviewPreviews(
             candidate,
             state.photos.map((photo) => photo.id),
@@ -219,8 +222,9 @@ export function SmartLayoutButton() {
               {phase === "confirm" && (
                 <>
                   <p className="text-sm leading-relaxed text-zinc-300">
-                    Thumbnails of your {photoCount} photos are sent to Google Gemini to suggest
-                    order and positioning. Originals stay on your device.
+                    Small previews of your {photoCount} photos and the suggested layout are sent
+                    to Google Gemini to arrange and review the carousel. Originals stay on your
+                    device.
                   </p>
                   <div className="flex gap-3 pt-1">
                     <Button
@@ -257,7 +261,7 @@ export function SmartLayoutButton() {
               {phase === "loading" && (
                 <div className="flex flex-col items-center gap-3 py-6 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-                  <p className="text-sm text-zinc-300">Arranging and reviewing your carousel…</p>
+                  <p className="text-sm text-zinc-300">{loadingMessage}</p>
                   <p className="text-xs text-zinc-500">Usually a few seconds</p>
                 </div>
               )}
