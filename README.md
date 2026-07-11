@@ -17,7 +17,7 @@ Copy `.env.example` → `.env.local` if you test smart layout (`GEMINI_API_KEY`)
 
 **Feature preview** → open a PR targeting `develop` → `https://<pr-id>.framinator.skarpa.dev` (native Coolify preview).
 **Dev** → merge to `develop` → `dev-framinator.skarpa.dev`.  
-**Prod** → GitHub Actions **Release to production** → `framinator.skarpa.dev`.
+**Prod** → merge to `main` → `framinator.skarpa.dev`.
 
 Full setup: [docs/deploy.md](docs/deploy.md).
 

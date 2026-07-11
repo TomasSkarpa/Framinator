@@ -6,9 +6,9 @@ Three environments on Coolify, one repo, no release branch.
 |-------|-----|----------------|
 | **Branch preview** | `https://<pr-id>.framinator.skarpa.dev` | Native Coolify preview for PRs targeting `develop` |
 | **Dev** | https://dev-framinator.skarpa.dev | Coolify, automatic on push to `develop` |
-| **Prod** | https://framinator.skarpa.dev | Coolify, manual via GitHub Actions **Release to production** |
+| **Prod** | https://framinator.skarpa.dev | Coolify, automatic on push to `main` |
 
-Flow: feature branch + PR → preview URL → merge to `develop` → dev auto-updates → merge `develop` → `main` → release workflow → prod.
+Flow: feature branch + PR → preview URL → merge to `develop` → dev auto-updates → merge `develop` → `main` → prod auto-updates.
 
 ## Local
 
@@ -59,22 +59,10 @@ Only PRs targeting the application's configured `develop` branch are previewed h
 
 ## Coolify prod (`framinator`)
 
-1. Branch **`main`**, **auto deploy off**.
+1. Branch **`main`**, **auto deploy on**.
 2. **Compose:** `docker-compose.yml` + `docker-compose.prod.yml`.
 3. **Domain:** `https://framinator.skarpa.dev`.
-4. **Deploy:** GitHub Actions **Release to production** calls the Coolify API (`COOLIFY_URL` + `COOLIFY_TOKEN` + `COOLIFY_PROD_APP_UUID`). Auto deploy stays off so prod only updates on an explicit release.
-5. Production previews are optional and only apply to PRs targeting `main`; feature previews targeting `develop` belong to `framinator-dev`.
-
-Release: GitHub → Actions → **Release to production** → confirm `release`.
-
-## GitHub secrets
-
-| Secret | Used by |
-|--------|---------|
-| `COOLIFY_URL` | Release to production |
-| `COOLIFY_TOKEN` | Release to production |
-| `COOLIFY_PROD_APP_UUID` | Release to production (Coolify app `framinator`, branch `main`) |
-| `COOLIFY_PREVIEWS_APP_UUID` | Legacy; native Coolify previews no longer use the deleted branch-preview workflow |
+4. Production previews are optional and only apply to PRs targeting `main`; feature previews targeting `develop` belong to `framinator-dev`.
 
 ## Uptime Kuma
 
