@@ -63,7 +63,7 @@ Only PRs targeting the application's configured `develop` branch are previewed h
 2. **Compose:** `docker-compose.yml` + `docker-compose.prod.yml`.
 3. **Domain:** `https://framinator.skarpa.dev`.
 4. **Deploy webhook** → GitHub secret `COOLIFY_DEPLOY_WEBHOOK_PROD`.
-5. **Preview Deployments:** off; feature previews belong to `framinator-dev`.
+5. Production previews are optional and only apply to PRs targeting `main`; feature previews targeting `develop` belong to `framinator-dev`.
 
 Release: GitHub → Actions → **Release to production** → confirm `release`.
 
