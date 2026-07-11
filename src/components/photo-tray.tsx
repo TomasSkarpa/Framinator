@@ -17,7 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useCallback, useState, type MouseEvent } from "react";
 import { useDropzone } from "react-dropzone";
-import { GripVertical, ImagePlus, Loader2, X } from "lucide-react";
+import { ArrowRight, GripVertical, ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SmartLayoutButton } from "@/components/smart-layout-button";
 import { MAX_PHOTOS } from "@/lib/constants";
@@ -29,10 +29,14 @@ import { cn, pressable } from "@/lib/utils";
 function SortablePhoto({
   photo,
   index,
+  isFirst,
+  isLast,
   onRemove,
 }: {
   photo: PhotoItem;
   index: number;
+  isFirst: boolean;
+  isLast: boolean;
   onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -47,17 +51,33 @@ function SortablePhoto({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn("group relative shrink-0 hover:z-10", isDragging && "z-20 opacity-80")}
+      className={cn("group relative w-24 shrink-0 hover:z-10", isDragging && "z-20 opacity-80")}
       data-testid={`photo-tray-item-${index}`}
       data-photo-name={photo.name}
     >
-      <img
-        src={photo.objectUrl}
-        alt={photo.name}
-        decoding="async"
-        loading="lazy"
-        className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
-      />
+      <div className="overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 shadow-sm">
+        <div className="relative">
+          <img
+            src={photo.objectUrl}
+            alt={photo.name}
+            decoding="async"
+            loading="lazy"
+            className="h-20 w-full object-cover"
+          />
+          {(isFirst || isLast) && (
+            <span className="absolute bottom-1 left-1 rounded bg-zinc-950/85 px-1.5 py-0.5 text-[10px] font-medium text-zinc-100 backdrop-blur-sm">
+              {isFirst ? "Starts here" : "Ends here"}
+            </span>
+          )}
+        </div>
+        <p
+          className="truncate border-t border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-300"
+          title={photo.name}
+          data-testid="photo-order-name"
+        >
+          {photo.name}
+        </p>
+      </div>
       <button
         type="button"
         className={cn(
@@ -81,6 +101,12 @@ function SortablePhoto({
       >
         <X className="h-3.5 w-3.5" />
       </button>
+      {!isLast && (
+        <ArrowRight
+          className="absolute -right-[18px] top-8 h-3.5 w-3.5 text-zinc-600"
+          aria-hidden
+        />
+      )}
     </div>
   );
 }
@@ -151,9 +177,16 @@ export function PhotoTray() {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-sm font-medium text-zinc-300">
-          Your photos · {state.photos.length} selected
-        </h2>
+        <div>
+          <h2 className="text-sm font-medium text-zinc-300">
+            Photo order · {state.photos.length} selected
+          </h2>
+          {sortable && (
+            <p className="mt-1 text-xs text-zinc-500">
+              Follow the arrows to see how photos fill your carousel.
+            </p>
+          )}
+        </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {state.photos.length >= 2 && <SmartLayoutButton />}
           {state.photos.length < MAX_PHOTOS && (
@@ -164,17 +197,12 @@ export function PhotoTray() {
         </div>
       </div>
 
-      {sortable && (
-        <p className="text-xs text-zinc-500">
-          Drag photos to set fill order. Leftmost fills the first frame.
-        </p>
-      )}
-
       <div
         {...getRootProps()}
         aria-busy={importing}
+        data-testid="photo-order-sequence"
         className={cn(
-          "flex gap-2 overflow-x-auto pb-2",
+          "flex gap-5 overflow-x-auto pb-2",
           isDragActive && !importing && "rounded-xl p-2 ring-2 ring-blue-500",
           importing && "opacity-90",
         )}
@@ -191,21 +219,32 @@ export function PhotoTray() {
                   key={photo.id}
                   photo={photo}
                   index={index}
+                  isFirst={index === 0}
+                  isLast={index === state.photos.length - 1}
                   onRemove={() => removePhoto(photo.id)}
                 />
               ))}
             </SortableContext>
           </DndContext>
         ) : (
-          state.photos.map((photo, index) => (
-            <div key={photo.id} className="group relative shrink-0 hover:z-10">
-              <img
-                src={photo.objectUrl}
-                alt={photo.name}
-                decoding="async"
-                loading="lazy"
-                className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
-              />
+          state.photos.map((photo) => (
+            <div key={photo.id} className="group relative w-24 shrink-0 hover:z-10">
+              <div className="overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 shadow-sm">
+                <img
+                  src={photo.objectUrl}
+                  alt={photo.name}
+                  decoding="async"
+                  loading="lazy"
+                  className="h-20 w-full object-cover"
+                />
+                <p
+                  className="truncate border-t border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-300"
+                  title={photo.name}
+                  data-testid="photo-order-name"
+                >
+                  {photo.name}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => removePhoto(photo.id)}

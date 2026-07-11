@@ -41,6 +41,8 @@ export function CustomizationPanel() {
 
   const showOverlayToggle =
     isMdcMarketingTemplate(state.templateId) && selectedSlide !== null;
+  const activeCropTarget =
+    slideCropOptions.find((option) => option.key === cropPlacementKey) ?? slideCropOptions[0];
 
   return (
     <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5" data-testid="customization-panel">
@@ -55,6 +57,29 @@ export function CustomizationPanel() {
 
       {activeCropPhoto ? (
         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+          <div
+            className="mb-4 flex items-center gap-3 rounded-lg border border-blue-500/25 bg-blue-500/10 p-3"
+            data-testid="editing-photo-summary"
+          >
+            <img
+              src={activeCropPhoto.objectUrl}
+              alt={`Currently editing ${activeCropPhoto.name}`}
+              className="h-14 w-14 shrink-0 rounded-md border border-zinc-700 object-cover"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-300">
+                Editing this photo
+              </p>
+              <p className="truncate text-sm font-medium text-zinc-100" title={activeCropPhoto.name}>
+                {activeCropPhoto.name}
+              </p>
+              <p className="mt-0.5 text-[11px] text-zinc-400">
+                Slide {selectedSlideIndex + 1}
+                {activeCropTarget ? ` · ${activeCropTarget.label}` : ""}
+              </p>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between gap-2">
             <label className="text-xs font-medium text-zinc-300">Crop</label>
             <Button
@@ -70,23 +95,34 @@ export function CustomizationPanel() {
 
           {slideCropOptions.length > 1 && (
             <div className="flex flex-wrap gap-2" data-testid="slide-crop-photo-picker">
-              {slideCropOptions.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  data-testid={`crop-target-${opt.key}`}
-                  onClick={() => setCropPlacement(opt.key as CropPlacementKey)}
-                  className={cn(
-                    pressable,
-                    "rounded-lg px-2.5 py-1 text-xs",
-                    cropPlacementKey === opt.key
-                      ? "bg-blue-600 text-white active:bg-blue-700"
-                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              {slideCropOptions.map((opt) => {
+                const photo = state.photos.find((item) => item.id === opt.photoId);
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    data-testid={`crop-target-${opt.key}`}
+                    onClick={() => setCropPlacement(opt.key as CropPlacementKey)}
+                    aria-pressed={cropPlacementKey === opt.key}
+                    className={cn(
+                      pressable,
+                      "flex min-w-0 items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs",
+                      cropPlacementKey === opt.key
+                        ? "border-blue-500 bg-blue-600 text-white active:bg-blue-700"
+                        : "border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
+                    )}
+                  >
+                    {photo && (
+                      <img
+                        src={photo.objectUrl}
+                        alt=""
+                        className="h-7 w-7 shrink-0 rounded object-cover"
+                      />
+                    )}
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
