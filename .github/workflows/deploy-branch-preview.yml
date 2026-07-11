@@ -47,18 +47,6 @@ jobs:
             echo "host=$pr.framinator.skarpa.dev"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Set Coolify preview URL template
-        if: steps.meta.outputs.skip != 'true'
-        run: |
-          curl -fsS -X PATCH "$COOLIFY_URL/api/v1/applications/$COOLIFY_PREVIEWS_APP_UUID" \
-            -H "Authorization: Bearer $COOLIFY_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{"preview_url_template": "{{pr_id}}.framinator.skarpa.dev"}'
-        env:
-          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-          COOLIFY_PREVIEWS_APP_UUID: ${{ secrets.COOLIFY_PREVIEWS_APP_UUID }}
-
       - name: Trigger Coolify preview deploy
         if: steps.meta.outputs.skip != 'true'
         run: |
