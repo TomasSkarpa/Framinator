@@ -3,8 +3,6 @@ name: Deploy branch preview
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
-    branches-ignore: [main, develop]
 
 concurrency:
   group: coolify-preview-template
