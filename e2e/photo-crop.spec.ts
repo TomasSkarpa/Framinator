@@ -37,6 +37,9 @@ test.describe("Per-photo crop and zoom", () => {
     await page.getByTestId("slide-thumb-2").click();
     await expect(page.getByTestId("crop-sliders")).toBeVisible();
     await expect(page.getByTestId("crop-slider-horizontal")).toBeVisible();
+    await expect(page.getByTestId("selected-slide-context")).toContainText(
+      "Editing this slide, 1 photo",
+    );
   });
 
   test("Customize panel adjusts the selected slide photo", async ({ page }) => {
@@ -79,6 +82,13 @@ test.describe("Per-photo crop and zoom", () => {
     await selectTemplate(page, "layered-prints");
 
     await expect(page.getByTestId("slide-crop-photo-picker")).toBeVisible({ timeout: 15_000 });
+    const picker = page.getByTestId("slide-crop-photo-picker");
+    await expect(picker.locator("img")).toHaveCount(2);
+    await expect(picker).not.toContainText("test-photo.png");
+    await expect(picker).not.toContainText("checker-photo.png");
+    await expect(page.getByTestId("selected-slide-context")).toContainText(
+      "Editing this slide, 2 photos",
+    );
 
     await page.getByTestId("crop-target-bg").click();
     await expect(page.getByTestId("crop-offset-display")).toContainText("offset");

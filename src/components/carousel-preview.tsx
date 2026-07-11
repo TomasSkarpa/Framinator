@@ -29,6 +29,7 @@ import { useCallback, useState } from "react";
 import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
 import { spreadPrintsForLayout } from "@/lib/layered-spreads";
 import { useProject } from "@/lib/project-context";
+import { slideCropTargets } from "@/lib/slide-crop";
 import { isLayeredTemplate } from "@/lib/templates";
 import { useSlidePreviewUrl } from "@/lib/use-slide-preview-url";
 import type { Slide } from "@/lib/types";
@@ -251,6 +252,11 @@ function SortableSlide({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const slidePhotos = Array.from(
+    new Set(slideCropTargets(slide).map((target) => target.photoId)),
+  )
+    .map((photoId) => state.photos.find((photo) => photo.id === photoId))
+    .filter((photo) => photo !== undefined);
 
   const assignedNames =
     isLayeredTemplate(state.templateId) &&
@@ -292,6 +298,26 @@ function SortableSlide({
       >
         <SlideThumb slide={slide} index={index} />
       </button>
+      {isActive && slidePhotos.length > 0 && (
+        <div
+          className="mt-2 flex items-center gap-2 px-1 text-xs font-medium text-blue-300"
+          data-testid="selected-slide-context"
+        >
+          <div className="flex -space-x-2" aria-hidden="true">
+            {slidePhotos.map((photo) => (
+              <img
+                key={photo.id}
+                src={photo.objectUrl}
+                alt=""
+                className="h-7 w-7 rounded-full border-2 border-zinc-950 object-cover"
+              />
+            ))}
+          </div>
+          <span>
+            Editing this slide, {slidePhotos.length} {slidePhotos.length === 1 ? "photo" : "photos"}
+          </span>
+        </div>
+      )}
       <button
         type="button"
         className={cn(
