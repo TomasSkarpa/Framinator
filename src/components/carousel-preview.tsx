@@ -334,13 +334,43 @@ function SortableSlide({
   );
 }
 
+export function LivePreview() {
+  const { state, selectedSlideIndex, selectedSlide, selectSlide } = useProject();
+
+  if (!selectedSlide) return null;
+
+  const go = (delta: number) => {
+    const next = Math.max(0, Math.min(state.slides.length - 1, selectedSlideIndex + delta));
+    const slide = state.slides[next];
+    if (slide) selectSlide(slide.id);
+  };
+
+  return (
+    <>
+      <InstagramFeedPreview
+        slide={selectedSlide}
+        slideIndex={selectedSlideIndex}
+        slideCount={state.slides.length}
+        onPrev={() => go(-1)}
+        onNext={() => go(1)}
+        onSelectSlide={(i) => {
+          const slide = state.slides[i];
+          if (slide) selectSlide(slide.id);
+        }}
+      />
+      <p className="mt-3 text-center text-xs text-zinc-500">
+        Slide {selectedSlideIndex + 1} of {state.slides.length} · rendered at Instagram feed size
+        ({state.aspectRatio})
+      </p>
+    </>
+  );
+}
+
 export function CarouselPreview() {
   const {
     state,
     reorderSlides,
     selectedSlideId,
-    selectedSlideIndex,
-    selectedSlide,
     selectSlide,
   } = useProject();
 
@@ -364,67 +394,34 @@ export function CarouselPreview() {
 
   if (!state.templateId || state.slides.length === 0) return null;
 
-  const go = (delta: number) => {
-    const next = Math.max(
-      0,
-      Math.min(state.slides.length - 1, selectedSlideIndex + delta),
-    );
-    const slide = state.slides[next];
-    if (slide) selectSlide(slide.id);
-  };
-
   return (
-    <section className="space-y-4">
-      <h2 className="text-sm font-medium text-zinc-300">Live preview</h2>
-
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
-        {selectedSlide && (
-          <InstagramFeedPreview
-            slide={selectedSlide}
-            slideIndex={selectedSlideIndex}
-            slideCount={state.slides.length}
-            onPrev={() => go(-1)}
-            onNext={() => go(1)}
-            onSelectSlide={(i) => {
-              const s = state.slides[i];
-              if (s) selectSlide(s.id);
-            }}
-          />
-        )}
-        <p className="mt-3 text-center text-xs text-zinc-500">
-          Slide {selectedSlideIndex + 1} of {state.slides.length} · rendered at Instagram feed
-          size ({state.aspectRatio})
-        </p>
-      </div>
-
-      <div className="border-t border-zinc-800 pt-6">
-        <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Reorder slides
-        </h3>
-        <p className="mb-3 text-xs text-zinc-500">
-          {isLayeredTemplate(state.templateId)
-            ? "Drag slides to change carousel order. Adjust crop in Customize below."
-            : "Select a slide, then adjust crop in Customize below."}
-        </p>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext
-            items={state.slides.map((s) => s.id)}
-            strategy={horizontalListSortingStrategy}
-          >
-            <div className="flex gap-3 overflow-x-auto p-2.5">
-              {state.slides.map((s, i) => (
-                <SortableSlide
-                  key={s.id}
-                  slide={s}
-                  index={i}
-                  isActive={selectedSlideId === s.id}
-                  onSelect={() => selectSlide(s.id)}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </div>
+    <section className="border-t border-zinc-800 pt-6">
+      <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
+        Reorder slides
+      </h3>
+      <p className="mb-3 text-xs text-zinc-500">
+        {isLayeredTemplate(state.templateId)
+          ? "Drag slides to change carousel order. Adjust crop in Customize below."
+          : "Select a slide, then adjust crop in Customize below."}
+      </p>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext
+          items={state.slides.map((s) => s.id)}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className="flex gap-3 overflow-x-auto p-2.5">
+            {state.slides.map((s, i) => (
+              <SortableSlide
+                key={s.id}
+                slide={s}
+                index={i}
+                isActive={selectedSlideId === s.id}
+                onSelect={() => selectSlide(s.id)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </section>
   );
 }
