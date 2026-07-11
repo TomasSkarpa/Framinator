@@ -64,6 +64,7 @@ Only PRs targeting the application's configured `develop` branch are previewed h
 3. **Domain:** `https://framinator.skarpa.dev`.
 4. **Deploy:** GitHub Actions **Release to production** calls the Coolify API (`COOLIFY_URL` + `COOLIFY_TOKEN` + `COOLIFY_PROD_APP_UUID`). Auto deploy stays off so prod only updates on an explicit release.
 5. Production previews are optional and only apply to PRs targeting `main`; feature previews targeting `develop` belong to `framinator-dev`.
+
 Release: GitHub → Actions → **Release to production** → confirm `release`.
 
 ## GitHub secrets
