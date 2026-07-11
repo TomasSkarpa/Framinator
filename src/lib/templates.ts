@@ -11,26 +11,20 @@ import { uid } from "./utils";
 import type { PhotoItem, Slide, TemplateId, TemplateMeta } from "./types";
 
 export const BASE_TEMPLATE_IDS = [
-  "framed-polaroid",
   "clean-carousel",
-  "kodak-strip",
-  "layered-prints",
+  "framed-polaroid",
+  "layered-spread-split",
   "layered-prints-panorama",
+  "layered-spread-tilted",
   "layered-spread-scatter",
   "layered-spread-cascade",
   "layered-spread-corner",
-  "layered-spread-tilted",
-  "layered-spread-split",
+  "layered-prints",
+  "kodak-strip",
   "soft-focus",
 ] as const satisfies readonly TemplateId[];
 
 export const TEMPLATES: TemplateMeta[] = [
-  {
-    id: "framed-polaroid",
-    name: "Framed polaroid",
-    description: "Bordered, one per slide",
-    icon: "frame",
-  },
   {
     id: "clean-carousel",
     name: "Clean carousel",
@@ -38,22 +32,28 @@ export const TEMPLATES: TemplateMeta[] = [
     icon: "carousel",
   },
   {
-    id: "kodak-strip",
-    name: "Kodak strip",
-    description: "Film frame on paper",
-    icon: "film",
+    id: "framed-polaroid",
+    name: "Framed polaroid",
+    description: "Bordered, one per slide",
+    icon: "frame",
   },
   {
-    id: "layered-prints",
-    name: "Layered prints",
-    description: "Snapshots on a scene",
-    icon: "layers",
+    id: "layered-spread-split",
+    name: "Split focus",
+    description: "Hero plus detail shots",
+    icon: "split",
   },
   {
     id: "layered-prints-panorama",
     name: "Panorama spread",
     description: "Print spans two slides",
     icon: "panorama",
+  },
+  {
+    id: "layered-spread-tilted",
+    name: "Tilted pile",
+    description: "Rotated polaroids",
+    icon: "tilted",
   },
   {
     id: "layered-spread-scatter",
@@ -74,16 +74,16 @@ export const TEMPLATES: TemplateMeta[] = [
     icon: "corner",
   },
   {
-    id: "layered-spread-tilted",
-    name: "Tilted pile",
-    description: "Rotated polaroids",
-    icon: "tilted",
+    id: "layered-prints",
+    name: "Layered prints",
+    description: "Snapshots on a scene",
+    icon: "layers",
   },
   {
-    id: "layered-spread-split",
-    name: "Split focus",
-    description: "Hero plus detail shots",
-    icon: "split",
+    id: "kodak-strip",
+    name: "Kodak strip",
+    description: "Film frame on paper",
+    icon: "film",
   },
   {
     id: "soft-focus",

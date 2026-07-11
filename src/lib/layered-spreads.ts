@@ -82,18 +82,20 @@ export function spreadSlideHasContent(slide: Slide): boolean {
 }
 
 export const PANORAMA_OVERLAY_SPEC: Omit<SpreadPrintLayer, "photoId"> = {
-  spreadXPct: 30,
-  yPct: 58,
-  spreadWPct: 140,
-  hPct: 28,
+  spreadXPct: 22,
+  yPct: 55,
+  spreadWPct: 156,
+  hPct: 31,
+  rotationDeg: -2,
   shadow: true,
 };
 
 const CORNER_BLEED_SPEC: Omit<SpreadPrintLayer, "photoId"> = {
-  spreadXPct: 58,
-  yPct: 4,
-  spreadWPct: 105,
-  hPct: 62,
+  spreadXPct: 54,
+  yPct: -7,
+  spreadWPct: 122,
+  hPct: 70,
+  rotationDeg: -3,
   shadow: true,
 };
 
@@ -132,8 +134,22 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
           prints: [
-            printSpec(p1, { xPct: 5, yPct: 8, wPct: 42, hPct: 38, shadow: true }),
-            printSpec(p2, { xPct: 48, yPct: 18, wPct: 38, hPct: 48, shadow: true }),
+            printSpec(p1, {
+              xPct: -6,
+              yPct: 9,
+              wPct: 50,
+              hPct: 43,
+              rotationDeg: -7,
+              shadow: true,
+            }),
+            printSpec(p2, {
+              xPct: 51,
+              yPct: 25,
+              wPct: 47,
+              hPct: 54,
+              rotationDeg: 5,
+              shadow: true,
+            }),
           ],
         },
         {
@@ -141,8 +157,22 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           spreadId,
           background: { kind: "photo", photoId: bgRight },
           prints: [
-            printSpec(p3, { xPct: 4, yPct: 32, wPct: 40, hPct: 42, shadow: true }),
-            printSpec(p4, { xPct: 50, yPct: 52, wPct: 44, hPct: 36, shadow: true }),
+            printSpec(p3, {
+              xPct: -9,
+              yPct: 48,
+              wPct: 52,
+              hPct: 43,
+              rotationDeg: 8,
+              shadow: true,
+            }),
+            printSpec(p4, {
+              xPct: 48,
+              yPct: 4,
+              wPct: 55,
+              hPct: 40,
+              rotationDeg: -5,
+              shadow: true,
+            }),
           ],
         },
       ];
@@ -159,7 +189,14 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
           prints: [
-            printSpec(p1, { xPct: 6, yPct: 6, wPct: 55, hPct: 48, shadow: true }),
+            printSpec(p1, {
+              xPct: 9,
+              yPct: 4,
+              wPct: 62,
+              hPct: 48,
+              rotationDeg: -6,
+              shadow: true,
+            }),
           ],
         },
         {
@@ -167,8 +204,22 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           spreadId,
           background: { kind: "photo", photoId: bgRight },
           prints: [
-            printSpec(p2, { xPct: 22, yPct: 36, wPct: 42, hPct: 36, shadow: true }),
-            printSpec(p3, { xPct: 46, yPct: 56, wPct: 34, hPct: 30, shadow: true }),
+            printSpec(p2, {
+              xPct: -12,
+              yPct: 35,
+              wPct: 55,
+              hPct: 42,
+              rotationDeg: 5,
+              shadow: true,
+            }),
+            printSpec(p3, {
+              xPct: 45,
+              yPct: 70,
+              wPct: 46,
+              hPct: 26,
+              rotationDeg: -4,
+              shadow: true,
+            }),
           ],
         },
       ];
@@ -192,7 +243,14 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           spreadId,
           background: { kind: "photo", photoId: bgRight },
           prints: [
-            printSpec(peek, { xPct: 2, yPct: 66, wPct: 48, hPct: 34, shadow: true }),
+            printSpec(peek, {
+              xPct: -6,
+              yPct: 69,
+              wPct: 56,
+              hPct: 38,
+              rotationDeg: 6,
+              shadow: true,
+            }),
           ],
           spreadPrint: spreadPrint(bleed, CORNER_BLEED_SPEC),
         },
@@ -211,27 +269,19 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           background: { kind: "photo", photoId: bgLeft },
           prints: [
             printSpec(p1, {
-              xPct: 12,
-              yPct: 28,
-              wPct: 58,
-              hPct: 52,
-              rotationDeg: -4,
+              xPct: 8,
+              yPct: 32,
+              wPct: 64,
+              hPct: 54,
+              rotationDeg: -7,
               shadow: true,
             }),
             printSpec(p2, {
-              xPct: 58,
-              yPct: 18,
-              wPct: 28,
-              hPct: 32,
-              rotationDeg: 7,
-              shadow: true,
-            }),
-            printSpec(p3, {
-              xPct: 52,
-              yPct: 52,
-              wPct: 32,
-              hPct: 38,
-              rotationDeg: -8,
+              xPct: 55,
+              yPct: 13,
+              wPct: 38,
+              hPct: 33,
+              rotationDeg: 8,
               shadow: true,
             }),
           ],
@@ -240,7 +290,16 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           role: "tilted-right",
           spreadId,
           background: { kind: "photo", photoId: bgRight },
-          prints: [],
+          prints: [
+            printSpec(p3, {
+              xPct: -10,
+              yPct: 40,
+              wPct: 60,
+              hPct: 48,
+              rotationDeg: -5,
+              shadow: true,
+            }),
+          ],
         },
       ];
     },
@@ -256,7 +315,14 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
           prints: [
-            printSpec(hero, { xPct: 5, yPct: 8, wPct: 90, hPct: 85, shadow: true }),
+            printSpec(hero, {
+              xPct: -2,
+              yPct: 12,
+              wPct: 88,
+              hPct: 72,
+              rotationDeg: -2,
+              shadow: true,
+            }),
           ],
         },
         {
@@ -264,9 +330,30 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
           spreadId,
           background: { kind: "photo", photoId: bgRight },
           prints: [
-            printSpec(s1, { xPct: 58, yPct: 62, wPct: 18, hPct: 22, shadow: true }),
-            printSpec(s2, { xPct: 72, yPct: 72, wPct: 16, hPct: 18, shadow: true }),
-            printSpec(s3, { xPct: 78, yPct: 58, wPct: 17, hPct: 20, shadow: true }),
+            printSpec(s1, {
+              xPct: -8,
+              yPct: 12,
+              wPct: 50,
+              hPct: 32,
+              rotationDeg: 6,
+              shadow: true,
+            }),
+            printSpec(s2, {
+              xPct: 45,
+              yPct: 44,
+              wPct: 46,
+              hPct: 37,
+              rotationDeg: -4,
+              shadow: true,
+            }),
+            printSpec(s3, {
+              xPct: 20,
+              yPct: 76,
+              wPct: 40,
+              hPct: 22,
+              rotationDeg: 3,
+              shadow: true,
+            }),
           ],
         },
       ];
