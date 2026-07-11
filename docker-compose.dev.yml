@@ -1,5 +1,5 @@
 # Dev overlay: Traefik on existing Coolify proxy network.
-# Coolify project: framinator-dev — branch main, auto-deploy on push.
+# Coolify project: framinator-dev — branch develop, auto-deploy on push.
 # Domain: https://dev-framinator.skarpa.dev
 
 services:

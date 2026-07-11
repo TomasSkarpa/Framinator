@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches-ignore: [main]
+    branches-ignore: [main, develop]
 
 concurrency:
   group: coolify-preview-template
@@ -38,7 +38,7 @@ jobs:
             exit 0
           fi
           slug="$(printf '%s' "$branch" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-63)"
-          if [ -z "$slug" ] || [ "$slug" = "main" ]; then
+          if [ -z "$slug" ] || [ "$slug" = "main" ] || [ "$slug" = "develop" ]; then
             echo "Invalid branch slug for $branch" >&2
             exit 1
           fi

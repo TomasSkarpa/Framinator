@@ -5,10 +5,10 @@ Three environments on Coolify, one repo, no release branch.
 | Stage | URL | How it deploys |
 |-------|-----|----------------|
 | **Branch preview** | `https://<branch-slug>.framinator.skarpa.dev` | Coolify preview + GitHub Actions (open PR required) |
-| **Dev** | https://dev-framinator.skarpa.dev | Coolify, automatic on push to `main` |
+| **Dev** | https://dev-framinator.skarpa.dev | Coolify, automatic on push to `develop` |
 | **Prod** | https://framinator.skarpa.dev | Coolify, manual via GitHub Actions **Release to production** |
 
-Flow: feature branch + PR → preview URL → merge to `main` → dev auto-updates → release workflow → prod.
+Flow: feature branch + PR → preview URL → merge to `develop` → dev auto-updates → merge `develop` → `main` → release workflow → prod.
 
 Branch slug rules: lowercase, non-alphanumeric → `-`, max 63 chars (`feature/cool-carousel` → `feature-cool-carousel`).
 
@@ -42,7 +42,7 @@ Optional: Coolify **Server → Wildcard Domain** = `https://framinator.skarpa.de
 Third Coolify project for PR previews (separate from dev/prod so Traefik labels do not clash).
 
 1. New project **framinator-previews** → Docker Compose → GitHub repo `TomasSkarpa/framinator`.
-2. **Branch:** `main` (PRs target main). **Auto deploy on push:** **off**.
+2. **Branch:** `develop` (PRs target develop). **Auto deploy on push:** **off**.
 3. **Preview Deployments:** enabled. **Automated preview deploy:** **off** (GitHub Actions sets the URL template and triggers deploy).
 4. **Compose files:** `docker-compose.yml` + `docker-compose.preview.yml`.
 5. **Service domain (UI):** `https://framinator.skarpa.dev:3000` on the `framinator` service (Coolify uses this as the base for preview FQDN generation).
@@ -58,14 +58,14 @@ Reference: [home_server_iac compose/coolify/framinator-previews](https://github.
 
 ## Coolify dev (`framinator-dev`)
 
-1. Project **framinator-dev** → repo, branch `main`, **auto deploy on**.
+1. Project **framinator-dev** → repo, branch **`develop`**, **auto deploy on**.
 2. **Compose:** `docker-compose.yml` + `docker-compose.dev.yml`.
 3. **Domain:** `https://dev-framinator.skarpa.dev`.
 4. **Env:** Gemini keys.
 
 ## Coolify prod (`framinator`)
 
-1. Branch `main`, **auto deploy off**.
+1. Branch **`main`**, **auto deploy off**.
 2. **Compose:** `docker-compose.yml` + `docker-compose.prod.yml`.
 3. **Domain:** `https://framinator.skarpa.dev`.
 4. **Deploy webhook** → GitHub secret `COOLIFY_DEPLOY_WEBHOOK_PROD`.
