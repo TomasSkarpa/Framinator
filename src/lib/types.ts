@@ -45,7 +45,6 @@ export type TemplateId =
   | "mdc-sharp-red-corner-wedge"
   | "mdc-right-side-brand-slab"
   | "mdc-repeating-logo-texture"
-  | "mdc-oversized-translucent-mark"
   | "mdc-monochrome-red-footer-fade";
 
 export type PhotoCrop = {
