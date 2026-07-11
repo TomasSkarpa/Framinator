@@ -55,3 +55,8 @@ Feature: Photo import
     Then I should see hint text about drag to set fill order
     When I reorder photos in the tray
     Then the tray order should match my new arrangement
+
+  Scenario: Identify photos while arranging them
+    Given I have uploaded multiple photos
+    Then each photo should show its filename
+    And the photo being customized should be marked as editing

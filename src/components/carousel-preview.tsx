@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
+import { slideCropTargets } from "@/lib/slide-crop";
 import { spreadPrintsForLayout } from "@/lib/layered-spreads";
 import { useProject } from "@/lib/project-context";
 import { isLayeredTemplate } from "@/lib/templates";
@@ -268,6 +269,12 @@ function SortableSlide({
           .join("|")
       : undefined;
 
+  const sourcePhotos = Array.from(
+    new Set(slideCropTargets(slide).map((target) => target.photoId)),
+  )
+    .map((photoId) => state.photos.find((photo) => photo.id === photoId))
+    .filter((photo) => photo !== undefined);
+
   return (
     <div
       ref={setNodeRef}
@@ -292,6 +299,32 @@ function SortableSlide({
       >
         <SlideThumb slide={slide} index={index} />
       </button>
+      <div className="mt-2 flex min-h-7 items-center gap-1.5 px-0.5">
+        <div className="flex -space-x-1">
+          {sourcePhotos.map((photo) => (
+            <img
+              key={photo.id}
+              src={photo.objectUrl}
+              alt=""
+              title={photo.name}
+              className="h-6 w-6 rounded-full border-2 border-zinc-950 object-cover"
+            />
+          ))}
+        </div>
+        <span
+          className={cn(
+            "max-w-32 truncate text-[10px] text-zinc-500",
+            isActive && "font-medium text-blue-300",
+          )}
+          title={sourcePhotos.map((photo) => photo.name).join(", ")}
+        >
+          {isActive
+            ? "Editing this slide"
+            : sourcePhotos.length === 1
+              ? sourcePhotos[0]?.name
+              : `${sourcePhotos.length} photos`}
+        </span>
+      </div>
       <button
         type="button"
         className={cn(

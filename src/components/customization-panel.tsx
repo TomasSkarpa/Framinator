@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -44,13 +45,35 @@ export function CustomizationPanel() {
 
   return (
     <section className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5" data-testid="customization-panel">
-      <div>
-        <h2 className="text-sm font-medium text-zinc-300">
-          Customize
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-medium text-zinc-300">Customize</h2>
           {selectedSlide && (
-            <span className="text-zinc-500"> · slide {selectedSlideIndex + 1}</span>
+            <p className="mt-1 text-xs font-medium text-blue-300">
+              Editing slide {selectedSlideIndex + 1}
+            </p>
           )}
-        </h2>
+        </div>
+        {activeCropPhoto && (
+          <div
+            className="flex max-w-[60%] items-center gap-2 rounded-lg border border-blue-500/40 bg-blue-500/10 p-1.5 pr-2"
+            data-testid="active-customize-photo"
+          >
+            <img
+              src={activeCropPhoto.objectUrl}
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-blue-400/70"
+            />
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-blue-300">
+                Photo selected
+              </p>
+              <p className="truncate text-[11px] text-zinc-200" title={activeCropPhoto.name}>
+                {activeCropPhoto.name}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {activeCropPhoto ? (
@@ -69,24 +92,51 @@ export function CustomizationPanel() {
           </div>
 
           {slideCropOptions.length > 1 && (
-            <div className="flex flex-wrap gap-2" data-testid="slide-crop-photo-picker">
-              {slideCropOptions.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  data-testid={`crop-target-${opt.key}`}
-                  onClick={() => setCropPlacement(opt.key as CropPlacementKey)}
-                  className={cn(
-                    pressable,
-                    "rounded-lg px-2.5 py-1 text-xs",
-                    cropPlacementKey === opt.key
-                      ? "bg-blue-600 text-white active:bg-blue-700"
-                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div className="space-y-2" data-testid="slide-crop-photo-picker">
+              <p className="text-[11px] text-zinc-500">Choose the photo to adjust</p>
+              <div className="flex flex-wrap gap-2">
+                {slideCropOptions.map((opt) => {
+                  const photo = state.photos.find((candidate) => candidate.id === opt.photoId);
+                  const isActive = cropPlacementKey === opt.key;
+
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      data-testid={`crop-target-${opt.key}`}
+                      onClick={() => setCropPlacement(opt.key as CropPlacementKey)}
+                      className={cn(
+                        pressable,
+                        "relative flex w-24 flex-col items-start gap-1 rounded-lg border p-1.5 text-left",
+                        isActive
+                          ? "border-blue-400 bg-blue-500/15 text-white ring-1 ring-blue-500 active:bg-blue-500/25"
+                          : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800 active:bg-zinc-700",
+                      )}
+                      aria-pressed={isActive}
+                    >
+                      {photo && (
+                        <img
+                          src={photo.objectUrl}
+                          alt=""
+                          className="h-14 w-full rounded-md object-cover"
+                        />
+                      )}
+                      <span className="flex w-full items-center justify-between gap-1 px-0.5 text-[10px] font-medium">
+                        {opt.label}
+                        {isActive && <Check className="h-3 w-3 shrink-0 text-blue-300" />}
+                      </span>
+                      {photo && (
+                        <span
+                          className="w-full truncate px-0.5 text-[9px] text-zinc-500"
+                          title={photo.name}
+                        >
+                          {photo.name}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 

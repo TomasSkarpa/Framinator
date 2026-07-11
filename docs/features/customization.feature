@@ -32,3 +32,9 @@ Feature: Global and per-slide customization
   Scenario: Border control hidden on non-polaroid templates
     Given I have selected the clean carousel template
     Then I should not see a border width control
+
+  Scenario: See which photo is being customized
+    Given I have selected a template
+    When I select a slide
+    Then Customize should show the selected slide and photo
+    And a multi-photo slide should show photo thumbnails for each crop target

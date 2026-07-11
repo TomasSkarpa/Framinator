@@ -29,10 +29,12 @@ import { cn, pressable } from "@/lib/utils";
 function SortablePhoto({
   photo,
   index,
+  isEditing,
   onRemove,
 }: {
   photo: PhotoItem;
   index: number;
+  isEditing: boolean;
   onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -47,17 +49,30 @@ function SortablePhoto({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn("group relative shrink-0 hover:z-10", isDragging && "z-20 opacity-80")}
+      className={cn("group relative w-20 shrink-0 hover:z-10", isDragging && "z-20 opacity-80")}
       data-testid={`photo-tray-item-${index}`}
       data-photo-name={photo.name}
+      data-editing={isEditing}
     >
-      <img
-        src={photo.objectUrl}
-        alt={photo.name}
-        decoding="async"
-        loading="lazy"
-        className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
-      />
+      <div
+        className={cn(
+          "relative rounded-lg border border-zinc-700",
+          isEditing && "border-blue-400 ring-2 ring-blue-500 ring-offset-2 ring-offset-zinc-950",
+        )}
+      >
+        <img
+          src={photo.objectUrl}
+          alt={photo.name}
+          decoding="async"
+          loading="lazy"
+          className="h-[78px] w-[78px] rounded-[7px] object-cover"
+        />
+        {isEditing && (
+          <span className="absolute inset-x-1 bottom-1 rounded bg-blue-600/95 px-1 py-0.5 text-center text-[9px] font-semibold text-white shadow">
+            Editing
+          </span>
+        )}
+      </div>
       <button
         type="button"
         className={cn(
@@ -81,12 +96,21 @@ function SortablePhoto({
       >
         <X className="h-3.5 w-3.5" />
       </button>
+      <p
+        className={cn(
+          "mt-1 truncate text-[10px] text-zinc-500",
+          isEditing && "font-medium text-blue-300",
+        )}
+        title={photo.name}
+      >
+        {photo.name}
+      </p>
     </div>
   );
 }
 
 export function PhotoTray() {
-  const { state, addPhotos, removePhoto, reorderPhotos } = useProject();
+  const { state, addPhotos, removePhoto, reorderPhotos, activeCropPhoto } = useProject();
   const { toast } = useToast();
   const [importing, setImporting] = useState(false);
 
@@ -166,7 +190,7 @@ export function PhotoTray() {
 
       {sortable && (
         <p className="text-xs text-zinc-500">
-          Drag photos to set fill order. Leftmost fills the first frame.
+          Photos fill the design from left to right. Drag to change the order.
         </p>
       )}
 
@@ -191,21 +215,30 @@ export function PhotoTray() {
                   key={photo.id}
                   photo={photo}
                   index={index}
+                  isEditing={activeCropPhoto?.id === photo.id}
                   onRemove={() => removePhoto(photo.id)}
                 />
               ))}
             </SortableContext>
           </DndContext>
         ) : (
-          state.photos.map((photo, index) => (
-            <div key={photo.id} className="group relative shrink-0 hover:z-10">
-              <img
-                src={photo.objectUrl}
-                alt={photo.name}
-                decoding="async"
-                loading="lazy"
-                className="h-20 w-20 rounded-lg object-cover border border-zinc-700"
-              />
+          state.photos.map((photo) => (
+            <div key={photo.id} className="group relative w-20 shrink-0 hover:z-10">
+              <div
+                className={cn(
+                  "rounded-lg border border-zinc-700",
+                  activeCropPhoto?.id === photo.id &&
+                    "border-blue-400 ring-2 ring-blue-500 ring-offset-2 ring-offset-zinc-950",
+                )}
+              >
+                <img
+                  src={photo.objectUrl}
+                  alt={photo.name}
+                  decoding="async"
+                  loading="lazy"
+                  className="h-[78px] w-[78px] rounded-[7px] object-cover"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => removePhoto(photo.id)}
@@ -217,6 +250,9 @@ export function PhotoTray() {
               >
                 <X className="h-3.5 w-3.5" />
               </button>
+              <p className="mt-1 truncate text-[10px] text-zinc-500" title={photo.name}>
+                {photo.name}
+              </p>
             </div>
           ))
         )}
