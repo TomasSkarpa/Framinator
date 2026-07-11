@@ -252,11 +252,7 @@ function SortableSlide({
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  const slidePhotos = Array.from(
-    new Set(slideCropTargets(slide).map((target) => target.photoId)),
-  )
-    .map((photoId) => state.photos.find((photo) => photo.id === photoId))
-    .filter((photo) => photo !== undefined);
+  const slidePhotoCount = new Set(slideCropTargets(slide).map((target) => target.photoId)).size;
 
   const assignedNames =
     isLayeredTemplate(state.templateId) &&
@@ -298,25 +294,13 @@ function SortableSlide({
       >
         <SlideThumb slide={slide} index={index} />
       </button>
-      {isActive && slidePhotos.length > 0 && (
-        <div
-          className="mt-2 flex items-center gap-2 px-1 text-xs font-medium text-blue-300"
+      {isActive && slidePhotoCount > 0 && (
+        <p
+          className="mt-2 px-1 text-center text-xs font-medium text-blue-300"
           data-testid="selected-slide-context"
         >
-          <div className="flex -space-x-2" aria-hidden="true">
-            {slidePhotos.map((photo) => (
-              <img
-                key={photo.id}
-                src={photo.objectUrl}
-                alt=""
-                className="h-7 w-7 rounded-full border-2 border-zinc-950 object-cover"
-              />
-            ))}
-          </div>
-          <span>
-            Editing this slide, {slidePhotos.length} {slidePhotos.length === 1 ? "photo" : "photos"}
-          </span>
-        </div>
+          Editing this slide, {slidePhotoCount} {slidePhotoCount === 1 ? "photo" : "photos"}
+        </p>
       )}
       <button
         type="button"
