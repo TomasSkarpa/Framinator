@@ -1,0 +1,91 @@
+name: Deploy branch preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: coolify-preview-template
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  deploy:
+    if: github.event_name != 'pull_request' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve branch slug and PR
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            branch="${{ github.head_ref }}"
+            pr="${{ github.event.pull_request.number }}"
+          else
+            branch="${{ github.ref_name }}"
+            pr="$(gh pr list --repo "${{ github.repository }}" --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          fi
+          if [ -z "${pr:-}" ]; then
+            echo "No open PR for branch $branch; Coolify preview deploy skipped (open a PR to get a preview URL)." >&2
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          slug="$(printf '%s' "$branch" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-63)"
+          if [ -z "$slug" ] || [ "$slug" = "main" ]; then
+            echo "Invalid branch slug for $branch" >&2
+            exit 1
+          fi
+          {
+            echo "skip=false"
+            echo "slug=$slug"
+            echo "pr=$pr"
+            echo "host=$slug.framinator.skarpa.dev"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set Coolify preview URL template
+        if: steps.meta.outputs.skip != 'true'
+        run: |
+          curl -fsS -X PATCH "$COOLIFY_URL/api/v1/applications/$COOLIFY_PREVIEWS_APP_UUID" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"preview_url_template\": \"${{ steps.meta.outputs.slug }}.framinator.skarpa.dev\"}"
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_PREVIEWS_APP_UUID: ${{ secrets.COOLIFY_PREVIEWS_APP_UUID }}
+
+      - name: Trigger Coolify preview deploy
+        if: steps.meta.outputs.skip != 'true'
+        run: |
+          curl -fsS -X POST "$COOLIFY_URL/api/v1/deploy" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"uuid\": \"$COOLIFY_PREVIEWS_APP_UUID\", \"pull_request_id\": ${{ steps.meta.outputs.pr }}}"
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_PREVIEWS_APP_UUID: ${{ secrets.COOLIFY_PREVIEWS_APP_UUID }}
+
+      - name: Preview URL
+        if: steps.meta.outputs.skip != 'true'
+        run: echo "https://${{ steps.meta.outputs.host }}"
+
+  cleanup:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Coolify preview
+        run: |
+          curl -fsS -X DELETE "$COOLIFY_URL/api/v1/applications/$COOLIFY_PREVIEWS_APP_UUID/previews/${{ github.event.pull_request.number }}" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN"
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_PREVIEWS_APP_UUID: ${{ secrets.COOLIFY_PREVIEWS_APP_UUID }}

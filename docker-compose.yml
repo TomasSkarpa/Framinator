@@ -1,5 +1,7 @@
-# Framinator — Coolify project: framinator
-# Domain: https://framinator.skarpa.dev
+# Framinator — base compose (build + env). Pair with an overlay:
+#   docker-compose.dev.yml     → https://dev-framinator.skarpa.dev (Coolify dev, main, auto-deploy)
+#   docker-compose.prod.yml    → https://framinator.skarpa.dev (Coolify prod, manual release)
+#   docker-compose.preview.yml → https://<branch>.framinator.skarpa.dev (Coolify previews via GH Actions)
 # Set GEMINI_API_KEY (+ optional GEMINI_API_KEY_FALLBACK) in Coolify UI or a local .env file.
 
 services:

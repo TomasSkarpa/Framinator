@@ -1,0 +1,32 @@
+# Dev overlay: Traefik on existing Coolify proxy network.
+# Coolify project: framinator-dev — branch main, auto-deploy on push.
+# Domain: https://dev-framinator.skarpa.dev
+
+services:
+  framinator:
+    build: .
+    restart: unless-stopped
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_KEY_FALLBACK: ${GEMINI_API_KEY_FALLBACK:-}
+    networks:
+      - coolify
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.gzip.compress=true
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.http-0-framinator-dev.entryPoints=http
+      - traefik.http.routers.http-0-framinator-dev.middlewares=redirect-to-https
+      - traefik.http.routers.http-0-framinator-dev.rule=Host(`dev-framinator.skarpa.dev`) && PathPrefix(`/`)
+      - traefik.http.routers.http-0-framinator-dev.service=http-0-framinator-dev
+      - traefik.http.routers.https-0-framinator-dev.entryPoints=https
+      - traefik.http.routers.https-0-framinator-dev.middlewares=gzip
+      - traefik.http.routers.https-0-framinator-dev.rule=Host(`dev-framinator.skarpa.dev`) && PathPrefix(`/`)
+      - traefik.http.routers.https-0-framinator-dev.service=http-0-framinator-dev
+      - traefik.http.routers.https-0-framinator-dev.tls=true
+      - traefik.http.routers.https-0-framinator-dev.tls.certresolver=letsencrypt
+      - traefik.http.services.http-0-framinator-dev.loadbalancer.server.port=3000
+
+networks:
+  coolify:
+    external: true

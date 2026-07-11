@@ -1,0 +1,18 @@
+name: Release to production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "release" to deploy main to framinator.skarpa.dev'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: inputs.confirm == 'release'
+    steps:
+      - name: Trigger Coolify production deploy
+        run: curl -fsS -X POST "$COOLIFY_DEPLOY_WEBHOOK_PROD"
+        env:
+          COOLIFY_DEPLOY_WEBHOOK_PROD: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK_PROD }}

@@ -2,7 +2,8 @@
 
 Instagram carousel builder. Compositing runs in your browser; photos never leave your device.
 
-**Live:** https://framinator.skarpa.dev
+**Live:** https://framinator.skarpa.dev  
+**Dev:** https://dev-framinator.skarpa.dev
 
 ## Dev
 
@@ -10,11 +11,15 @@ Instagram carousel builder. Compositing runs in your browser; photos never leave
 npm install && npm run dev
 ```
 
+Copy `.env.example` → `.env.local` if you test smart layout (`GEMINI_API_KEY`).
+
 ## Deploy
 
-Coolify + root `docker-compose.yml`, domain `framinator.skarpa.dev`. See [home_server_iac compose](https://github.com/TomasSkarpa/home_server_iac/tree/main/compose/coolify/framinator).
+**Feature preview** → open PR → `https://<branch-slug>.framinator.skarpa.dev` (Coolify).  
+**Dev** → merge to `main` → `dev-framinator.skarpa.dev`.  
+**Prod** → GitHub Actions **Release to production** → `framinator.skarpa.dev`.
 
-Smart layout: set `GEMINI_API_KEY` and optional `GEMINI_API_KEY_FALLBACK` in Coolify (not in git). Fallback is used on rate limit.
+Full setup: [docs/deploy.md](docs/deploy.md).
 
 Smart layout crop alignment debug:
 
