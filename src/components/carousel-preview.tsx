@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { exportHeight, EXPORT_WIDTH } from "@/lib/constants";
+import { spreadPrintsForLayout } from "@/lib/layered-spreads";
 import { useProject } from "@/lib/project-context";
 import { isLayeredTemplate } from "@/lib/templates";
 import { useSlidePreviewUrl } from "@/lib/use-slide-preview-url";
@@ -258,7 +259,7 @@ function SortableSlide({
           slide.layeredPrints.background.kind === "photo"
             ? slide.layeredPrints.background.photoId
             : undefined,
-          slide.layeredPrints.spreadPrint?.photoId,
+          ...spreadPrintsForLayout(slide.layeredPrints).map((p) => p.photoId),
           ...slide.layeredPrints.prints.map((p) => p.photoId),
         ]
           .filter(Boolean)

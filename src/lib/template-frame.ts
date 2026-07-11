@@ -34,19 +34,19 @@ export function smartLayoutFrameContext(
     case "layered-prints-panorama":
       return (
         `Template "${templateId}": two-slide panorama spread with roles panorama-left and panorama-right. ` +
-        `One overlay photo spans both slides in a wide horizontal print (about 140% of one slide wide and 28% tall, ` +
-        `crossing the center seam). Crop wide subjects so the important content stays visible inside that horizontal ` +
+        `One overlay photo spans both slides in a wide horizontal print, ` +
+        `crossing the center seam. Crop wide subjects so the important content stays visible inside that horizontal ` +
         `panorama band and is not lost at the left/right slide edges or the seam. Background photos still fill full slides.`
       );
     case "layered-spread-scatter":
       return (
-        `Template "${templateId}": two-slide scatter spread with several small paper prints over full-slide backgrounds. ` +
+        `Template "${templateId}": two-slide scatter spread with paper prints that can cross the center seam. ` +
         `Crop each print for its own small rectangular window, keeping faces/products centered with extra margin because ` +
         `prints overlap and sit in different left/right spread roles. Background photos fill a full ${slideAspect} slide.`
       );
     case "layered-spread-cascade":
       return (
-        `Template "${templateId}": two-slide cascade spread with stepped paper prints over full-slide backgrounds. ` +
+        `Template "${templateId}": two-slide cascade spread with stepped paper prints crossing both slides. ` +
         `Crop foreground prints tightly enough to read in smaller frames, but keep faces and key objects away from edges. ` +
         `Background photos fill a full ${slideAspect} slide.`
       );
@@ -58,8 +58,8 @@ export function smartLayoutFrameContext(
       );
     case "layered-spread-tilted":
       return (
-        `Template "${templateId}": two-slide tilted pile spread. Several rotated prints sit mostly on one slide over ` +
-        `a full-slide background. Crop print photos with generous face/object margin because rotation trims corners; ` +
+        `Template "${templateId}": two-slide tilted pile spread. Rotated prints flow across both slides over ` +
+        `full-slide backgrounds. Crop print photos with generous face/object margin because rotation trims corners; ` +
         `background photos fill a full ${slideAspect} slide.`
       );
     case "layered-spread-split":

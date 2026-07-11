@@ -24,7 +24,7 @@ async function uploadPhotos(page: import("@playwright/test").Page, paths: string
 }
 
 test.describe("Panorama spread", () => {
-  test("assigns bg, overlay, bg across two slides", async ({ page }) => {
+  test("assigns overlay before backgrounds across two slides", async ({ page }) => {
     const fixtures = writeNamedFixtures(3);
     await gotoBuilder(page);
     await uploadPhotos(page, fixtures);
@@ -42,8 +42,20 @@ test.describe("Panorama spread", () => {
     const right = await slides.nth(1).getAttribute("data-assigned-names");
     expect(left).toContain("panorama-1.png");
     expect(left).toContain("panorama-2.png");
-    expect(right).toContain("panorama-2.png");
+    expect(right).toContain("panorama-1.png");
     expect(right).toContain("panorama-3.png");
+  });
+
+  test("fills a cross-slide print before either background", async ({ page }) => {
+    const fixtures = writeNamedFixtures(1);
+    await gotoBuilder(page);
+    await uploadPhotos(page, fixtures);
+    await selectTemplate(page, "layered-spread-scatter");
+
+    const slides = page.locator("[data-assigned-names]");
+    await expect(slides).toHaveCount(2);
+    await expect(slides.nth(0)).toHaveAttribute("data-assigned-names", "panorama-1.png");
+    await expect(slides.nth(1)).toHaveAttribute("data-assigned-names", "panorama-1.png");
   });
 
   test("grows to four slides for four photos", async ({ page }) => {

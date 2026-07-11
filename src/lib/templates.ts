@@ -3,6 +3,7 @@ import {
   buildSpreadSlides,
   isLayeredSpreadTemplate,
   reflowSpreadSlides,
+  spreadPrintsForLayout,
   spreadSlideHasContent,
   syncSpreadSlides,
 } from "./layered-spreads";
@@ -181,8 +182,10 @@ export function usedPhotoIds(slides: Slide[]): Set<string> {
     for (const print of slide.layeredPrints?.prints ?? []) {
       if (print.photoId) ids.add(print.photoId);
     }
-    if (slide.layeredPrints?.spreadPrint?.photoId) {
-      ids.add(slide.layeredPrints.spreadPrint.photoId);
+    if (slide.layeredPrints) {
+      for (const print of spreadPrintsForLayout(slide.layeredPrints)) {
+        if (print.photoId) ids.add(print.photoId);
+      }
     }
   }
   return ids;

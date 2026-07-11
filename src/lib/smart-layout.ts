@@ -70,6 +70,39 @@ export type SmartLayoutApiPayload = {
   details?: string[];
 };
 
+export type SmartLayoutReviewPayload = {
+  approved: boolean;
+  photoOrder?: number[];
+  crops?: SmartLayoutCropEntry[];
+  whyChanged?: string;
+};
+
+export function shouldReviewSmartLayout(templateId: TemplateId | null): boolean {
+  return templateId === "soft-focus" || isLayeredTemplate(templateId);
+}
+
+export function mergeSmartLayoutReview(
+  initial: SmartLayoutApiPayload,
+  review: SmartLayoutReviewPayload,
+): SmartLayoutApiPayload {
+  if (review.approved) return initial;
+  const expectedOrder = [...initial.photoOrder].sort((a, b) => a - b);
+  const reviewedOrder = review.photoOrder
+    ? [...review.photoOrder].sort((a, b) => a - b)
+    : null;
+  const hasCompleteOrder =
+    reviewedOrder?.length === expectedOrder.length &&
+    reviewedOrder.every((value, index) => value === expectedOrder[index]);
+  const crops = new Map((initial.crops ?? []).map((crop) => [crop.photoIndex, crop]));
+  for (const crop of review.crops ?? []) crops.set(crop.photoIndex, crop);
+  return {
+    ...initial,
+    photoOrder: hasCompleteOrder ? review.photoOrder! : initial.photoOrder,
+    crops: [...crops.values()],
+    whyArranged: review.whyChanged?.trim() || initial.whyArranged,
+  };
+}
+
 export type SmartLayoutRequestPhoto = {
   id: string;
   name: string;

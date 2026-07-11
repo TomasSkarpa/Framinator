@@ -1,9 +1,7 @@
-import { DEFAULT_PHOTO_CROP } from "./constants";
 import type {
   LayeredPrintsLayout,
   LayeredPrintsRole,
   PhotoItem,
-  PrintLayer,
   Slide,
   SpreadPrintLayer,
   TemplateId,
@@ -35,13 +33,6 @@ export function isLayeredSpreadTemplate(
   return !!templateId && LAYERED_SPREAD_TEMPLATE_IDS.has(templateId);
 }
 
-function printSpec(
-  photoId: string | undefined,
-  spec: Omit<PrintLayer, "photoId">,
-): PrintLayer {
-  return photoId ? { photoId, ...spec } : { ...spec };
-}
-
 function spreadPrint(
   photoId: string | undefined,
   spec: Omit<SpreadPrintLayer, "photoId">,
@@ -69,15 +60,20 @@ export function cellsFromSpreadLayout(layout: LayeredPrintsLayout): { photoId: s
   };
   if (layout.background.kind === "photo") add(layout.background.photoId);
   for (const p of layout.prints) add(p.photoId);
-  if (layout.spreadPrint?.photoId) add(layout.spreadPrint.photoId);
+  for (const p of spreadPrintsForLayout(layout)) add(p.photoId);
   return ids.map((photoId) => ({ photoId }));
+}
+
+/** Includes the legacy singular field so previously saved projects still render. */
+export function spreadPrintsForLayout(layout: LayeredPrintsLayout): SpreadPrintLayer[] {
+  return [...(layout.spreadPrint ? [layout.spreadPrint] : []), ...(layout.spreadPrints ?? [])];
 }
 
 export function spreadSlideHasContent(slide: Slide): boolean {
   const lp = slide.layeredPrints;
   if (!lp) return false;
   if (lp.background.kind === "photo" && lp.background.photoId) return true;
-  if (lp.spreadPrint?.photoId) return true;
+  if (spreadPrintsForLayout(lp).some((p) => !!p.photoId)) return true;
   return lp.prints.some((p) => !!p.photoId);
 }
 
@@ -104,21 +100,22 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
     slotsPerSpread: 3,
     leftRole: "panorama-left",
     rightRole: "panorama-right",
-    buildSpreadLayouts(spreadId, [bgLeft, overlay, bgRight]) {
+    buildSpreadLayouts(spreadId, [overlay, bgLeft, bgRight]) {
+      const spreadPrints = [spreadPrint(overlay, PANORAMA_OVERLAY_SPEC)];
       return [
         {
           role: "panorama-left",
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
           prints: [],
-          spreadPrint: spreadPrint(overlay, PANORAMA_OVERLAY_SPEC),
+          spreadPrints,
         },
         {
           role: "panorama-right",
           spreadId,
           background: { kind: "photo", photoId: bgRight },
           prints: [],
-          spreadPrint: spreadPrint(overlay, PANORAMA_OVERLAY_SPEC),
+          spreadPrints,
         },
       ];
     },
@@ -127,53 +124,55 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
     slotsPerSpread: 6,
     leftRole: "scatter-left",
     rightRole: "scatter-right",
-    buildSpreadLayouts(spreadId, [bgLeft, bgRight, p1, p2, p3, p4]) {
+    buildSpreadLayouts(spreadId, [p1, p2, p3, p4, bgLeft, bgRight]) {
+      const spreadPrints = [
+        spreadPrint(p1, {
+          spreadXPct: -6,
+          yPct: 9,
+          spreadWPct: 50,
+          hPct: 43,
+          rotationDeg: -7,
+          shadow: true,
+        }),
+        spreadPrint(p2, {
+          spreadXPct: 60,
+          yPct: 25,
+          spreadWPct: 55,
+          hPct: 54,
+          rotationDeg: 5,
+          shadow: true,
+        }),
+        spreadPrint(p3, {
+          spreadXPct: 93,
+          yPct: 48,
+          spreadWPct: 56,
+          hPct: 43,
+          rotationDeg: 8,
+          shadow: true,
+        }),
+        spreadPrint(p4, {
+          spreadXPct: 148,
+          yPct: 4,
+          spreadWPct: 55,
+          hPct: 40,
+          rotationDeg: -5,
+          shadow: true,
+        }),
+      ];
       return [
         {
           role: "scatter-left",
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
-          prints: [
-            printSpec(p1, {
-              xPct: -6,
-              yPct: 9,
-              wPct: 50,
-              hPct: 43,
-              rotationDeg: -7,
-              shadow: true,
-            }),
-            printSpec(p2, {
-              xPct: 51,
-              yPct: 25,
-              wPct: 47,
-              hPct: 54,
-              rotationDeg: 5,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
         {
           role: "scatter-right",
           spreadId,
           background: { kind: "photo", photoId: bgRight },
-          prints: [
-            printSpec(p3, {
-              xPct: -9,
-              yPct: 48,
-              wPct: 52,
-              hPct: 43,
-              rotationDeg: 8,
-              shadow: true,
-            }),
-            printSpec(p4, {
-              xPct: 48,
-              yPct: 4,
-              wPct: 55,
-              hPct: 40,
-              rotationDeg: -5,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
       ];
     },
@@ -182,45 +181,47 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
     slotsPerSpread: 5,
     leftRole: "cascade-left",
     rightRole: "cascade-right",
-    buildSpreadLayouts(spreadId, [bgLeft, p1, bgRight, p2, p3]) {
+    buildSpreadLayouts(spreadId, [p1, p2, p3, bgLeft, bgRight]) {
+      const spreadPrints = [
+        spreadPrint(p1, {
+          spreadXPct: 9,
+          yPct: 4,
+          spreadWPct: 62,
+          hPct: 48,
+          rotationDeg: -6,
+          shadow: true,
+        }),
+        spreadPrint(p2, {
+          spreadXPct: 72,
+          yPct: 35,
+          spreadWPct: 60,
+          hPct: 42,
+          rotationDeg: 5,
+          shadow: true,
+        }),
+        spreadPrint(p3, {
+          spreadXPct: 145,
+          yPct: 70,
+          spreadWPct: 48,
+          hPct: 26,
+          rotationDeg: -4,
+          shadow: true,
+        }),
+      ];
       return [
         {
           role: "cascade-left",
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
-          prints: [
-            printSpec(p1, {
-              xPct: 9,
-              yPct: 4,
-              wPct: 62,
-              hPct: 48,
-              rotationDeg: -6,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
         {
           role: "cascade-right",
           spreadId,
           background: { kind: "photo", photoId: bgRight },
-          prints: [
-            printSpec(p2, {
-              xPct: -12,
-              yPct: 35,
-              wPct: 55,
-              hPct: 42,
-              rotationDeg: 5,
-              shadow: true,
-            }),
-            printSpec(p3, {
-              xPct: 45,
-              yPct: 70,
-              wPct: 46,
-              hPct: 26,
-              rotationDeg: -4,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
       ];
     },
@@ -229,30 +230,32 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
     slotsPerSpread: 4,
     leftRole: "corner-left",
     rightRole: "corner-right",
-    buildSpreadLayouts(spreadId, [bgLeft, bleed, bgRight, peek]) {
+    buildSpreadLayouts(spreadId, [bleed, peek, bgLeft, bgRight]) {
+      const spreadPrints = [
+        spreadPrint(bleed, CORNER_BLEED_SPEC),
+        spreadPrint(peek, {
+          spreadXPct: 92,
+          yPct: 69,
+          spreadWPct: 56,
+          hPct: 38,
+          rotationDeg: 6,
+          shadow: true,
+        }),
+      ];
       return [
         {
           role: "corner-left",
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
           prints: [],
-          spreadPrint: spreadPrint(bleed, CORNER_BLEED_SPEC),
+          spreadPrints,
         },
         {
           role: "corner-right",
           spreadId,
           background: { kind: "photo", photoId: bgRight },
-          prints: [
-            printSpec(peek, {
-              xPct: -6,
-              yPct: 69,
-              wPct: 56,
-              hPct: 38,
-              rotationDeg: 6,
-              shadow: true,
-            }),
-          ],
-          spreadPrint: spreadPrint(bleed, CORNER_BLEED_SPEC),
+          prints: [],
+          spreadPrints,
         },
       ];
     },
@@ -261,45 +264,47 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
     slotsPerSpread: 5,
     leftRole: "tilted-left",
     rightRole: "tilted-right",
-    buildSpreadLayouts(spreadId, [bgLeft, bgRight, p1, p2, p3]) {
+    buildSpreadLayouts(spreadId, [p1, p2, p3, bgLeft, bgRight]) {
+      const spreadPrints = [
+        spreadPrint(p1, {
+          spreadXPct: 8,
+          yPct: 32,
+          spreadWPct: 64,
+          hPct: 54,
+          rotationDeg: -7,
+          shadow: true,
+        }),
+        spreadPrint(p2, {
+          spreadXPct: 68,
+          yPct: 13,
+          spreadWPct: 60,
+          hPct: 33,
+          rotationDeg: 8,
+          shadow: true,
+        }),
+        spreadPrint(p3, {
+          spreadXPct: 136,
+          yPct: 40,
+          spreadWPct: 60,
+          hPct: 48,
+          rotationDeg: -5,
+          shadow: true,
+        }),
+      ];
       return [
         {
           role: "tilted-left",
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
-          prints: [
-            printSpec(p1, {
-              xPct: 8,
-              yPct: 32,
-              wPct: 64,
-              hPct: 54,
-              rotationDeg: -7,
-              shadow: true,
-            }),
-            printSpec(p2, {
-              xPct: 55,
-              yPct: 13,
-              wPct: 38,
-              hPct: 33,
-              rotationDeg: 8,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
         {
           role: "tilted-right",
           spreadId,
           background: { kind: "photo", photoId: bgRight },
-          prints: [
-            printSpec(p3, {
-              xPct: -10,
-              yPct: 40,
-              wPct: 60,
-              hPct: 48,
-              rotationDeg: -5,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
       ];
     },
@@ -308,53 +313,55 @@ const SPREAD_DEFS: Record<string, SpreadTemplateDef> = {
     slotsPerSpread: 6,
     leftRole: "split-left",
     rightRole: "split-right",
-    buildSpreadLayouts(spreadId, [bgLeft, hero, bgRight, s1, s2, s3]) {
+    buildSpreadLayouts(spreadId, [hero, s1, s2, s3, bgLeft, bgRight]) {
+      const spreadPrints = [
+        spreadPrint(hero, {
+          spreadXPct: -2,
+          yPct: 12,
+          spreadWPct: 88,
+          hPct: 72,
+          rotationDeg: -2,
+          shadow: true,
+        }),
+        spreadPrint(s1, {
+          spreadXPct: 76,
+          yPct: 12,
+          spreadWPct: 50,
+          hPct: 32,
+          rotationDeg: 6,
+          shadow: true,
+        }),
+        spreadPrint(s2, {
+          spreadXPct: 128,
+          yPct: 44,
+          spreadWPct: 46,
+          hPct: 37,
+          rotationDeg: -4,
+          shadow: true,
+        }),
+        spreadPrint(s3, {
+          spreadXPct: 98,
+          yPct: 76,
+          spreadWPct: 40,
+          hPct: 22,
+          rotationDeg: 3,
+          shadow: true,
+        }),
+      ];
       return [
         {
           role: "split-left",
           spreadId,
           background: { kind: "photo", photoId: bgLeft },
-          prints: [
-            printSpec(hero, {
-              xPct: -2,
-              yPct: 12,
-              wPct: 88,
-              hPct: 72,
-              rotationDeg: -2,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
         {
           role: "split-right",
           spreadId,
           background: { kind: "photo", photoId: bgRight },
-          prints: [
-            printSpec(s1, {
-              xPct: -8,
-              yPct: 12,
-              wPct: 50,
-              hPct: 32,
-              rotationDeg: 6,
-              shadow: true,
-            }),
-            printSpec(s2, {
-              xPct: 45,
-              yPct: 44,
-              wPct: 46,
-              hPct: 37,
-              rotationDeg: -4,
-              shadow: true,
-            }),
-            printSpec(s3, {
-              xPct: 20,
-              yPct: 76,
-              wPct: 40,
-              hPct: 22,
-              rotationDeg: 3,
-              shadow: true,
-            }),
-          ],
+          prints: [],
+          spreadPrints,
         },
       ];
     },
@@ -447,18 +454,38 @@ export function buildSpreadSlides(
   return syncSpreadSlides(templateId, [], photos);
 }
 
-// ponytail: dev-only guard for scatter slotting
+// ponytail: dev-only guard for foreground-first spread slotting
 if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
-  const built = buildSpreadSlides("layered-spread-scatter", [
-    { id: "a", name: "a", objectUrl: "", crop: { offsetX: 0, offsetY: 0, scale: 1 } },
-    { id: "b", name: "b", objectUrl: "", crop: { offsetX: 0, offsetY: 0, scale: 1 } },
-    { id: "c", name: "c", objectUrl: "", crop: { offsetX: 0, offsetY: 0, scale: 1 } },
-    { id: "d", name: "d", objectUrl: "", crop: { offsetX: 0, offsetY: 0, scale: 1 } },
-    { id: "e", name: "e", objectUrl: "", crop: { offsetX: 0, offsetY: 0, scale: 1 } },
-    { id: "f", name: "f", objectUrl: "", crop: { offsetX: 0, offsetY: 0, scale: 1 } },
-  ]);
-  const left = built[0].layeredPrints;
-  if (left?.role !== "scatter-left" || left.prints.length !== 2) {
-    throw new Error("scatter self-check: layout broken");
+  const foregroundCounts: [LayeredSpreadTemplateId, number][] = [
+    ["layered-prints-panorama", 1],
+    ["layered-spread-scatter", 4],
+    ["layered-spread-cascade", 3],
+    ["layered-spread-corner", 2],
+    ["layered-spread-tilted", 3],
+    ["layered-spread-split", 4],
+  ];
+  for (const [templateId, count] of foregroundCounts) {
+    const photos = Array.from({ length: count }, (_, i) => ({
+      id: `${templateId}-${i}`,
+      name: `${templateId}-${i}`,
+      objectUrl: "",
+      crop: { offsetX: 0, offsetY: 0, scale: 1 },
+    }));
+    const [left, right] = buildSpreadSlides(templateId, photos);
+    const leftLayout = left?.layeredPrints;
+    const rightLayout = right?.layeredPrints;
+    const spreadPrints = leftLayout ? spreadPrintsForLayout(leftLayout) : [];
+    if (
+      leftLayout?.background.kind !== "photo" ||
+      leftLayout.background.photoId ||
+      rightLayout?.background.kind !== "photo" ||
+      rightLayout.background.photoId ||
+      spreadPrints.filter((p) => !!p.photoId).length !== count ||
+      !spreadPrints.some(
+        (p) => !!p.photoId && p.spreadXPct < 100 && p.spreadXPct + p.spreadWPct > 100,
+      )
+    ) {
+      throw new Error(`${templateId} self-check: foreground-first slotting broken`);
+    }
   }
 }

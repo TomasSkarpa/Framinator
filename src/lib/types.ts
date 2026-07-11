@@ -118,7 +118,10 @@ export type LayeredPrintsLayout = {
   background: LayeredPrintsBackground;
   prints: PrintLayer[];
   spreadId?: string;
+  /** Legacy single cross-slide print kept for restored projects. */
   spreadPrint?: SpreadPrintLayer;
+  /** Ordered print layers positioned across the full two-slide spread. */
+  spreadPrints?: SpreadPrintLayer[];
   caption?: string;
 };
 

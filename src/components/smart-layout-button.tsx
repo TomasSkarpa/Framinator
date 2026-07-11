@@ -7,12 +7,17 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SmartLayoutNoticePanel } from "@/components/smart-layout-notice";
 import { useToast } from "@/components/ui/toast";
 import {
+  applySmartLayoutPlan,
   apiPayloadToPlan,
   buildSmartLayoutRequestPhotos,
+  mergeSmartLayoutReview,
   noticeFromPayload,
+  shouldReviewSmartLayout,
   type SmartLayoutApiPayload,
   type SmartLayoutNotice,
+  type SmartLayoutReviewPayload,
 } from "@/lib/smart-layout";
+import { renderSmartLayoutReviewPreviews } from "@/lib/smart-layout-review";
 import { useProject } from "@/lib/project-context";
 import type { ProjectState } from "@/lib/types";
 import { cn, pressable } from "@/lib/utils";
@@ -20,7 +25,7 @@ import { cn, pressable } from "@/lib/utils";
 type DialogPhase = "confirm" | "loading" | "error";
 
 export function SmartLayoutButton() {
-  const { state, applySmartLayout, restoreState, availableTemplates } = useProject();
+  const { state, applySmartLayout, restoreState, availableTemplates, brand } = useProject();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<DialogPhase>("confirm");
@@ -63,13 +68,13 @@ export function SmartLayoutButton() {
         }),
       });
 
-      const body = (await res.json()) as SmartLayoutApiPayload & { error?: string };
+      let body = (await res.json()) as SmartLayoutApiPayload & { error?: string };
 
       if (!res.ok) {
         throw new Error(body.error ?? "Smart layout failed");
       }
 
-      const plan = apiPayloadToPlan(
+      let plan = apiPayloadToPlan(
         body,
         state.photos,
         state.slides,
@@ -77,6 +82,34 @@ export function SmartLayoutButton() {
       );
       if (!plan) {
         throw new Error("Could not parse layout suggestion");
+      }
+
+      const candidate = applySmartLayoutPlan(state, plan);
+      if (shouldReviewSmartLayout(candidate.templateId)) {
+        try {
+          const previews = await renderSmartLayoutReviewPreviews(
+            candidate,
+            state.photos.map((photo) => photo.id),
+            brand,
+          );
+          const reviewRes = await fetch("/api/smart-layout/review", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ photos: requestPhotos, previews, templateId: candidate.templateId }),
+          });
+          if (reviewRes.ok) {
+            const review = (await reviewRes.json()) as SmartLayoutReviewPayload;
+            body = mergeSmartLayoutReview(body, review);
+            plan = apiPayloadToPlan(
+              body,
+              state.photos,
+              state.slides,
+              availableTemplates.map((template) => template.id),
+            ) ?? plan;
+          }
+        } catch {
+          // Final review is an enhancement; keep the valid first-pass layout on failure.
+        }
       }
 
       setUndoSnapshot(structuredClone(state));
@@ -91,7 +124,7 @@ export function SmartLayoutButton() {
       setPhase("error");
       setErrorMessage(err instanceof Error ? err.message : "Something went wrong");
     }
-  }, [applySmartLayout, availableTemplates, clearUndo, state, toast]);
+  }, [applySmartLayout, availableTemplates, brand, clearUndo, state]);
 
   const handleUndo = useCallback(() => {
     if (!undoSnapshot) return;
@@ -224,7 +257,7 @@ export function SmartLayoutButton() {
               {phase === "loading" && (
                 <div className="flex flex-col items-center gap-3 py-6 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-                  <p className="text-sm text-zinc-300">Studying your photos…</p>
+                  <p className="text-sm text-zinc-300">Arranging and reviewing your carousel…</p>
                   <p className="text-xs text-zinc-500">Usually a few seconds</p>
                 </div>
               )}

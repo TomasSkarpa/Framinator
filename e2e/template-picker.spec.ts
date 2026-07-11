@@ -39,6 +39,7 @@ test.describe("Template picker", () => {
     const preview = page.getByTestId("template-preview-layered-prints-panorama");
     await expect(preview).toHaveAttribute("data-preview-mode", "spread");
     await expect(preview.locator("img")).toHaveCount(2);
+    await expect(page.getByText("Swipe pair")).toHaveCount(0);
   });
 
   test("leads with two essentials and two story-first spreads", async ({ page }) => {

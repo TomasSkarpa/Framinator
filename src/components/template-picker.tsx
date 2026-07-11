@@ -94,9 +94,6 @@ function TemplatePreview({
             />
           ))}
         </div>
-        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">
-          Swipe pair
-        </span>
       </div>
     );
   }

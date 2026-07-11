@@ -44,7 +44,7 @@ if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
     objectUrl: "",
     crop: { ...DEFAULT_PHOTO_CROP },
   });
-  const photos = [stub("bg1"), stub("ov"), stub("bg2"), stub("bg3")];
+  const photos = [stub("ov"), stub("bg1"), stub("bg2"), stub("next")];
   const built = buildPanoramaSlides(photos);
   if (built.length !== 4) {
     throw new Error("panorama self-check: expected 4 slides for 4 photos");
@@ -55,7 +55,7 @@ if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
     spread0?.spreadId !== spread1?.spreadId ||
     spread0?.background.kind !== "photo" ||
     spread0.background.photoId !== "bg1" ||
-    spread0.spreadPrint?.photoId !== "ov" ||
+    spread0.spreadPrints?.[0]?.photoId !== "ov" ||
     spread1?.background.kind !== "photo" ||
     spread1.background.photoId !== "bg2"
   ) {
@@ -63,12 +63,12 @@ if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
   }
   const reflowed = reflowPanoramaSlides(built, [stub("x"), stub("y"), stub("z")]);
   const leftBg = reflowed[0].layeredPrints?.background;
-  if (leftBg?.kind !== "photo" || leftBg.photoId !== "x") {
+  if (leftBg?.kind !== "photo" || leftBg.photoId !== "y") {
     throw new Error("panorama self-check: photo tray reorder reflow broken");
   }
   const swapped = [...built];
   [swapped[0], swapped[1]] = [swapped[1], swapped[0]];
-  const stickyOverlay = swapped[0].layeredPrints?.spreadPrint?.photoId;
+  const stickyOverlay = swapped[0].layeredPrints?.spreadPrints?.[0]?.photoId;
   if (stickyOverlay !== "ov") {
     throw new Error("panorama self-check: sticky slide reorder broken");
   }
