@@ -62,18 +62,18 @@ Only PRs targeting the application's configured `develop` branch are previewed h
 1. Branch **`main`**, **auto deploy off**.
 2. **Compose:** `docker-compose.yml` + `docker-compose.prod.yml`.
 3. **Domain:** `https://framinator.skarpa.dev`.
-4. **Deploy webhook** → GitHub secret `COOLIFY_DEPLOY_WEBHOOK_PROD`.
+4. **Deploy:** GitHub Actions **Release to production** calls the Coolify API (`COOLIFY_URL` + `COOLIFY_TOKEN` + `COOLIFY_PROD_APP_UUID`). Auto deploy stays off so prod only updates on an explicit release.
 5. Production previews are optional and only apply to PRs targeting `main`; feature previews targeting `develop` belong to `framinator-dev`.
-
 Release: GitHub → Actions → **Release to production** → confirm `release`.
 
 ## GitHub secrets
 
 | Secret | Used by |
 |--------|---------|
-| `COOLIFY_DEPLOY_WEBHOOK_PROD` | Release to production workflow |
-
-Enable Coolify API: Coolify → Settings → API → Enable.
+| `COOLIFY_URL` | Release to production |
+| `COOLIFY_TOKEN` | Release to production |
+| `COOLIFY_PROD_APP_UUID` | Release to production (Coolify app `framinator`, branch `main`) |
+| `COOLIFY_PREVIEWS_APP_UUID` | Legacy; native Coolify previews no longer use the deleted branch-preview workflow |
 
 ## Uptime Kuma
 

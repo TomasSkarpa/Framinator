@@ -13,6 +13,12 @@ jobs:
     if: inputs.confirm == 'release'
     steps:
       - name: Trigger Coolify production deploy
-        run: curl -fsS -X POST "$COOLIFY_DEPLOY_WEBHOOK_PROD"
+        run: |
+          curl -fsS -X POST "$COOLIFY_URL/api/v1/deploy" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"uuid\": \"$COOLIFY_PROD_APP_UUID\", \"force\": true}"
         env:
-          COOLIFY_DEPLOY_WEBHOOK_PROD: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK_PROD }}
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_PROD_APP_UUID: ${{ secrets.COOLIFY_PROD_APP_UUID }}
