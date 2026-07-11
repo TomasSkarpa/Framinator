@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { CROP_SCALE_MAX, CROP_SCALE_MIN, DEFAULT_PHOTO_CROP } from "@/lib/constants";
@@ -69,24 +70,43 @@ export function CustomizationPanel() {
           </div>
 
           {slideCropOptions.length > 1 && (
-            <div className="flex flex-wrap gap-2" data-testid="slide-crop-photo-picker">
-              {slideCropOptions.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  data-testid={`crop-target-${opt.key}`}
-                  onClick={() => setCropPlacement(opt.key as CropPlacementKey)}
-                  className={cn(
-                    pressable,
-                    "rounded-lg px-2.5 py-1 text-xs",
-                    cropPlacementKey === opt.key
-                      ? "bg-blue-600 text-white active:bg-blue-700"
-                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600",
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div className="space-y-2" data-testid="slide-crop-photo-picker">
+              <p className="text-[11px] text-zinc-500">Choose the photo to adjust</p>
+              <div className="flex flex-wrap gap-2">
+                {slideCropOptions.map((opt) => {
+                  const photo = state.photos.find((candidate) => candidate.id === opt.photoId);
+                  const isActive = cropPlacementKey === opt.key;
+
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      data-testid={`crop-target-${opt.key}`}
+                      onClick={() => setCropPlacement(opt.key as CropPlacementKey)}
+                      aria-pressed={isActive}
+                      className={cn(
+                        pressable,
+                        "relative flex w-24 flex-col gap-1 rounded-lg border p-1.5 text-left",
+                        isActive
+                          ? "border-blue-400 bg-blue-500/15 text-white ring-1 ring-blue-500 active:bg-blue-500/25"
+                          : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800 active:bg-zinc-700",
+                      )}
+                    >
+                      {photo && (
+                        <img
+                          src={photo.objectUrl}
+                          alt=""
+                          className="h-14 w-full rounded-md object-cover"
+                        />
+                      )}
+                      <span className="flex w-full items-center justify-between gap-1 px-0.5 text-[10px] font-medium">
+                        {opt.label}
+                        {isActive && <Check className="h-3 w-3 shrink-0 text-blue-300" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 

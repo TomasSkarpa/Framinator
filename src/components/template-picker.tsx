@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { renderSlidePreviewDataUrl } from "@/lib/canvas-render";
+import { isLayeredSpreadTemplate } from "@/lib/layered-spreads";
 import { useProject } from "@/lib/project-context";
 import { buildSlides } from "@/lib/templates";
 import type { TemplateId } from "@/lib/types";
@@ -42,38 +43,68 @@ function TemplatePreview({
   templateId: TemplateId;
 }) {
   const { state, brand } = useProject();
-  const [url, setUrl] = useState<string | null>(null);
+  const [urls, setUrls] = useState<string[]>([]);
+  const isSpread = isLayeredSpreadTemplate(templateId);
 
   useEffect(() => {
     if (state.photos.length === 0) return;
     const slides = buildSlides(templateId, state.photos);
-    const first = slides[0];
-    if (!first) return;
+    const previewSlides = slides.slice(0, isSpread ? 2 : 1);
+    if (previewSlides.length === 0) return;
     const map = new Map(state.photos.map((p) => [p.id, p]));
     let cancelled = false;
-    void renderSlidePreviewDataUrl(first, map, {
-      filter: state.filter,
-      borderWidth: state.borderWidth,
-      templateId,
-      aspectRatio: state.aspectRatio,
-      slideIndex: 0,
-      brand,
-    }).then((u) => {
-      if (!cancelled) setUrl(u);
+    void Promise.all(
+      previewSlides.map((slide, slideIndex) =>
+        renderSlidePreviewDataUrl(slide, map, {
+          filter: state.filter,
+          borderWidth: state.borderWidth,
+          templateId,
+          aspectRatio: state.aspectRatio,
+          slideIndex,
+          brand,
+        }),
+      ),
+    ).then((nextUrls) => {
+      if (!cancelled) setUrls(nextUrls);
     });
     return () => {
       cancelled = true;
     };
-  }, [brand, templateId, state.photos, state.filter, state.borderWidth, state.aspectRatio]);
+  }, [brand, isSpread, templateId, state.photos, state.filter, state.borderWidth, state.aspectRatio]);
 
-  if (!url) {
+  if (urls.length === 0) {
     return <div className="aspect-[4/5] w-full animate-pulse rounded-md bg-zinc-800" />;
   }
+
+  if (isSpread) {
+    return (
+      <div
+        className="relative aspect-[4/5] w-full overflow-hidden rounded-md bg-zinc-950 p-2"
+        data-preview-mode="spread"
+        data-testid={`template-preview-${templateId}`}
+      >
+        <div className="grid h-full grid-cols-2 items-center gap-1.5">
+          {urls.map((url, index) => (
+            <img
+              key={url}
+              src={url}
+              alt={`Slide ${index + 1} preview`}
+              className="w-full rounded-sm shadow-md"
+              style={{ aspectRatio: "4 / 5" }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <img
-      src={url}
+      src={urls[0]}
       alt=""
       className="aspect-[4/5] w-full rounded-md object-cover"
+      data-preview-mode="single"
+      data-testid={`template-preview-${templateId}`}
     />
   );
 }

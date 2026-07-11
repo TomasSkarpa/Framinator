@@ -1,7 +1,13 @@
 import { HERO_PRINT_FRAME } from "./layered-prints";
+import { spreadPrintsForLayout } from "./layered-spreads";
 import type { LayeredPrintsLayout, PrintLayer, Slide, TemplateId } from "./types";
 
-export type CropPlacementKey = "main" | "bg" | `print-${number}` | "spread";
+export type CropPlacementKey =
+  | "main"
+  | "bg"
+  | `print-${number}`
+  | "spread"
+  | `spread-${number}`;
 
 export type SlideCropTarget = {
   key: CropPlacementKey;
@@ -39,14 +45,20 @@ export function slideCropTargets(slide: Slide): SlideCropTarget[] {
 
 function layeredCropTargets(layout: LayeredPrintsLayout): SlideCropTarget[] {
   const out: SlideCropTarget[] = [];
-  if (layout.background.kind === "photo") {
-    addTarget(out, "bg", layout.background.photoId, "Background");
-  }
   layout.prints.forEach((p, i) => {
     addTarget(out, `print-${i}`, p.photoId, layout.prints.length > 1 ? `Print ${i + 1}` : "Print");
   });
-  if (layout.spreadPrint?.photoId) {
-    addTarget(out, "spread", layout.spreadPrint.photoId, "Spread overlay");
+  const spreadPrints = spreadPrintsForLayout(layout);
+  spreadPrints.forEach((p, i) => {
+    addTarget(
+      out,
+      `spread-${i}`,
+      p.photoId,
+      spreadPrints.length > 1 ? `Print ${i + 1}` : "Print",
+    );
+  });
+  if (layout.background.kind === "photo") {
+    addTarget(out, "bg", layout.background.photoId, "Background");
   }
   return out;
 }
@@ -77,13 +89,17 @@ export function cropFrameForPlacement(
   if (key === "bg") {
     return { xPct: 0, yPct: 0, wPct: 100, hPct: 100 };
   }
-  if (key === "spread" && lp.spreadPrint) {
+  if (key === "spread" || key.startsWith("spread-")) {
+    const idx = key === "spread" ? 0 : Number(key.slice(7));
+    const spread = spreadPrintsForLayout(lp)[idx];
+    if (!spread) return { xPct: 0, yPct: 0, wPct: 100, hPct: 100 };
+    const slideOffset = lp.role.endsWith("-right") ? 100 : 0;
     const layer: PrintLayer = {
-      photoId: lp.spreadPrint.photoId,
-      xPct: lp.spreadPrint.spreadXPct,
-      yPct: lp.spreadPrint.yPct,
-      wPct: lp.spreadPrint.spreadWPct,
-      hPct: lp.spreadPrint.hPct,
+      photoId: spread.photoId,
+      xPct: spread.spreadXPct - slideOffset,
+      yPct: spread.yPct,
+      wPct: spread.spreadWPct,
+      hPct: spread.hPct,
     };
     return printInnerRect(layer, borderPct);
   }

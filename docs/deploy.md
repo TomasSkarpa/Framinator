@@ -4,13 +4,11 @@ Three environments on Coolify, one repo, no release branch.
 
 | Stage | URL | How it deploys |
 |-------|-----|----------------|
-| **Branch preview** | `https://<branch-slug>.framinator.skarpa.dev` | Coolify preview + GitHub Actions (open PR required) |
-| **Dev** | https://dev-framinator.skarpa.dev | Coolify, automatic on push to `main` |
+| **Branch preview** | `https://<pr-id>.framinator.skarpa.dev` | Native Coolify preview for PRs targeting `develop` |
+| **Dev** | https://dev-framinator.skarpa.dev | Coolify, automatic on push to `develop` |
 | **Prod** | https://framinator.skarpa.dev | Coolify, manual via GitHub Actions **Release to production** |
 
-Flow: feature branch + PR → preview URL → merge to `main` → dev auto-updates → release workflow → prod.
-
-Branch slug rules: lowercase, non-alphanumeric → `-`, max 63 chars (`feature/cool-carousel` → `feature-cool-carousel`).
+Flow: feature branch + PR → preview URL → merge to `develop` → dev auto-updates → merge `develop` → `main` → release workflow → prod.
 
 ## Local
 
@@ -37,38 +35,35 @@ TLS: Traefik HTTP-01 issues a cert per preview hostname as previews are created.
 
 Optional: Coolify **Server → Wildcard Domain** = `https://framinator.skarpa.dev`.
 
-## Coolify branch previews (`framinator-previews`)
+## Coolify branch previews
 
-Third Coolify project for PR previews (separate from dev/prod so Traefik labels do not clash).
+PR previews are native preview deployments on the existing **framinator-dev** application.
 
-1. New project **framinator-previews** → Docker Compose → GitHub repo `TomasSkarpa/framinator`.
-2. **Branch:** `main` (PRs target main). **Auto deploy on push:** **off**.
-3. **Preview Deployments:** enabled. **Automated preview deploy:** **off** (GitHub Actions sets the URL template and triggers deploy).
-4. **Compose files:** `docker-compose.yml` + `docker-compose.preview.yml`.
-5. **Service domain (UI):** `https://framinator.skarpa.dev:3000` on the `framinator` service (Coolify uses this as the base for preview FQDN generation).
-6. **Preview URL template (initial):** `placeholder.framinator.skarpa.dev` (overwritten per deploy by GitHub Actions).
-7. **Env:** `GEMINI_API_KEY`, optional `GEMINI_API_KEY_FALLBACK`.
-8. Copy the application **UUID** for GitHub secrets.
+1. Use the GitHub App source for `TomasSkarpa/framinator`.
+2. Configure branch **`develop`** and automatic deployment on push.
+3. Use `docker-compose.yml` + `docker-compose.dev.yml`.
+4. Set the application domain in Coolify to `https://dev-framinator.skarpa.dev`.
+5. Enable Preview Deployments and automated preview deployment.
+6. Set the preview URL template to `{{pr_id}}.framinator.skarpa.dev`.
+7. Keep custom Traefik labels out of the Compose files. Coolify must generate unique routers and services for dev and each PR.
+8. Set preview-scoped Gemini environment variables in Coolify as needed.
 
-Preview URL is set per deploy to `{branch-slug}.framinator.skarpa.dev`. Coolify only supports `{{pr_id}}` in templates natively; the workflow patches the template from the PR branch name before calling the deploy API.
-
-**Requires an open PR** for the branch. Push-only without a PR skips deploy (logged in Actions).
-
-Reference: [home_server_iac compose/coolify/framinator-previews](https://github.com/TomasSkarpa/home_server_iac/tree/main/compose/coolify/framinator-previews).
+Only PRs targeting the application's configured `develop` branch are previewed here. Existing PRs may need **Load Pull Requests** once after enabling previews.
 
 ## Coolify dev (`framinator-dev`)
 
-1. Project **framinator-dev** → repo, branch `main`, **auto deploy on**.
+1. Project **framinator-dev** → repo, branch **`develop`**, **auto deploy on**.
 2. **Compose:** `docker-compose.yml` + `docker-compose.dev.yml`.
-3. **Domain:** `https://dev-framinator.skarpa.dev`.
+3. **Domain:** `https://dev-framinator.skarpa.dev`, configured in Coolify rather than Compose labels.
 4. **Env:** Gemini keys.
 
 ## Coolify prod (`framinator`)
 
-1. Branch `main`, **auto deploy off**.
+1. Branch **`main`**, **auto deploy off**.
 2. **Compose:** `docker-compose.yml` + `docker-compose.prod.yml`.
 3. **Domain:** `https://framinator.skarpa.dev`.
 4. **Deploy webhook** → GitHub secret `COOLIFY_DEPLOY_WEBHOOK_PROD`.
+5. Production previews are optional and only apply to PRs targeting `main`; feature previews targeting `develop` belong to `framinator-dev`.
 
 Release: GitHub → Actions → **Release to production** → confirm `release`.
 
@@ -76,9 +71,6 @@ Release: GitHub → Actions → **Release to production** → confirm `release`.
 
 | Secret | Used by |
 |--------|---------|
-| `COOLIFY_URL` | Branch preview workflow (e.g. `https://coolify.skarpa.dev`) |
-| `COOLIFY_TOKEN` | Branch preview workflow (Coolify → Security → API Tokens, deploy + write) |
-| `COOLIFY_PREVIEWS_APP_UUID` | Branch preview workflow (framinator-previews app UUID) |
 | `COOLIFY_DEPLOY_WEBHOOK_PROD` | Release to production workflow |
 
 Enable Coolify API: Coolify → Settings → API → Enable.
@@ -90,8 +82,3 @@ Enable Coolify API: Coolify → Settings → API → Enable.
 | https://framinator.skarpa.dev/api/health | required (prod) |
 | https://dev-framinator.skarpa.dev/api/health | optional |
 | Branch previews | skip |
-
-## Limitations
-
-- One preview URL template per Coolify app: concurrent PR deploys can race if two run at once. Usually fine for solo work; re-run Actions if a preview gets the wrong host.
-- Reserved: do not use branch slug `dev` expecting dev-framinator (dev uses a separate hostname).

@@ -3,6 +3,7 @@
 import { CarouselPreview } from "@/components/carousel-preview";
 import { CustomizationPanel } from "@/components/customization-panel";
 import { ExportButton } from "@/components/export-button";
+import { LivePreviewButton } from "@/components/live-preview-button";
 import { ProfilePreviewButton } from "@/components/profile-preview-button";
 import { PhotoTray } from "@/components/photo-tray";
 import { ResumePrompt } from "@/components/resume-prompt";
@@ -25,6 +26,7 @@ function BuilderShell({ brand }: { brand: BrandConfig | null }) {
             </p>
           </div>
           <div className="flex gap-2">
+            <LivePreviewButton />
             <ProfilePreviewButton />
             <ExportButton />
           </div>

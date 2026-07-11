@@ -210,4 +210,29 @@ test.describe("Smart layout", () => {
     expect(requestBody?.templateId).toBe("layered-prints-panorama");
     expect(requestBody?.slideRoles).toEqual(["panorama-left", "panorama-right"]);
   });
+
+  test("Layered layouts receive one rendered final review", async ({ page }) => {
+    await gotoBuilder(page);
+    await uploadPhotos(page, [E2E_FIXTURE_PATH, E2E_CHECKER_FIXTURE_PATH]);
+    await selectTemplate(page, "layered-prints");
+
+    let reviewBody: Record<string, unknown> | null = null;
+    await page.route("**/api/smart-layout/review", async (route) => {
+      reviewBody = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ approved: true }),
+      });
+    });
+    await mockSmartLayout(page, DEFAULT_SMART_LAYOUT_PAYLOAD);
+
+    await openSmartLayout(page);
+    await confirmSmartLayout(page);
+    await expect(page.getByTestId("smart-layout-undo")).toBeVisible({ timeout: 15_000 });
+
+    expect(reviewBody).not.toBeNull();
+    expect(reviewBody?.templateId).toBe("layered-prints");
+    expect(Array.isArray(reviewBody?.previews)).toBe(true);
+  });
 });

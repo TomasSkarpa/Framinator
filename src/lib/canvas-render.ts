@@ -11,7 +11,11 @@ import { drawCover } from "./crop-math";
 import { blurCanvas, supportsCanvasFilter } from "./canvas-blur";
 import { loadLut, applyLutToCanvas, type Lut3D } from "./lut";
 import { HERO_PRINT_FRAME } from "./layered-prints";
-import { isLayeredSpreadTemplate, spreadIndexFromRole } from "./layered-spreads";
+import {
+  isLayeredSpreadTemplate,
+  spreadIndexFromRole,
+  spreadPrintsForLayout,
+} from "./layered-spreads";
 import { drawMdcBrandedSpreadAccent, drawMdcMarketingTemplate, hasMdcBrandedSpreadAccent, isMdcMarketingTemplate } from "./mdc-marketing-templates";
 import type { BrandConfig } from "./brands";
 import type {
@@ -454,8 +458,7 @@ async function drawSpreadLayeredSlide(
   }
 
   const spreadIndex = spreadIndexFromRole(layout.role);
-  const spread = layout.spreadPrint;
-  if (spread) {
+  for (const spread of spreadPrintsForLayout(layout)) {
     if (spread.photoId) {
       const photo = photosById.get(spread.photoId);
       if (photo) {

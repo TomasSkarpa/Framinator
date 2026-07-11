@@ -32,6 +32,32 @@ test.describe("Template picker", () => {
     expect(cursor).toBe("pointer");
   });
 
+  test("spread templates preview both slides", async ({ page }) => {
+    await gotoBuilder(page);
+    await uploadPhoto(page, FIXTURE);
+
+    const preview = page.getByTestId("template-preview-layered-prints-panorama");
+    await expect(preview).toHaveAttribute("data-preview-mode", "spread");
+    await expect(preview.locator("img")).toHaveCount(2);
+    await expect(page.getByText("Swipe pair")).toHaveCount(0);
+  });
+
+  test("leads with two essentials and two story-first spreads", async ({ page }) => {
+    await gotoBuilder(page);
+    await uploadPhoto(page, FIXTURE);
+
+    const firstFour = await page.locator("button[data-testid^='template-']").evaluateAll((buttons) =>
+      buttons.slice(0, 4).map((button) => button.getAttribute("data-testid")),
+    );
+
+    expect(firstFour).toEqual([
+      "template-clean-carousel",
+      "template-framed-polaroid",
+      "template-layered-spread-split",
+      "template-layered-prints-panorama",
+    ]);
+  });
+
   test("brand route uses MDC-specific templates", async ({ page }) => {
     await gotoBuilder(page);
     await uploadPhoto(page, FIXTURE);
